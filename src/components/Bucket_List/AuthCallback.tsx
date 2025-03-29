@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { SpotifyAuth } from '../../lib/spotify/auth';
 
 export function AuthCallback() {
-  const navigate = useNavigate();
+  const navigate = useNavigate(); //hello
 
   useEffect(() => {
     const auth = SpotifyAuth.getInstance();
