@@ -1,10 +1,12 @@
 import { Button } from "../ui/button";
-import { getAuthUrl } from "../../../lib/Recommendation_Roulette/spotify";
+import { SpotifyAuth as SpotifyAuthClass } from '../../../lib/spotify/auth';
 import { UserCircle } from "lucide-react";
 
-export function SpotifyAuth() {
-  const handleLogin = () => {
-    window.location.href = getAuthUrl();
+export function SpotifyAuthButton() {
+    const handleLogin = async () => {
+        const auth = SpotifyAuthClass.getInstance();
+        await auth.authenticate();
+
   };
 
   return (

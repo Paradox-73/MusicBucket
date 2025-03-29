@@ -1,39 +1,19 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SpotifyAuth } from '../../lib/Bucket_List/spotify/auth';
+import { SpotifyAuth } from '../../lib/spotify/auth';
 
 export function AuthCallback() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleCallback = async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get('code');
-      const error = urlParams.get('error');
-
-      if (error) {
-        console.error('Authentication error:', error);
-        navigate('/', { replace: true });
-        return;
-      }
-
-      if (code) {
-        try {
-          const auth = SpotifyAuth.getInstance();
-          await auth.handleCallback(code);
-          // Force a reload to ensure all components pick up the new auth state
-          window.location.href = '/';
-        } catch (err) {
-          console.error('Error handling callback:', err);
-          navigate('/', { replace: true });
-        }
-      } else {
-        navigate('/', { replace: true });
-      }
-    };
-
-    handleCallback();
+    const auth = SpotifyAuth.getInstance();
+    const token = new URLSearchParams(window.location.hash).get('access_token');
+    if (token) {
+      auth.setToken(token, 3600); // Assuming the token expires in 3600 seconds
+      navigate('/'); // Redirect to home or another page after successful login
+    }
   }, [navigate]);
+
 
   return (
     <div className="flex min-h-screen items-center justify-center">

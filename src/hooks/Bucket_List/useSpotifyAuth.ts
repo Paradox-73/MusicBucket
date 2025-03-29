@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { SpotifyAuth } from '../../lib/Bucket_List/spotify/auth';
+import { SpotifyAuth } from '../../lib/spotify/auth';
 
 export function useSpotifyAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -9,8 +9,9 @@ export function useSpotifyAuth() {
     const checkAuth = async () => {
       try {
         const auth = SpotifyAuth.getInstance();
-        const token = await auth.getAccessToken();
-        setIsAuthenticated(!!token);
+        const isAuthenticated = await auth.isAuthenticated();
+        setIsAuthenticated(isAuthenticated);
+        setIsAuthenticated(isAuthenticated);
       } catch (error) {
         console.error('Auth check failed:', error);
         setIsAuthenticated(false);

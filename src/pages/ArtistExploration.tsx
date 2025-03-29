@@ -42,12 +42,12 @@ const ArtistExploration = () => {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-purple-100">
         <div className="container px-4 py-8 mx-auto">
           <div className="flex flex-col items-center justify-center space-y-8">
             <div className="text-center">
               <div className="flex items-center justify-center mb-4">
-                <Music className="w-12 h-12 text-green-600" />
+                <Music className="w-12 h-12 text-purple-600" />
               </div>
               <h1 className="text-4xl font-bold text-gray-900">
                 Artist Explorer
@@ -64,12 +64,12 @@ const ArtistExploration = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-purple-100">
       <div className="container px-4 py-8 mx-auto">
         <div className="flex flex-col items-center justify-center space-y-8">
           <div className="text-center">
             <div className="flex items-center justify-center mb-4">
-              <Music className="w-12 h-12 text-green-600" />
+              <Music className="w-12 h-12 text-purple-600" />
             </div>
             <h1 className="text-4xl font-bold text-gray-900">
               Artist Explorer

@@ -1,13 +1,12 @@
 import React from 'react';
 import { Music } from 'lucide-react';
-import { useSpotifyAuthBridge } from '../lib/spotifyAuth';
+import { SpotifyAuth } from '../lib/spotify/auth';
 
 export function SpotifyLoginButton() {
-  const spotifyAuth = useSpotifyAuthBridge();
-
   const handleLogin = async () => {
     try {
-      await spotifyAuth.authenticate();
+      const auth = SpotifyAuth.getInstance();
+      await auth.authenticate();
     } catch (error) {
       console.error('Failed to authenticate with Spotify:', error);
     }
@@ -22,4 +21,4 @@ export function SpotifyLoginButton() {
       <span>Connect with Spotify</span>
     </button>
   );
-} 
+}

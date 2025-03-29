@@ -1,9 +1,10 @@
 import React from 'react';
-import { getAuthUrl } from '../../lib/Exploration_Score/spotify';
+import { SpotifyAuth } from '../../lib/spotify/auth';
 
 export const LoginButton: React.FC = () => {
-  const handleLogin = () => {
-    window.location.href = getAuthUrl();
+  const handleLogin = async () => {
+    const auth = SpotifyAuth.getInstance();
+    await auth.authenticate();
   };
 
   return (

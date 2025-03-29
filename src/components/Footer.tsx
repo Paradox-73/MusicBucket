@@ -20,7 +20,7 @@ const Footer: React.FC = () => {
       { name: 'Terms & Conditions', path: '/privacy' },
     ],
     social: [
-      { name: 'Project GitHub', icon: <Github className="w-5 h-5" />, url: 'your-project-github-url' },
+      { name: 'Project GitHub', icon: <Github className="w-5 h-5" />, url: 'https://github.com/Paradox-73/MusicBucket' },
       { name: 'Developer 1 LinkedIn', icon: <Linkedin className="w-5 h-5" />, url: 'https://www.linkedin.com/in/kanav-bhardwaj-a25940281/' },
       { name: 'Developer 2 LinkedIn', icon: <Linkedin className="w-5 h-5" />, url: 'https://www.linkedin.com/in/nikunj-mahajan-9b43542b6/' },
       { name: 'Developer 1 Instagram', icon: <Instagram className="w-5 h-5" />, url: 'https://www.instagram.com/kanavbhardwaj_73/' },

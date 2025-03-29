@@ -87,4 +87,5 @@ export class SpotifyAuth {
     this.tokenExpiration = expirationTime;
     this.isInitialized = true;
   }
-} 
+
+}

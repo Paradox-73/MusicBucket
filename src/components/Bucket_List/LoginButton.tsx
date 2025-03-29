@@ -1,11 +1,12 @@
 import React from 'react';
 import { Music } from 'lucide-react';
-import { SpotifyAuth } from '../../lib/Bucket_List/spotify/auth';
+import { SpotifyAuth } from '../../lib/spotify/auth';
 
 export function LoginButton() {
-  const handleLogin = () => {
+    const handleLogin = async () => {
+
     const auth = SpotifyAuth.getInstance();
-    window.location.href = auth.getLoginUrl();
+    await auth.authenticate();
   };
 
   return (
