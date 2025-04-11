@@ -10,18 +10,26 @@ interface SearchFilterProps {
 }
 
 export function SearchFilter({ selectedFilter, onFilterChange }: SearchFilterProps) {
+  const [isOpen, setIsOpen] = React.useState(false);
+
   return (
-    <div className="relative group">
-      <button className="flex items-center gap-2 rounded-lg px-3 py-2 text-white hover:bg-white/10">
+    <div className="relative">
+      <button 
+        onClick={() => setIsOpen(!isOpen)} 
+        className="flex items-center gap-2 rounded-lg px-3 py-2 text-white hover:bg-white/10"
+      >
         <Filter className="h-4 w-4" />
         <span className="capitalize">{selectedFilter}</span>
       </button>
       
-      <div className="absolute right-0 top-full mt-2 hidden w-48 rounded-xl border border-white/10 bg-black/90 p-2 backdrop-blur-lg group-hover:block">
+      <div className={`absolute right-0 top-full mt-2 w-48 rounded-xl border border-white/10 bg-black/90 p-2 backdrop-blur-lg ${isOpen ? 'block' : 'hidden'}`}>
         {FILTER_OPTIONS.map((filter) => (
           <button
             key={filter}
-            onClick={() => onFilterChange(filter)}
+            onClick={() => {
+              onFilterChange(filter);
+              setIsOpen(false);
+            }}
             className={`w-full rounded-lg px-4 py-2 text-left capitalize transition-all ${
               selectedFilter === filter
                 ? 'bg-white/20 text-white'
