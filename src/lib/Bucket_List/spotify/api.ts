@@ -27,22 +27,30 @@ export class SpotifyAPI {
       ...options,
       headers: {
         ...options.headers,
-        Authorization: `Bearer ${token}`,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
     });
 
     if (!response.ok) {
-      throw new Error(`Spotify API error: ${response.statusText}`);
+      const errorText = await response.text();
+      throw new Error(`Spotify API error (${response.status}): ${errorText || response.statusText}`);
     }
 
     return response.json();
   }
 
   async search(query: string, types: string[] = ['artist', 'album', 'track', 'playlist', 'show']): Promise<SpotifyItem[]> {
+    // Ensure query is not empty
+    if (!query.trim()) {
+      return [];
+    }
+
     const params = new URLSearchParams({
-      q: query,
+      q: query,  // Remove encodeURIComponent as URLSearchParams handles encoding
       type: types.join(','),
       limit: '10',
+      market: 'US'
     });
 
     const data = await this.fetch(`/search?${params}`);

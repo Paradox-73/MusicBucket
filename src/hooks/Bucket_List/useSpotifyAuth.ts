@@ -9,8 +9,8 @@ export function useSpotifyAuth() {
     const checkAuth = async () => {
       try {
         const auth = SpotifyAuth.getInstance();
+        await auth.initialize();
         const isAuthenticated = await auth.isAuthenticated();
-        setIsAuthenticated(isAuthenticated);
         setIsAuthenticated(isAuthenticated);
       } catch (error) {
         console.error('Auth check failed:', error);

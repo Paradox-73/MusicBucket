@@ -4,15 +4,14 @@ import type { SpotifyTokenResponse } from './types';
 const TOKEN_KEY = 'spotify_token';
 const EXPIRES_KEY = 'spotify_expires_at';
 
+import { spotifyApi } from '../../spotify';
+
 export class SpotifyAuth {
   private static instance: SpotifyAuth;
-  private accessToken: string | null = null;
-  private expiresAt: number = 0;
+  private isInitialized: boolean = false;
+  private tokenExpiration: number | null = null;
 
-  private constructor() {
-    // Load token from localStorage on initialization
-    this.loadToken();
-  }
+  private constructor() {}
 
   static getInstance(): SpotifyAuth {
     if (!SpotifyAuth.instance) {
@@ -21,80 +20,77 @@ export class SpotifyAuth {
     return SpotifyAuth.instance;
   }
 
-  private loadToken(): void {
-    const token = localStorage.getItem(TOKEN_KEY);
-    const expiresAt = localStorage.getItem(EXPIRES_KEY);
+  public async initialize(): Promise<boolean> {
+    if (this.isInitialized) {
+      return true;
+    }
+
+    const token = localStorage.getItem('spotify_token');
+    const expiration = localStorage.getItem('spotify_token_expiration');
     
-    if (token && expiresAt) {
-      this.accessToken = token;
-      this.expiresAt = parseInt(expiresAt, 10);
-    }
-  }
-
-  private saveToken(token: string, expiresAt: number): void {
-    localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem(EXPIRES_KEY, expiresAt.toString());
-  }
-
-  getLoginUrl(): string {
-    const params = new URLSearchParams({
-      client_id: SPOTIFY_CONFIG.clientId,
-      response_type: 'code',
-      redirect_uri: SPOTIFY_CONFIG.redirectUri,
-      scope: SPOTIFY_CONFIG.scopes.join(' '),
-    });
-
-    return `${SPOTIFY_CONFIG.authEndpoint}?${params.toString()}`;
-  }
-
-  async handleCallback(code: string): Promise<void> {
-    const params = new URLSearchParams({
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: SPOTIFY_CONFIG.redirectUri,
-    });
-
-    const response = await fetch(SPOTIFY_CONFIG.tokenEndpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${btoa(
-          `${SPOTIFY_CONFIG.clientId}:${SPOTIFY_CONFIG.clientSecret}`
-        )}`,
-      },
-      body: params,
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error_description || 'Failed to get access token');
+    if (token && expiration) {
+      const expirationTime = parseInt(expiration);
+      if (expirationTime > Date.now()) {
+        spotifyApi.setAccessToken(token);
+        this.tokenExpiration = expirationTime;
+        this.isInitialized = true;
+        return true;
+      } else {
+        // Token has expired, clear it
+        this.clearToken();
+      }
     }
 
-    const data = await response.json() as SpotifyTokenResponse;
-    this.setAccessToken(data.access_token, data.expires_in);
+    return false;
   }
 
-  private setAccessToken(token: string, expiresIn: number): void {
-    this.accessToken = token;
-    this.expiresAt = Date.now() + expiresIn * 1000;
-    this.saveToken(token, this.expiresAt);
+  public async authenticate(): Promise<boolean> {
+    const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
+    const redirectUri = `${window.location.origin}/callback`;
+    const scope = 'user-read-private user-read-email playlist-read-private playlist-read-collaborative user-library-read';
+
+    const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;
+    
+    window.location.href = authUrl;
+    return true;
   }
 
-  async getAccessToken(): Promise<string | null> {
-    // Check if token exists and is still valid
-    if (this.accessToken && Date.now() < this.expiresAt) {
-      return this.accessToken;
+  public async isAuthenticated(): Promise<boolean> {
+    if (!this.isInitialized) {
+      return false;
     }
 
-    // Clear invalid token
+    // Check if token is expired
+    if (this.tokenExpiration && this.tokenExpiration <= Date.now()) {
+      this.clearToken();
+      return false;
+    }
+
+    return !!spotifyApi.getAccessToken();
+  }
+
+  public async logout(): Promise<void> {
     this.clearToken();
-    return null;
   }
 
-  clearToken(): void {
-    this.accessToken = null;
-    this.expiresAt = 0;
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(EXPIRES_KEY);
+  public clearToken(): void {
+    localStorage.removeItem('spotify_token');
+    localStorage.removeItem('spotify_token_expiration');
+    spotifyApi.setAccessToken('');
+    this.isInitialized = false;
+    this.tokenExpiration = null;
+  }
+
+  public getAccessToken(): string | null {
+    return spotifyApi.getAccessToken();
+  }
+
+  public setToken(token: string, expiresIn: number): void {
+    localStorage.setItem('spotify_token', token);
+    const expirationTime = Date.now() + (expiresIn * 1000);
+    localStorage.setItem('spotify_token_expiration', expirationTime.toString());
+    spotifyApi.setAccessToken(token);
+    this.tokenExpiration = expirationTime;
+    this.isInitialized = true;
   }
 }
