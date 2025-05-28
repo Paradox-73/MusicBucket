@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/:path*", "destination": "/index.html" }
+  ],
+  "redirects": [
+    { "source": "/callback", "destination": "/index.html", "permanent": false }
+  ]
+}
