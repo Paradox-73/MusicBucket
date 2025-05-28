@@ -34,7 +34,6 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import Home from './pages/Home';
-import Login from './pages/Login';
 import ComingSoon from './pages/ComingSoon';
 import ArtistExploration from './pages/ArtistExploration';
 import BucketList from './pages/BucketList';
@@ -53,7 +52,6 @@ function App() {
       <Route path="/callback" element={<SpotifyCallback />} />
       <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
-        <Route path="login" element={<Login />} />
         <Route path="artist-exploration" element={<ArtistExploration />} />
         <Route path="bucket-list" element={<BucketList />} />
         <Route path="culture-clash" element={<CultureClash />} />

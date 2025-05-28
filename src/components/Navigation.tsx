@@ -42,15 +42,7 @@ const Navigation: React.FC = () => {
               {link.name}
             </Link>
           ))}
-          {user ? (
-            <Link to="/profile" className="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-secondary transition-colors duration-200">
-              Profile
-            </Link>
-          ) : (
-            <Link to="/login" className="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-secondary transition-colors duration-200">
-              Login
-            </Link>
-          )}
+          
           <ThemeToggle />
         </div>
 
