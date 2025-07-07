@@ -1,38 +1,17 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SpotifyAuth } from '../lib/spotify/auth';
+import { useAuth } from '../hooks/useAuth';
 
 export const SpotifyCallback: React.FC = () => {
   const navigate = useNavigate();
-  const spotifyAuth = SpotifyAuth.getInstance();
+  const { session, loading } = useAuth();
 
   useEffect(() => {
-    const handleCallback = async () => {
-      try {
-        // Get the hash fragment from the URL
-        const hash = window.location.hash.substring(1);
-        const params = new URLSearchParams(hash);
-        const accessToken = params.get('access_token');
-        const expiresIn = params.get('expires_in');
-
-        if (accessToken && expiresIn) {
-          // Store the token with expiration
-          spotifyAuth.setToken(accessToken, parseInt(expiresIn));
-          
-          // Redirect back to home page
-          navigate('/');
-        } else {
-          console.error('No access token or expiration received');
-          navigate('/');
-        }
-      } catch (error) {
-        console.error('Error handling Spotify callback:', error);
-        navigate('/');
-      }
-    };
-
-    handleCallback();
-  }, [navigate]);
+    // Only navigate once authentication state is loaded and a session exists
+    if (!loading && session) {
+      navigate('/');
+    }
+  }, [loading, session, navigate]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">

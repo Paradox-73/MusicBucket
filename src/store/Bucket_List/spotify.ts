@@ -1,12 +1,27 @@
 import { create } from 'zustand';
-import { DBClient } from '../../lib/Bucket_List/db/client';
+import { addBucketListItem, getBucketList, updateBucketListItem, deleteBucketListItem } from '../../services/Bucket_List/supabaseBucketList';
+import { useAuthStore } from '../authStore';
 import { SpotifyState, SpotifyItem } from '../../types/Bucket_List/spotify';
 
 export const useSpotifyStore = create<SpotifyState>((set, get) => {
-  const db = DBClient.getInstance();
-
   // Load initial items from database
-  db.getItems().then((items) => set({ items }));
+  // This will be called when the user logs in
+  useAuthStore.subscribe(
+    (state) => state.user,
+    async (user) => {
+      if (user) {
+        try {
+          const items = await getBucketList(user.id);
+          set({ items });
+        } catch (error) {
+          console.error('Error loading bucket list items:', error);
+        }
+      } else {
+        set({ items: [] }); // Clear items if user logs out
+      }
+    },
+    { fireImmediately: true }
+  );
 
   return {
     items: [],
@@ -15,17 +30,26 @@ export const useSpotifyStore = create<SpotifyState>((set, get) => {
     searchResults: [],
 
     addItem: async (item) => {
+      const user = useAuthStore.getState().user;
+      if (!user) {
+        console.error('User not authenticated. Cannot add item.');
+        return;
+      }
+
       const newItem = {
-        ...item,
-        addedAt: new Date().toISOString(),
-        listened: false,
-        priority: 'medium',
+        user_id: user.id,
+        name: item.name,
+        imageUrl: item.imageUrl,
+        artists: item.artists,
+        type: item.type,
+        completed: false,
+        created_at: new Date().toISOString(),
       };
 
       try {
-        await db.addItem(newItem);
+        const addedItem = await addBucketListItem(newItem);
         set((state) => ({
-          items: [newItem, ...state.items],
+          items: [addedItem, ...state.items],
           searchResults: [], // Clear search results after adding
         }));
       } catch (error) {
@@ -35,7 +59,7 @@ export const useSpotifyStore = create<SpotifyState>((set, get) => {
 
     removeItem: async (id) => {
       try {
-        await db.deleteItem(id);
+        await deleteBucketListItem(id);
         set((state) => ({
           items: state.items.filter((item) => item.id !== id),
         }));
@@ -48,10 +72,10 @@ export const useSpotifyStore = create<SpotifyState>((set, get) => {
       try {
         const item = get().items.find((i) => i.id === id);
         if (item) {
-          await db.updateItem(id, { listened: !item.listened });
+          const updatedItem = await updateBucketListItem(id, { listened: !item.listened });
           set((state) => ({
             items: state.items.map((item) =>
-              item.id === id ? { ...item, listened: !item.listened } : item
+              item.id === id ? updatedItem : item
             ),
           }));
         }
@@ -62,10 +86,10 @@ export const useSpotifyStore = create<SpotifyState>((set, get) => {
 
     updateNotes: async (id, notes) => {
       try {
-        await db.updateItem(id, { notes });
+        const updatedItem = await updateBucketListItem(id, { notes });
         set((state) => ({
           items: state.items.map((item) =>
-            item.id === id ? { ...item, notes } : item
+            item.id === id ? updatedItem : item
           ),
         }));
       } catch (error) {
@@ -75,10 +99,10 @@ export const useSpotifyStore = create<SpotifyState>((set, get) => {
 
     updatePriority: async (id, priority) => {
       try {
-        await db.updateItem(id, { priority });
+        const updatedItem = await updateBucketListItem(id, { priority });
         set((state) => ({
           items: state.items.map((item) =>
-            item.id === id ? { ...item, priority } : item
+            item.id === id ? updatedItem : item
           ),
         }));
       } catch (error) {
@@ -86,23 +110,7 @@ export const useSpotifyStore = create<SpotifyState>((set, get) => {
       }
     },
 
-    backup: async () => {
-      try {
-        await db.backup();
-      } catch (error) {
-        console.error('Error creating backup:', error);
-      }
-    },
-
-    restore: async (file: File) => {
-      try {
-        await db.restore(file);
-        const items = await db.getItems();
-        set({ items });
-      } catch (error) {
-        console.error('Error restoring backup:', error);
-      }
-    },
+    
 
     setFilter: (filter) => set({ filter }),
     setSortBy: (sortBy) => set({ sortBy }),

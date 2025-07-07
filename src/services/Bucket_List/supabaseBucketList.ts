@@ -1,9 +1,9 @@
 import { supabase } from '../../lib/supabase';
-import type { BucketListItem } from '../../types/Bucket_List/bucket';
+import type { BucketItem } from '../../types/Bucket_List/bucket';
 
 const TABLE = 'bucket_list_items';
 
-export async function getBucketList(user_id: string): Promise<BucketListItem[]> {
+export async function getBucketList(user_id: string): Promise<BucketItem[]> {
   const { data, error } = await supabase
     .from(TABLE)
     .select('*')
@@ -13,17 +13,27 @@ export async function getBucketList(user_id: string): Promise<BucketListItem[]> 
   return data || [];
 }
 
-export async function addBucketListItem(item: Omit<BucketListItem, 'id' | 'created_at'>): Promise<BucketListItem> {
+export async function addBucketListItem(item: Omit<BucketItem, 'id' | 'created_at'> & { user_id: string }): Promise<BucketItem> {
   const { data, error } = await supabase
     .from(TABLE)
-    .insert([item])
+    .insert([
+      {
+        user_id: item.user_id,
+        title: item.name, // Map name to title
+        imageUrl: item.imageUrl,
+        artists: item.artists,
+        type: item.type,
+        completed: item.completed,
+        // created_at is handled by default value in DB
+      },
+    ])
     .select()
     .single();
   if (error) throw error;
   return data;
 }
 
-export async function updateBucketListItem(id: string, updates: Partial<BucketListItem>): Promise<BucketListItem> {
+export async function updateBucketListItem(id: string, updates: Partial<Omit<BucketItem, 'user_id'>>): Promise<BucketItem> {
   const { data, error } = await supabase
     .from(TABLE)
     .update(updates)
@@ -40,4 +50,4 @@ export async function deleteBucketListItem(id: string): Promise<void> {
     .delete()
     .eq('id', id);
   if (error) throw error;
-} 
+}

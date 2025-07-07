@@ -1,11 +1,27 @@
 import { spotifyApi } from '../spotify';
+import { supabase } from "../supabase";
 
 export class SpotifyAuth {
   private static instance: SpotifyAuth;
   private isInitialized: boolean = false;
-  private tokenExpiration: number | null = null;
 
-  private constructor() {}
+  private constructor() {
+    supabase.auth.onAuthStateChange((event, session) => {
+      console.log('SpotifyAuth: onAuthStateChange - Event:', event, 'Session:', session);
+      if (event === 'SIGNED_IN' && session) {
+        const spotifyAccessToken = session.provider_token;
+        console.log('SpotifyAuth: SIGNED_IN - Spotify Access Token:', spotifyAccessToken);
+        if (spotifyAccessToken) {
+          spotifyApi.setAccessToken(spotifyAccessToken);
+          this.isInitialized = true;
+        }
+      } else if (event === 'SIGNED_OUT') {
+        console.log('SpotifyAuth: SIGNED_OUT');
+        spotifyApi.setAccessToken('');
+        this.isInitialized = false;
+      }
+    });
+  }
 
   public static getInstance(): SpotifyAuth {
     if (!SpotifyAuth.instance) {
@@ -15,77 +31,75 @@ export class SpotifyAuth {
   }
 
   public async initialize(): Promise<boolean> {
-    if (this.isInitialized) {
-      return true;
-    }
-
-    const token = localStorage.getItem('spotify_token');
-    const expiration = localStorage.getItem('spotify_token_expiration');
-    
-    if (token && expiration) {
-      const expirationTime = parseInt(expiration);
-      if (expirationTime > Date.now()) {
-        spotifyApi.setAccessToken(token);
-        this.tokenExpiration = expirationTime;
+    console.log('SpotifyAuth: Initializing...');
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log('SpotifyAuth: Initial session check - Session:', session);
+    if (session) {
+      const spotifyAccessToken = session.provider_token;
+      console.log('SpotifyAuth: Initial session check - Spotify Access Token:', spotifyAccessToken);
+      if (spotifyAccessToken) {
+        spotifyApi.setAccessToken(spotifyAccessToken);
         this.isInitialized = true;
         return true;
-      } else {
-        // Token has expired, clear it
-        this.clearToken();
       }
     }
-
+    this.isInitialized = false;
     return false;
   }
 
   public async authenticate(): Promise<boolean> {
-    const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
-    const redirectUri = `${window.location.origin}/callback`;
-    const scope = 'user-read-private user-read-email playlist-read-private playlist-read-collaborative user-library-read';
+    console.log('SpotifyAuth: Authenticating with Spotify...');
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'spotify',
+      options: {
+        scopes: 'user-read-private user-read-email playlist-read-private playlist-read-collaborative user-library-read playlist-modify-public playlist-modify-private',
+        redirectTo: `${window.location.origin}/callback`,
+      },
+    });
 
-    const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;
-    
-    window.location.href = authUrl;
+    if (error) {
+      console.error('Error during Spotify authentication:', error);
+      return false;
+    }
+    console.log('SpotifyAuth: signInWithOAuth initiated. Data:', data);
+    // Supabase handles the redirect, so we don't need to do anything here
     return true;
   }
 
   public async isAuthenticated(): Promise<boolean> {
-    if (!this.isInitialized) {
-      return false;
-    }
-
-    // Check if token is expired
-    if (this.tokenExpiration && this.tokenExpiration <= Date.now()) {
-      this.clearToken();
-      return false;
-    }
-
-    return !!spotifyApi.getAccessToken();
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log('SpotifyAuth: isAuthenticated check - Session:', session, 'isInitialized:', this.isInitialized);
+    return !!session && this.isInitialized;
   }
 
   public async logout(): Promise<void> {
-    this.clearToken();
+    console.log('SpotifyAuth: Logging out...');
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error during Spotify logout:', error);
+    }
+    spotifyApi.setAccessToken('');
+    this.isInitialized = false;
+    console.log('SpotifyAuth: Logged out.');
   }
 
   public clearToken(): void {
-    localStorage.removeItem('spotify_token');
-    localStorage.removeItem('spotify_token_expiration');
+    console.log('SpotifyAuth: Clearing token...');
+    // Supabase manages the token, so no direct clearing needed here
     spotifyApi.setAccessToken('');
     this.isInitialized = false;
-    this.tokenExpiration = null;
+    console.log('SpotifyAuth: Token cleared.');
   }
 
   public getAccessToken(): string | null {
-    return spotifyApi.getAccessToken();
+    const token = spotifyApi.getAccessToken();
+    console.log('SpotifyAuth: getAccessToken - Token:', token);
+    return token;
   }
 
   public setToken(token: string, expiresIn: number): void {
-    localStorage.setItem('spotify_token', token);
-    const expirationTime = Date.now() + (expiresIn * 1000);
-    localStorage.setItem('spotify_token_expiration', expirationTime.toString());
-    spotifyApi.setAccessToken(token);
-    this.tokenExpiration = expirationTime;
-    this.isInitialized = true;
+    console.log('SpotifyAuth: setToken called (Supabase manages token).');
+    // Supabase manages the token, so no direct setting needed here
+    // The token will be set via the onAuthStateChange listener
   }
-
 }
