@@ -37,14 +37,14 @@ export const getAudioFeatures = async (trackIds: string[]) => {
   }
 };
 
-export const getRecommendations = async (seed_artists: string[], seed_genres: string[], seed_tracks: string[]) => {
+export const getRecommendations = async (seed_artists?: string[], seed_genres?: string[], seed_tracks?: string[]) => {
   try {
-    const response = await spotifyApi.getRecommendations({
-      seed_artists,
-      seed_genres,
-      seed_tracks,
-      limit: 100,
-    });
+    const options: any = { limit: 100 };
+    if (seed_artists && seed_artists.length > 0) options.seed_artists = seed_artists;
+    if (seed_genres && seed_genres.length > 0) options.seed_genres = seed_genres;
+    if (seed_tracks && seed_tracks.length > 0) options.seed_tracks = seed_tracks;
+
+    const response = await spotifyApi.getRecommendations(options);
     return response.tracks;
   } catch (error) {
     console.error('Error getting recommendations:', error);
@@ -152,5 +152,15 @@ export const addTracksToPlaylist = async (playlistId: string, trackUris: string[
     await spotifyApi.addTracksToPlaylist(playlistId, trackUris);
   } catch (error) {
     console.error('Error adding tracks to playlist:', error);
+  }
+};
+
+export const getTrack = async (trackId: string) => {
+  try {
+    const response = await spotifyApi.getTrack(trackId);
+    return response;
+  } catch (error) {
+    console.error('Error getting track:', error);
+    return null;
   }
 };

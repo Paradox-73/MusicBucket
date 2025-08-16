@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { addBucketListItem, getBucketList, updateBucketListItem, deleteBucketListItem } from '../../services/Bucket_List/supabaseBucketList';
 import { useAuthStore } from '../authStore';
+import { getTopArtists, getRecommendations } from '../../lib/spotify';
+import { SpotifyAuth } from '../../lib/spotify/auth';
 import { SpotifyState, SpotifyItem } from '../../types/Bucket_List/spotify';
 
 export const useSpotifyStore = create<SpotifyState>((set, get) => {
@@ -32,6 +34,7 @@ export const useSpotifyStore = create<SpotifyState>((set, get) => {
     filter: 'all',
     sortBy: 'date',
     searchResults: [],
+    searchQuery: '',
 
     addItem: async (item) => {
       const user = useAuthStore.getState().user;
@@ -51,9 +54,15 @@ export const useSpotifyStore = create<SpotifyState>((set, get) => {
       };
 
       try {
-        const addedItem = await addBucketListItem(newItem);
+        const addedItemFromDB = await addBucketListItem(newItem);
+        // The DB returns a `title` field. The client expects a `name` field.
+        // We use the name from the original `item` to ensure the UI updates instantly and correctly.
+        const itemForState = {
+          ...addedItemFromDB,
+          name: newItem.name,
+        };
         set((state) => ({
-          items: [addedItem, ...state.items],
+          items: [itemForState, ...state.items],
           searchResults: [], // Clear search results after adding
         }));
       } catch (error) {
@@ -126,6 +135,7 @@ export const useSpotifyStore = create<SpotifyState>((set, get) => {
     setFilter: (filter) => set({ filter }),
     setSortBy: (sortBy) => set({ sortBy }),
     setSearchResults: (searchResults) => set({ searchResults }),
+    setSearchQuery: (query) => set({ searchQuery: query }),
 
     // Add this new action
     loadItems: async (userId: string) => {
@@ -136,6 +146,41 @@ export const useSpotifyStore = create<SpotifyState>((set, get) => {
         set({ items });
       } catch (error) {
         console.error('Error in loadItems action:', error);
+      }
+    },
+
+    addRandomItem: async () => {
+      try {
+        const topArtists = await getTopArtists();
+        if (topArtists.length === 0) {
+          console.log("No top artists found to seed recommendations.");
+          return;
+        }
+
+        const seed_artists = [topArtists[0].id]; // Use only the first artist as a seed
+        const seed_genres = ['pop']; // Hardcoded genre for testing
+
+        const recommendations = await getRecommendations(seed_artists, seed_genres, []);
+
+        if (recommendations.length === 0) {
+          console.log("Could not find any recommendations.");
+          return;
+        }
+
+        const randomTrack = recommendations[Math.floor(Math.random() * recommendations.length)];
+
+        const itemToAdd: SpotifyItem = {
+          id: randomTrack.id,
+          type: 'track',
+          name: randomTrack.name,
+          imageUrl: randomTrack.album.images[0]?.url || '',
+          artists: randomTrack.artists.map(artist => artist.name),
+        };
+
+        get().addItem(itemToAdd);
+
+      } catch (error) {
+        console.error('Error adding random item:', error);
       }
     },
   }; // <--- Correct closing curly brace for the returned object

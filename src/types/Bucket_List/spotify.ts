@@ -21,4 +21,7 @@ export interface SpotifyState {
   setFilter: (filter: SpotifyState['filter']) => void;
   setSortBy: (sortBy: SpotifyState['sortBy']) => void;
   setSearchResults: (results: SpotifyItem[]) => void;
+  addRandomItem: () => void;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
 }

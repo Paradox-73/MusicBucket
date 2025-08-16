@@ -72,6 +72,7 @@ pnpm-lock.yaml
 # Keep package-lock.json for npm
 
 # IDE specific
+
 *.code-workspace
 .history/
 

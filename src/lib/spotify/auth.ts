@@ -52,7 +52,7 @@ export class SpotifyAuth {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'spotify',
       options: {
-        scopes: 'user-read-private user-read-email playlist-read-private playlist-read-collaborative user-library-read playlist-modify-public playlist-modify-private',
+        scopes: 'user-read-private user-read-email playlist-read-private playlist-read-collaborative user-library-read playlist-modify-public playlist-modify-private user-top-read',
         redirectTo: `${window.location.origin}/callback`,
       },
     });
