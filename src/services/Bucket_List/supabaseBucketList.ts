@@ -4,16 +4,37 @@ import type { BucketItem } from '../../types/Bucket_List/bucket';
 const TABLE = 'bucket_list_items';
 
 export async function getBucketList(user_id: string): Promise<BucketItem[]> {
+  console.log('getBucketList called for user_id:', user_id); // Add this
   const { data, error } = await supabase
     .from(TABLE)
-    .select('*')
+    .select('*') // Try selecting all columns again
     .eq('user_id', user_id)
     .order('created_at', { ascending: false });
-  if (error) throw error;
-  return data || [];
+
+  if (error) {
+    console.error('Supabase getBucketList error:', error); // Add this
+    throw error;
+  }
+
+  console.log('Supabase getBucketList raw data:', data); // Add this
+
+  const mappedData = data.map(item => ({
+    id: item.id,
+    user_id: item.user_id,
+    name: item.title,
+    imageUrl: item.imageUrl,
+    artists: item.artists,
+    type: item.type,
+    completed: item.completed,
+    created_at: item.created_at,
+    spotify_id: item.spotify_id,
+  })) || [];
+
+  console.log('Supabase getBucketList mapped data:', mappedData); // Add this
+  return mappedData;
 }
 
-export async function addBucketListItem(item: Omit<BucketItem, 'id' | 'created_at'> & { user_id: string }): Promise<BucketItem> {
+export async function addBucketListItem(item: Omit<BucketItem, 'id' | 'created_at'> & { user_id: string, spotify_id: string }): Promise<BucketItem> {
   const { data, error } = await supabase
     .from(TABLE)
     .insert([
@@ -24,7 +45,7 @@ export async function addBucketListItem(item: Omit<BucketItem, 'id' | 'created_a
         artists: item.artists,
         type: item.type,
         completed: item.completed,
-        // created_at is handled by default value in DB
+        spotify_id: item.spotify_id, // Add this line
       },
     ])
     .select()

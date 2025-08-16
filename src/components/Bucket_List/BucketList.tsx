@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react'; // Add useEffect
 import { Check, Trash2, Star, ExternalLink } from 'lucide-react';
 import { useSpotifyStore } from '../../store/Bucket_List/spotify';
 import { SpotifyItem } from '../../types/Bucket_List/spotify';
+import { useAuthStore } from '../../store/authStore'; // Import useAuthStore
 
 const CATEGORIES = ['artist', 'album', 'track', 'playlist', 'podcast'] as const;
 
@@ -11,8 +12,17 @@ const getSpotifyUrl = (item: SpotifyItem) => {
 };
 
 export function BucketList() {
-  const { items, filter, sortBy, toggleListened, removeItem, updatePriority } =
+  const { items, filter, sortBy, toggleListened, removeItem, updatePriority, loadItems } = // Get loadItems
     useSpotifyStore();
+  const user = useAuthStore((state) => state.user); // Get user from auth store
+
+  useEffect(() => {
+    console.log('BucketList component mounted or user changed. User:', user); // Add this log
+    if (user && items.length === 0) { // Only fetch if user exists and items are empty
+      console.log('Fetching bucket list from useEffect for user:', user.id); // Add this log
+      loadItems(user.id); // Call the new action
+    }
+  }, [user, items.length, loadItems]); // Depend on user and items.length
 
   const filteredItems = items.filter((item) => {
     if (filter === 'listened') return item.listened;
@@ -93,7 +103,7 @@ export function BucketList() {
                     <button
                       onClick={() => toggleListened(item.id)}
                       className={`rounded-full p-2 ${
-                        item.listened
+                        item.completed
                           ? 'bg-green-500/20 text-green-400'
                           : 'text-gray-400 hover:bg-white/10'
                       }`}

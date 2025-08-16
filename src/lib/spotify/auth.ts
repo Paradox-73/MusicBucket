@@ -73,14 +73,16 @@ export class SpotifyAuth {
   }
 
   public async logout(): Promise<void> {
-    console.log('SpotifyAuth: Logging out...');
+    console.log('SpotifyAuth: Attempting to log out...');
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('Error during Spotify logout:', error);
+    } else {
+      console.log('SpotifyAuth: Supabase signOut successful.');
     }
     spotifyApi.setAccessToken('');
     this.isInitialized = false;
-    console.log('SpotifyAuth: Logged out.');
+    console.log('SpotifyAuth: Logged out and token cleared.');
   }
 
   public clearToken(): void {
@@ -93,7 +95,7 @@ export class SpotifyAuth {
 
   public getAccessToken(): string | null {
     const token = spotifyApi.getAccessToken();
-    console.log('SpotifyAuth: getAccessToken - Token:', token);
+    console.log('SpotifyAuth: getAccessToken - Returning token:', token);
     return token;
   }
 

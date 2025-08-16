@@ -17,7 +17,7 @@ const Footer: React.FC = () => {
       { name: 'About Us', path: '/about' },
       { name: 'Support', path: '/support' },
       { name: 'Privacy Policy', path: '/privacy' },
-      { name: 'Terms & Conditions', path: '/privacy' },
+      { name: 'Terms & Conditions', path: '/terms' },
     ],
     social: [
       { name: 'Project GitHub', icon: <Github className="w-5 h-5" />, url: 'https://github.com/Paradox-73/MusicBucket' },

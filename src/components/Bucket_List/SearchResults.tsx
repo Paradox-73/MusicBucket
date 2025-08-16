@@ -9,8 +9,14 @@ export function SearchResults() {
   const items = useSpotifyStore((state) => state.items);
 
   const handleAdd = (item: SpotifyItem) => {
+    console.log('handleAdd called for item:', item); // Add this
+    console.log('Current items in store:', items); // Add this
     // Check if item already exists in bucketlist
-    if (items.some((existing) => existing.id === item.id)) {
+    if (items.some((existing) => {
+      console.log(`Comparing existing.spotify_id (${existing.spotify_id}) with item.id (${item.id})`); // Add this
+      return existing.spotify_id === item.id;
+    })) {
+      console.log('Item already in bucketlist. Preventing duplicate.'); // Add this
       return;
     }
     addItem(item);

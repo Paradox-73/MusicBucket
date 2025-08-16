@@ -9,14 +9,18 @@ export const useSpotifyStore = create<SpotifyState>((set, get) => {
   useAuthStore.subscribe(
     (state) => state.user,
     async (user) => {
+      console.log('Auth state user changed:', user); // Add this
       if (user) {
         try {
+          console.log('Attempting to load bucket list for user ID:', user.id); // Add this
           const items = await getBucketList(user.id);
+          console.log('Loaded bucket list items:', items); // Add this
           set({ items });
         } catch (error) {
           console.error('Error loading bucket list items:', error);
         }
       } else {
+        console.log('User logged out. Clearing bucket list items.'); // Add this
         set({ items: [] }); // Clear items if user logs out
       }
     },
@@ -43,7 +47,7 @@ export const useSpotifyStore = create<SpotifyState>((set, get) => {
         artists: item.artists,
         type: item.type,
         completed: false,
-        created_at: new Date().toISOString(),
+        spotify_id: item.id, // Pass Spotify's ID here
       };
 
       try {
@@ -58,29 +62,36 @@ export const useSpotifyStore = create<SpotifyState>((set, get) => {
     },
 
     removeItem: async (id) => {
+      console.log('removeItem called for ID:', id); // Add this
       try {
         await deleteBucketListItem(id);
+        console.log('Item successfully deleted from Supabase:', id); // Add this
         set((state) => ({
           items: state.items.filter((item) => item.id !== id),
         }));
+        console.log('Local store updated after removal.'); // Add this
       } catch (error) {
-        console.error('Error removing item:', error);
+        console.error('Error removing item:', error); // This should catch the 55000 error if it's still there
       }
     },
 
     toggleListened: async (id) => {
+      console.log('toggleListened called for ID:', id); // Add this
       try {
         const item = get().items.find((i) => i.id === id);
         if (item) {
-          const updatedItem = await updateBucketListItem(id, { listened: !item.listened });
+          console.log('Toggling item:', item); // Add this
+          const updatedItem = await updateBucketListItem(id, { completed: !item.completed });
+          console.log('Item successfully updated in Supabase:', updatedItem); // Add this
           set((state) => ({
             items: state.items.map((item) =>
               item.id === id ? updatedItem : item
             ),
           }));
+          console.log('Local store updated after toggle.'); // Add this
         }
       } catch (error) {
-        console.error('Error updating listened status:', error);
+        console.error('Error updating listened status:', error); // This should catch the 55000 error if it's still there
       }
     },
 
@@ -115,5 +126,17 @@ export const useSpotifyStore = create<SpotifyState>((set, get) => {
     setFilter: (filter) => set({ filter }),
     setSortBy: (sortBy) => set({ sortBy }),
     setSearchResults: (searchResults) => set({ searchResults }),
-  };
+
+    // Add this new action
+    loadItems: async (userId: string) => {
+      try {
+        console.log('loadItems action called for user ID:', userId); // Add this log
+        const items = await getBucketList(userId);
+        console.log('loadItems action fetched items:', items); // Add this log
+        set({ items });
+      } catch (error) {
+        console.error('Error in loadItems action:', error);
+      }
+    },
+  }; // <--- Correct closing curly brace for the returned object
 });

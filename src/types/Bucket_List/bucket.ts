@@ -1,5 +1,6 @@
 export interface BucketItem {
-  id: string;
+  id: string; // Supabase generated ID
+  spotify_id: string; // Original Spotify ID
   user_id: string;
   name: string;
   imageUrl: string;

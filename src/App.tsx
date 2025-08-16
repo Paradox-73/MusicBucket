@@ -30,7 +30,7 @@
 // export default App;
 
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import Home from './pages/Home';
@@ -45,15 +45,20 @@ import { SpotifyCallback } from './components/SpotifyCallback';
 import AboutUs from './pages/AboutUs';
 import Support from './pages/Support';
 import Legal from './pages/Legal';
+import { SpotifyAuth } from './lib/spotify/auth';
 
 function App() {
+  useEffect(() => {
+    SpotifyAuth.getInstance().initialize();
+  }, []);
+
   return (
     <Routes>
       <Route path="/callback" element={<SpotifyCallback />} />
       <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
         <Route path="artist-exploration" element={<ArtistExploration />} />
-        <Route path="bucket-list" element={<BucketList />} />
+        <Route path="bucket-list/*" element={<BucketList />} />
         <Route path="culture-clash" element={<CultureClash />} />
         <Route path="exploration-score/*" element={<ExplorationScore />} />
         <Route path="rabbit-hole" element={<ComingSoon />} />
@@ -62,6 +67,7 @@ function App() {
         <Route path="about" element={<AboutUs />} />
         <Route path="support" element={<Support />} />
         <Route path="privacy" element={<Legal />} />
+        <Route path="terms" element={<Legal />} />
         <Route path="profile" element={<ComingSoon />} />
       </Route>
     </Routes>

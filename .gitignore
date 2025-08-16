@@ -80,3 +80,8 @@ pnpm-lock.yaml
 .env.development.local
 .env.test.local
 .env.production.local
+error.txt
+progress_report.html
+file_structure.txt
+roadmap.txt
+notion

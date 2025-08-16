@@ -21,4 +21,4 @@ export const SpotifyCallback: React.FC = () => {
       </div>
     </div>
   );
-}; 
+};
