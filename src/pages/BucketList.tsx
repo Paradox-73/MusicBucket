@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom';
 import { MainLayout } from '../components/Bucket_List/layout/MainLayout';
 import { AuthCallback } from '../components/Bucket_List/AuthCallback';
 import { useSpotifyAuth } from '../hooks/Bucket_List/useSpotifyAuth';
+import { PublicBucketListPage } from './PublicBucketListPage';
 
 const BucketList = () => {
   const { isLoading } = useSpotifyAuth();
@@ -21,7 +22,8 @@ const BucketList = () => {
   return (
     <Routes>
       <Route path="/callback" element={<AuthCallback />} />
-      <Route path="/" element={<MainLayout />} />
+      <Route path="/share/:listId" element={<PublicBucketListPage />} />
+      <Route path="/*" element={<MainLayout />} />
     </Routes>
   );
 };

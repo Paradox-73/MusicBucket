@@ -1,9 +1,10 @@
 import { Music } from 'lucide-react';
 import { LoginButton } from '../LoginButton';
 import { useSpotifyAuth } from '../../../hooks/Bucket_List/useSpotifyAuth';
-import { SearchPanel } from './SearchPanel';
-import { BucketListPanel } from './BucketListPanel';
 import { Toaster } from 'sonner';
+import { Routes, Route } from 'react-router-dom';
+import { BucketListsGrid } from './BucketListsGrid';
+import { BucketListDetail } from './BucketListDetail';
 
 export function MainLayout() {
   const { isAuthenticated } = useSpotifyAuth();
@@ -24,17 +25,10 @@ export function MainLayout() {
   return (
     <div className="flex h-full flex-col bg-black">
       <Toaster richColors />
-      <main className="grid flex-1 grid-cols-12 overflow-hidden">
-        {/* Left Panel: Search */}
-        <div className="col-span-5 border-r border-white/10 xl:col-span-4">
-          <SearchPanel />
-        </div>
-
-        {/* Right Panel: Bucket List */}
-        <div className="col-span-7 xl:col-span-8">
-          <BucketListPanel />
-        </div>
-      </main>
+      <Routes>
+        <Route path="/" element={<BucketListsGrid />} />
+        <Route path="/:listId" element={<BucketListDetail />} />
+      </Routes>
     </div>
   );
 }

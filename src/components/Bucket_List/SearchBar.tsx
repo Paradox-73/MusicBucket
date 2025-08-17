@@ -4,7 +4,7 @@ import { useSpotifyStore } from '../../store/Bucket_List/spotify';
 import { useSpotifySearch } from '../../hooks/Bucket_List/useSpotifySearch';
 import { useDebounce } from '../../hooks/Bucket_List/useDebounce';
 
-export function SearchBar() {
+export function SearchBar({ listId }: { listId: string }) {
   const [query, setQuery] = useState('');
   const { setSearchResults, addRandomItem, setSearchQuery } = useSpotifyStore();
   const { search, isLoading, error } = useSpotifySearch();

@@ -1,29 +1,17 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Filters } from '../Filters';
 import { BucketList } from '../BucketList';
 import { useSpotifyStore } from '../../../store/Bucket_List/spotify';
-import { useAuthStore } from '../../../store/authStore';
 import { SpotifyItem } from '../../../types/Bucket_List/spotify';
 
 export function BucketListPanel() {
-  const { items, addItem, loadItems, filter } = useSpotifyStore();
-  const user = useAuthStore((state) => state.user);
-
-  useEffect(() => {
-    console.log('BucketListPanel: user changed', user);
-    if (user) {
-      loadItems(user.id);
-    }
-  }, [user, loadItems]);
+  const { items, addItem, filter } = useSpotifyStore();
 
   const filteredItems = items.filter((item) => {
-    console.log('BucketListPanel: filtering - item.completed:', item.completed, 'filter:', filter);
     if (filter === 'listened') return item.completed;
     if (filter === 'not-listened') return !item.completed;
     return true;
   });
-
-  console.log('BucketListPanel: items.length:', items.length, 'filter:', filter, 'filteredItems.length:', filteredItems.length);
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();

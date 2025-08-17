@@ -5,7 +5,7 @@ import { useSpotifyStore } from '../../store/Bucket_List/spotify';
 import { SpotifyItem } from '../../types/Bucket_List/spotify';
 import { getTrack } from '../../lib/spotify';
 
-export function SearchResults() {
+export function SearchResults({ listId }: { listId: string }) {
   const searchResults = useSpotifyStore((state) => state.searchResults);
   const addItem = useSpotifyStore((state) => state.addItem);
   const items = useSpotifyStore((state) => state.items);
