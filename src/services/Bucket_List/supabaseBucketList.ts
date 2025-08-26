@@ -21,6 +21,7 @@ export async function getBucketLists(userId: string) {
 }
 
 export async function getPublicBucketList(listId: string) {
+  console.log('getPublicBucketList: Attempting to fetch public list with ID:', listId);
   const { data, error } = await supabase
     .from(BUCKET_LISTS_TABLE)
     .select('*, items:bucket_list_items(*)')
@@ -28,12 +29,19 @@ export async function getPublicBucketList(listId: string) {
     .eq('is_public', true)
     .single();
 
+    console.log('getPublicBucketList: Supabase raw data:', data);
+    console.log('getPublicBucketList: Supabase error:', error);
+
     if (error) {
-        console.error('Supabase getPublicBucketList error:', error);
+        console.error('getPublicBucketList: Supabase error:', error);
         throw error;
     }
+    console.log('getPublicBucketList: Successfully fetched list:', data);
     return data;
 }
+
+
+
 
 export async function createBucketList(name: string, userId: string) {
     const { data, error } = await supabase

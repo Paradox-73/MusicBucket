@@ -44,7 +44,7 @@ export function SpotifyAuthButton() {
 
   if (loading) {
     return (
-      <Button variant="ghost" size="icon" className="text-[#00cccc] opacity-50">
+      <Button variant="ghost" size="icon" className="text-blue-500 dark:text-[#00cccc] opacity-50">
         <UserCircle className="h-5 w-5" />
       </Button>
     );
@@ -55,7 +55,7 @@ export function SpotifyAuthButton() {
       <Button
         variant="ghost"
         size="icon"
-        className="text-[#00cccc] hover:text-[#800080]"
+        className="text-blue-500 dark:text-[#00cccc] hover:text-purple-600 dark:hover:text-[#800080]"
         onClick={handleLogin}
       >
         <Music2 className="h-5 w-5" />
@@ -69,7 +69,7 @@ export function SpotifyAuthButton() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative text-[#00cccc] hover:text-[#800080]"
+          className="relative text-blue-500 dark:text-[#00cccc] hover:text-purple-600 dark:hover:text-[#800080]"
         >
           {profile.images?.[0]?.url ? (
             <img
@@ -82,11 +82,11 @@ export function SpotifyAuthButton() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuItem className="font-medium">
+      <DropdownMenuContent align="end" className="w-48 bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+        <DropdownMenuItem className="font-medium text-gray-900 dark:text-white">
           {profile.display_name}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleLogout}>
+        <DropdownMenuItem onClick={handleLogout} className="text-gray-900 dark:text-white">
           <LogOut className="mr-2 h-4 w-4" />
           Logout
         </DropdownMenuItem>

@@ -1,30 +1,73 @@
 import React, { useEffect, useState } from 'react';
 import { SpotifyArtist } from '../../types/Artist_Exploration/artist';
-import { getArtistAllTracks, getLikedTracks } from '../../lib/Artist_Exploration/spotify';
+import { getArtistAllTracks } from '../../lib/Artist_Exploration/spotify';
 import { calculateMetrics } from '../../utils/Artist_Exploration/metrics';
-import { Loader2, Info, AlertCircle } from 'lucide-react';
+import { Loader2, Info, AlertCircle, Share2 } from 'lucide-react';
 import { SongWeightDetails } from '../../utils/Artist_Exploration/weights/songWeight';
+import { SpotifyTrack } from '../../types/Artist_Exploration/spotify';
+import { User } from '@supabase/supabase-js';
+import {
+  getArtistExplorationScoreFromSupabase,
+  saveArtistExplorationScoreToSupabase,
+} from '../../lib/supabaseArtistData';
+import { ArtistDeepDive } from './ArtistDeepDive';
 
 interface Props {
   artist: SpotifyArtist;
   token: string;
+  likedTracks: SpotifyTrack[];
+  user: User;
 }
 
-export function ExplorationScore({ artist, token }: Props) {
+export function ExplorationScore({ artist, token, likedTracks, user }: Props) {
   const [metrics, setMetrics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [showDeepDive, setShowDeepDive] = useState(false);
+
+  const handleShare = async () => {
+    if (!metrics) return;
+
+    const shareText = `My Artist Exploration Score for ${artist.name} is ${metrics.score?.toFixed(2)}! I've listened to ${metrics.likedTracks?.length || 0} out of ${metrics.totalTracks || 0} tracks. Discover your score at MusicBucket!`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Artist Exploration Score',
+          text: shareText,
+          url: window.location.href, // Share the current page URL
+        });
+        console.log('Content shared successfully');
+      } catch (shareError) {
+        console.error('Error sharing:', shareError);
+      }
+    } else {
+      // Fallback for browsers that do not support Web Share API
+      navigator.clipboard.writeText(shareText + `\n${window.location.href}`)
+        .then(() => alert('Exploration score copied to clipboard!'))
+        .catch(err => console.error('Failed to copy:', err));
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
       try {
-        const [artistTracks, likedTracks] = await Promise.all([
-          getArtistAllTracks(artist.id, token),
-          getLikedTracks(token),
-        ]);
+        if (!user) {
+          throw new Error('User not authenticated.');
+        }
+
+        // Try to get cached score from Supabase first
+        const cachedMetrics = await getArtistExplorationScoreFromSupabase(user.id, artist.id);
+        if (cachedMetrics) {
+          setMetrics(cachedMetrics);
+          setLoading(false);
+          return;
+        }
+
+        const artistTracks = await getArtistAllTracks(artist.id, token, user);
 
         if (!artistTracks || !likedTracks) {
           throw new Error('Failed to fetch required data');
@@ -32,6 +75,10 @@ export function ExplorationScore({ artist, token }: Props) {
 
         const calculatedMetrics = calculateMetrics(artistTracks, likedTracks, artist.id);
         setMetrics(calculatedMetrics);
+
+        // Save calculated metrics to Supabase
+        await saveArtistExplorationScoreToSupabase(user.id, artist.id, calculatedMetrics);
+
       } catch (error) {
         console.error('Error fetching metrics:', error);
         setError(error instanceof Error ? error.message : 'Failed to calculate metrics');
@@ -41,7 +88,7 @@ export function ExplorationScore({ artist, token }: Props) {
     };
 
     fetchData();
-  }, [artist.id, token]);
+  }, [artist.id, token, likedTracks, user]);
 
   if (loading) {
     return (
@@ -102,6 +149,12 @@ export function ExplorationScore({ artist, token }: Props) {
                 ({metrics.details?.listenedPercentage || 0}%)
               </span>
             </div>
+            <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+              <div
+                className="bg-green-600 h-2.5 rounded-full"
+                style={{ width: `${metrics.details?.listenedPercentage || 0}%` }}
+              ></div>
+            </div>
           </div>
 
           <div>
@@ -124,12 +177,54 @@ export function ExplorationScore({ artist, token }: Props) {
             </div>
           </div>
 
+          {metrics.topLikedTracks && metrics.topLikedTracks.length > 0 && (
+            <div>
+              <div className="text-sm font-medium text-gray-500 mb-2">Top Liked Tracks:</div>
+              <ul className="list-disc list-inside space-y-1">
+                {metrics.topLikedTracks.map((track: SpotifyTrack) => (
+                  <li key={track.id} className="text-base text-gray-800 dark:text-gray-200">
+                    {track.name}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {metrics.likedAlbums && metrics.likedAlbums.length > 0 && (
+            <div>
+              <div className="text-sm font-medium text-gray-500 mb-2">Albums Explored:</div>
+              <ul className="list-disc list-inside space-y-1">
+                {metrics.likedAlbums.map((album: any) => (
+                  <li key={album.id} className="text-base text-gray-800 dark:text-gray-200">
+                    {album.name} ({album.likedTrackCount} tracks)
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <button
             onClick={() => setShowDetails(!showDetails)}
             className="flex items-center gap-2 text-sm text-green-600 hover:text-green-700"
           >
             <Info className="w-4 h-4" />
             {showDetails ? 'Hide' : 'Show'} Detailed Weights
+          </button>
+
+          <button
+            onClick={() => setShowDeepDive(!showDeepDive)}
+            className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 mt-4"
+          >
+            <Info className="w-4 h-4" />
+            {showDeepDive ? 'Hide' : 'Show'} Deep Dive
+          </button>
+
+          <button
+            onClick={handleShare}
+            className="flex items-center gap-2 text-sm text-purple-600 hover:text-purple-700 mt-4"
+          >
+            <Share2 className="w-4 h-4" />
+            Share Score
           </button>
 
           {showDetails && metrics.songWeights && (
@@ -151,6 +246,10 @@ export function ExplorationScore({ artist, token }: Props) {
                 ))}
               </div>
             </div>
+          )}
+
+          {showDeepDive && (
+            <ArtistDeepDive artist={artist} token={token} user={user} />
           )}
         </div>
       </div>

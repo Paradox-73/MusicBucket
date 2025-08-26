@@ -80,7 +80,7 @@ export const PlaylistEditor: React.FC<PlaylistEditorProps> = ({ tracks, onSave }
   return (
     <div className="space-y-6">
       <div className="flex items-start space-x-4">
-        <div className="w-32 h-32 relative bg-gray-100 rounded-lg overflow-hidden">
+        <div className="w-32 h-32 relative bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
           {image ? (
             <img
               src={URL.createObjectURL(image)}
@@ -89,7 +89,7 @@ export const PlaylistEditor: React.FC<PlaylistEditorProps> = ({ tracks, onSave }
             />
           ) : (
             <div className="flex items-center justify-center w-full h-full">
-              <Image className="w-8 h-8 text-gray-400" />
+              <Image className="w-8 h-8 text-gray-500 dark:text-gray-400" />
             </div>
           )}
           <input
@@ -104,13 +104,13 @@ export const PlaylistEditor: React.FC<PlaylistEditorProps> = ({ tracks, onSave }
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-4 py-2 text-xl font-bold border-none focus:ring-2 focus:ring-blue-500 rounded-lg"
+            className="w-full px-4 py-2 text-xl font-bold border-none focus:ring-2 focus:ring-blue-500 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             placeholder="Playlist Name"
           />
         </div>
         <button
           onClick={() => setIsPublic(!isPublic)}
-          className="p-2 rounded-full hover:bg-gray-100"
+          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
         >
           {isPublic ? <Globe className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
         </button>
@@ -120,7 +120,7 @@ export const PlaylistEditor: React.FC<PlaylistEditorProps> = ({ tracks, onSave }
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="flex-1 p-4 border rounded-lg resize-none h-24"
+          className="flex-1 p-4 border rounded-lg resize-none h-24 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
           placeholder="Add an optional description"
         />
       </div>
@@ -128,7 +128,7 @@ export const PlaylistEditor: React.FC<PlaylistEditorProps> = ({ tracks, onSave }
       <div className="flex justify-end space-x-4">
         <button
           onClick={handleSave}
-          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center space-x-2"
+          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 flex items-center space-x-2"
         >
           <Save className="w-4 h-4" />
           <span>Save to Spotify</span>

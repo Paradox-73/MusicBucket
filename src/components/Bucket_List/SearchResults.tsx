@@ -82,7 +82,7 @@ export function SearchResults({ listId }: { listId: string }) {
             onDragStart={(e) => {
               e.dataTransfer.setData('text/plain', JSON.stringify(item));
             }}
-            className="group relative flex items-center space-x-4 rounded-xl bg-white/5 p-3 shadow-sm transition-all hover:bg-white/10 cursor-grab"
+            className="group relative flex items-center space-x-4 rounded-xl bg-gray-200 dark:bg-white/5 p-3 shadow-sm transition-all hover:bg-gray-300 dark:hover:bg-white/10 cursor-grab"
           >
             <img
               src={item.imageUrl}
@@ -90,9 +90,9 @@ export function SearchResults({ listId }: { listId: string }) {
               className={`h-12 w-12 flex-shrink-0 rounded-md object-cover ${item.type === 'artist' ? 'rounded-full' : ''}`}
             />
             <div className="flex-1 min-w-0">
-              <h3 className="font-medium truncate text-white">{item.name}</h3>
+              <h3 className="font-medium truncate text-gray-900 dark:text-white">{item.name}</h3>
               {item.artists && (
-                <p className="text-sm text-gray-400 truncate">
+                <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
                   {item.artists.join(', ')}
                 </p>
               )}
@@ -101,8 +101,8 @@ export function SearchResults({ listId }: { listId: string }) {
               onClick={() => handleAdd(item)}
               disabled={isInBucketlist}
               className={`rounded-full p-2 transition-colors ${isInBucketlist
-                  ? 'text-gray-500 cursor-not-allowed'
-                  : 'text-gray-400 hover:bg-purple-500/20 hover:text-purple-400'
+                  ? 'text-gray-600 dark:text-gray-500 cursor-not-allowed'
+                  : 'text-gray-500 dark:text-gray-400 hover:bg-purple-500/20 hover:text-purple-400'
                 }`}
             >
               <Plus className="h-5 w-5" />

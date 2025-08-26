@@ -224,12 +224,12 @@ export const PlaylistView: React.FC = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold">Your Road Trip Playlist</h2>
           {route && (
-            <p className="text-gray-600 mt-1">
+            <p className="text-gray-500 dark:text-gray-400 mt-1">
               Trip duration: {formatTripDuration(route.duration)}
             </p>
           )}
@@ -237,7 +237,7 @@ export const PlaylistView: React.FC = () => {
         <div className="flex items-center space-x-4">
           <button
             onClick={handlePlayAll}
-            className="p-2 rounded-full hover:bg-gray-100"
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             {playingAll ? (
               <Pause className="w-5 h-5" />
@@ -247,14 +247,14 @@ export const PlaylistView: React.FC = () => {
           </button>
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className="p-2 rounded-full hover:bg-gray-100"
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <Edit className="w-5 h-5" />
           </button>
           {isConnected ? (
             <button
               onClick={handleLogout}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center space-x-2"
+              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 flex items-center space-x-2"
             >
               <LogOut className="w-4 h-4" />
               <span>Disconnect</span>
@@ -265,7 +265,7 @@ export const PlaylistView: React.FC = () => {
                 const spotifyAuth = MainAppSpotifyAuth.getInstance();
                 await spotifyAuth.authenticate();
               }}
-              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700"
             >
               Connect to Spotify
             </button>
@@ -274,7 +274,7 @@ export const PlaylistView: React.FC = () => {
       </div>
 
       {(error || success) && (
-        <div className={`p-4 mb-4 rounded-lg ${error ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+        <div className={`p-4 mb-4 rounded-lg ${error ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200'}`}>
           {error || success}
         </div>
       )}
@@ -289,7 +289,7 @@ export const PlaylistView: React.FC = () => {
           {playlist.map((track) => (
             <div
               key={track.id}
-              className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
             >
               <div className="flex items-center space-x-4">
                 <img
@@ -299,8 +299,7 @@ export const PlaylistView: React.FC = () => {
                 />
                 <button
                   onClick={() => handlePlayPause(track.id, track.previewUrl)}
-                  className={`p-2 rounded-full ${track.previewUrl ? 'hover:bg-gray-200' : 'opacity-50 cursor-not-allowed'}`}
-                  disabled={!track.previewUrl}
+                  className={`p-2 rounded-full ${track.previewUrl ? 'hover:bg-gray-200 dark:hover:bg-gray-600' : 'opacity-50 cursor-not-allowed'}`}
                 >
                   {playing === track.id ? (
                     <Pause className="w-5 h-5" />
@@ -310,12 +309,12 @@ export const PlaylistView: React.FC = () => {
                 </button>
                 <div>
                   <h3 className="font-medium">{track.name}</h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     {track.artist.name} • {track.artist.location.name}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center space-x-4 text-gray-500">
+              <div className="flex items-center space-x-4 text-gray-600 dark:text-gray-400">
                 <Clock className="w-4 h-4" />
                 <span className="text-sm">{formatDuration(track.duration)}</span>
               </div>

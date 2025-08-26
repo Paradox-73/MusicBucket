@@ -117,7 +117,7 @@ const RoadTripMixtape = () => {
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <div className="mb-4 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600 h-12 w-12"></div>
-          <p className="text-gray-600">Checking Spotify authentication...</p>
+          <p className="text-gray-600 dark:text-gray-300">Checking Spotify authentication...</p>
         </div>
       </div>
     );
@@ -128,11 +128,11 @@ const RoadTripMixtape = () => {
       <div className="flex flex-col min-h-screen items-center justify-center p-4">
         <div className="text-center max-w-md">
           <Music className="w-16 h-16 text-blue-500 mx-auto mb-6" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Road Trip Playlist Generator</h2>
-          <p className="text-gray-600 mb-8">To generate playlists for your road trips, you need to connect to Spotify first. This app requires permission to create and modify playlists on your behalf.</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Road Trip Playlist Generator</h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-8">To generate playlists for your road trips, you need to connect to Spotify first. This app requires permission to create and modify playlists on your behalf.</p>
           <button
             onClick={handleLogin}
-            className="flex items-center space-x-2 mx-auto px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            className="flex items-center space-x-2 mx-auto px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors"
           >
             <LogIn className="h-5 w-5" />
             <span>Connect with Spotify</span>
@@ -143,12 +143,12 @@ const RoadTripMixtape = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow-sm">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center space-x-2">
             <Music className="w-8 h-8 text-blue-500" />
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               Road Trip Playlist Generator
             </h1>
           </div>
@@ -158,7 +158,7 @@ const RoadTripMixtape = () => {
       <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
               <div className="space-y-4">
               <LocationInput
                 label="Starting Point"
@@ -177,7 +177,7 @@ const RoadTripMixtape = () => {
                 userLocation={userLocation || undefined}
               />
                 <button
-                  className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-400"
+                  className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors disabled:bg-gray-400"
                   disabled={isLoading || !startLocation || !endLocation}
                   onClick={handleGeneratePlaylist}
                 >
@@ -190,7 +190,7 @@ const RoadTripMixtape = () => {
             </div>
             <PlaylistView />
           </div>
-          <div className="bg-white rounded-lg shadow-lg p-2 h-[600px]">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 h-[600px]">
             <TripMap userLocation={userLocation as Location | null} />
           </div>
         </div>

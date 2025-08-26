@@ -3,8 +3,7 @@
 // import Navbar from './components/Navbar';
 // import ArtistExploration from './pages/ArtistExploration';
 // import BucketList from './pages/BucketList';
-// import CultureClash from './pages/CultureClash';
-// import ExplorationScore from './pages/ExplorationScore';
+// import Dashboard from './pages/Dashboard';
 // import RabbitHole from './pages/RabbitHole';
 // import RecommendationRoulette from './pages/RecommendationRoulette';
 // import RoadTripMixtape from './pages/RoadTripMixtape';
@@ -16,7 +15,6 @@
 //       <Routes>
 //         <Route path="/artist-exploration" element={ArtistExploration} />
 //         <Route path="/bucket-list" element={BucketList} />
-//         <Route path="/culture-clash" element={CultureClash} />
 //         <Route path="/exploration-score" element={ExplorationScore} />
 //         <Route path="/rabbit-hole" element={RabbitHole} />
 //         <Route path="/recommendation-roulette" element={RecommendationRoulette} />
@@ -38,14 +36,16 @@ import ComingSoon from './pages/ComingSoon';
 import ArtistExploration from './pages/ArtistExploration';
 import BucketList from './pages/BucketList';
 import RoadTripMixtape from './pages/RoadTripMixtape';
-import ExplorationScore from './pages/ExplorationScore';
-import CultureClash from './pages/CultureClash';
+import Dashboard from './pages/Dashboard';
 import RecommendationRoulette from './pages/RecommendationRoulette';
 import { SpotifyCallback } from './components/SpotifyCallback';
 import AboutUs from './pages/AboutUs';
 import Support from './pages/Support';
 import Legal from './pages/Legal';
 import { SpotifyAuth } from './lib/spotify/auth';
+import { AuthCallback } from './components/Bucket_List/AuthCallback';
+import CultureClashPage from './pages/CultureClashPage';
+import PublicBucketListPage from './pages/PublicBucketListPage';
 
 function App() {
   useEffect(() => {
@@ -55,12 +55,12 @@ function App() {
   return (
     <Routes>
       <Route path="/callback" element={<SpotifyCallback />} />
+      <Route path="/bucket-list/callback" element={<AuthCallback />} />
       <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
         <Route path="artist-exploration" element={<ArtistExploration />} />
         <Route path="bucket-list/*" element={<BucketList />} />
-        <Route path="culture-clash" element={<CultureClash />} />
-        <Route path="exploration-score/*" element={<ExplorationScore />} />
+        <Route path="dashboard/*" element={<Dashboard />} />
         <Route path="rabbit-hole" element={<ComingSoon />} />
         <Route path="recommendation-roulette" element={<RecommendationRoulette />} />
         <Route path="roadtrip-mixtape" element={<RoadTripMixtape />} />
@@ -69,12 +69,11 @@ function App() {
         <Route path="privacy" element={<Legal />} />
         <Route path="terms" element={<Legal />} />
         <Route path="profile" element={<ComingSoon />} />
+        <Route path="culture-clash" element={<CultureClashPage />} />
       </Route>
+      <Route path="/bucketlist/share/:id" element={<PublicBucketListPage />} />
     </Routes>
   );
 }
 
 export default App;
-
-
-

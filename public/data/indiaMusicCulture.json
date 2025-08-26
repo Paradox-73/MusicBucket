@@ -1,0 +1,38 @@
+{
+  "name": "India",
+  "flagUrl": "/images/flags/india.png",
+  "historicalContext": "India's music history spans millennia, deeply intertwined with its diverse cultural and spiritual traditions. From ancient Vedic chants to classical ragas and modern Bollywood hits, music has always been a central part of Indian life. The classical traditions, Hindustani in the North and Carnatic in the South, are highly sophisticated systems of melody (raga) and rhythm (tala).",
+  "keyGenres": [
+    "Bollywood",
+    "Indian Classical (Hindustani, Carnatic)",
+    "Folk (Bhangra, Garba, Lavani)",
+    "Pop",
+    "Rock"
+  ],
+  "influentialArtists": [
+    "A.R. Rahman",
+    "Lata Mangeshkar",
+    "Ravi Shankar",
+    "M.S. Subbulakshmi",
+    "Kishore Kumar",
+    "Diljit Dosanjh"
+  ],
+  "playlists": [
+    {
+      "name": "Bollywood Hits",
+      "spotifyEmbedUrl": "https://open.spotify.com/embed/playlist/37i9dQZF1DX0XUsE4jC1kQ?utm_source=generator"
+    },
+    {
+      "name": "Indian Classical",
+      "spotifyEmbedUrl": "https://open.spotify.com/embed/playlist/37i9dQZF1DX9tPFwDMOaN1?utm_source=generator"
+    },
+    {
+      "name": "Bhangra Anthems",
+      "spotifyEmbedUrl": "https://open.spotify.com/embed/playlist/37i9dQZF1DX1uQ7aK13gQ?utm_source=generator"
+    }
+  ],
+  "images": [
+    "/images/india_music_1.jpg",
+    "/images/india_music_2.jpg"
+  ]
+}

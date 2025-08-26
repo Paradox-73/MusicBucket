@@ -27,9 +27,9 @@ export function BucketListPanel() {
   };
 
   return (
-    <div className="flex h-full flex-col bg-black/90" onDragOver={handleDragOver} onDrop={handleDrop}>
-      <header className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-        <h2 className="text-lg font-semibold text-white">Your Bucket List</h2>
+    <div className="flex h-full flex-col bg-gray-100 dark:bg-black/90" onDragOver={handleDragOver} onDrop={handleDrop}>
+      <header className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 px-6 py-4">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Your Bucket List</h2>
         <Filters />
       </header>
       <main className="flex-1 overflow-y-auto p-6">
@@ -40,18 +40,18 @@ export function BucketListPanel() {
             <div className="text-center">
               {filter === 'listened' ? (
                 <>
-                  <h3 className="text-lg font-semibold text-white">Get listening!</h3>
-                  <p className="mt-2 text-sm text-gray-400">You haven't marked any items as listened yet.</p>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Get listening!</h3>
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">You haven't marked any items as listened yet.</p>
                 </>
               ) : filter === 'not-listened' ? (
                 <>
-                  <h3 className="text-lg font-semibold text-white">Congrats!</h3>
-                  <p className="mt-2 text-sm text-gray-400">You've listened to everything in your bucket.</p>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Congrats!</h3>
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">You've listened to everything in your bucket.</p>
                 </>
               ) : (
                 <>
-                  <h3 className="text-lg font-semibold text-white">Your bucket is empty!</h3>
-                  <p className="mt-2 text-sm text-gray-400">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Your bucket is empty!</h3>
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                     Use the search panel on the left to find artists, albums, and tracks to add.
                   </p>
                 </>

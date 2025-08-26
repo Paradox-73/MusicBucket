@@ -17,7 +17,7 @@ export function RecommendationDisplay({ recommendation }: RecommendationDisplayP
   if (!recommendation) return null;
 
   return (
-    <Card className="p-6 mt-8 bg-gradient-to-br from-[#800080]/10 to-[#00cccc]/10">
+    <Card className="p-6 mt-8 bg-gradient-to-br from-purple-200/10 to-blue-200/10 dark:from-[#800080]/10 dark:to-[#00cccc]/10">
       <div className="flex items-center gap-4">
         {recommendation.images?.[0]?.url ? (
           <img
@@ -26,25 +26,25 @@ export function RecommendationDisplay({ recommendation }: RecommendationDisplayP
             className="w-24 h-24 rounded-lg"
           />
         ) : (
-          <div className="w-24 h-24 rounded-lg bg-black/50 flex items-center justify-center">
-            <Music className="w-8 h-8 text-[#00cccc]" />
+          <div className="w-24 h-24 rounded-lg bg-gray-200/50 dark:bg-black/50 flex items-center justify-center">
+            <Music className="w-8 h-8 text-blue-500 dark:text-[#00cccc]" />
           </div>
         )}
         <div className="flex-1">
-          <h3 className="text-xl font-semibold text-white">{recommendation.name}</h3>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{recommendation.name}</h3>
           {recommendation.artists && (
-            <p className="text-gray-400">
+            <p className="text-gray-500 dark:text-gray-400">
               {recommendation.artists.map(a => a.name).join(', ')}
             </p>
           )}
           {recommendation.publisher && (
-            <p className="text-gray-400">By {recommendation.publisher}</p>
+            <p className="text-gray-500 dark:text-gray-400">By {recommendation.publisher}</p>
           )}
           {recommendation.owner && (
-            <p className="text-gray-400">By {recommendation.owner.display_name}</p>
+            <p className="text-gray-500 dark:text-gray-400">By {recommendation.owner.display_name}</p>
           )}
           {recommendation.type && (
-            <p className="text-gray-400 text-sm">Type: {recommendation.type}</p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">Type: {recommendation.type}</p>
           )}
         </div>
         {recommendation.external_urls?.spotify && (
@@ -52,7 +52,7 @@ export function RecommendationDisplay({ recommendation }: RecommendationDisplayP
             href={recommendation.external_urls.spotify}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#00cccc] hover:text-[#800080] transition-colors"
+            className="text-blue-500 dark:text-[#00cccc] hover:text-purple-600 dark:hover:text-[#800080] transition-colors"
           >
             <ExternalLink className="w-6 h-6" />
           </a>

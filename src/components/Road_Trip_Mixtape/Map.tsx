@@ -5,6 +5,7 @@ import { MapPin } from 'lucide-react';
 import { useAppStore } from '../../store/Road_Trip_Mixtape';
 import { Location } from '../../types/Road_Trip_Mixtape';
 import mapboxgl from 'mapbox-gl';
+import { useTheme } from '../../hooks/useTheme';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
@@ -15,6 +16,7 @@ interface TripMapProps {
 export const TripMap: React.FC<TripMapProps> = ({ userLocation }) => {
   const { route, artists } = useAppStore();
   const mapRef = useRef<any>();
+  const { theme } = useTheme();
 
   useEffect(() => {
     if (!mapRef.current || !userLocation) return;
@@ -67,7 +69,7 @@ export const TripMap: React.FC<TripMapProps> = ({ userLocation }) => {
         zoom: userLocation ? 10 : 3.5,
       }}
       style={{ width: '100%', height: '100%' }}
-      mapStyle="mapbox://styles/mapbox/streets-v11"
+      mapStyle={theme === 'dark' ? 'mapbox://styles/mapbox/dark-v10' : 'mapbox://styles/mapbox/streets-v11'}
       mapboxAccessToken={MAPBOX_TOKEN}
     >
       {userLocation && (
@@ -77,10 +79,10 @@ export const TripMap: React.FC<TripMapProps> = ({ userLocation }) => {
           anchor="bottom"
         >
           <div className="relative">
-            <div className="absolute -top-8 -left-2 bg-blue-500 text-white px-2 py-1 rounded text-sm whitespace-nowrap">
+            <div className="absolute -top-8 -left-2 bg-blue-500 text-white dark:bg-blue-600 px-2 py-1 rounded text-sm whitespace-nowrap">
               You are here
             </div>
-            <div className="w-4 h-4 bg-blue-500 rounded-full" />
+            <div className="w-4 h-4 bg-blue-500 dark:bg-blue-600 rounded-full" />
           </div>
         </Marker>
       )}

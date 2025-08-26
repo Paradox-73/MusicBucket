@@ -70,9 +70,9 @@ export function BucketListDetail() {
   }
 
   return (
-    <div className="flex h-full flex-col bg-black text-white">
-        <header className="p-4 border-b border-white/10 flex justify-between items-center">
-            <Link to=".." className="flex items-center gap-2 hover:text-purple-400 transition-colors">
+    <div className="flex h-full flex-col bg-gray-100 dark:bg-black text-gray-900 dark:text-white">
+        <header className="p-4 border-b border-gray-200 dark:border-white/10 flex justify-between items-center">
+            <Link to=".." className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
                 <ArrowLeft size={20} />
                 Back to My Lists
             </Link>
@@ -81,13 +81,13 @@ export function BucketListDetail() {
                 <button onClick={handleTogglePublic} className="flex items-center gap-1 text-sm">
                     {list.is_public ? <><Globe size={16} /> Public</> : <><Lock size={16} /> Private</>}
                 </button>
-                <button onClick={handleShare} className="flex items-center gap-1 text-sm bg-purple-600 px-3 py-1 rounded-full hover:bg-purple-700">
+                <button onClick={handleShare} className="flex items-center gap-1 text-sm bg-purple-600 px-3 py-1 rounded-full hover:bg-purple-700 text-white">
                     <Share2 size={16} /> Share
                 </button>
             </div>
         </header>
       <main className="grid flex-1 grid-cols-12 overflow-hidden">
-        <div className="col-span-5 border-r border-white/10 xl:col-span-4">
+        <div className="col-span-5 border-r border-gray-200 dark:border-white/10 xl:col-span-4">
           <SearchPanel listId={listId!} />
         </div>
         <div className="col-span-7 xl:col-span-8">

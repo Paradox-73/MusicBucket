@@ -36,16 +36,16 @@ export function SearchBar({ listId }: { listId: string }) {
   return (
     <div className="flex items-center gap-2">
       <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
         <input
           type="text"
           value={query}
           onChange={handleSearch}
           placeholder="Search artists, albums, tracks..."
-          className="w-full rounded-lg border border-white/10 bg-white/5 py-2 pl-10 pr-4 text-white placeholder:text-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+          className="w-full rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 py-2 pl-10 pr-4 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
         />
         {isLoading && (
-          <div className="mt-2 text-sm text-gray-400">Searching...</div>
+          <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">Searching...</div>
         )}
         {error && (
           <div className="mt-2 text-sm text-red-400">{error}</div>
@@ -53,7 +53,7 @@ export function SearchBar({ listId }: { listId: string }) {
       </div>
       <button 
         onClick={handleFeelingLucky}
-        className="rounded-lg border border-white/10 bg-white/5 p-2 text-white transition-colors hover:bg-white/10"
+        className="rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 p-2 text-gray-900 dark:text-white transition-colors hover:bg-gray-200 dark:hover:bg-white/10"
         title="I'm Feeling Lucky"
       >
         <Dice5 className="h-5 w-5" />

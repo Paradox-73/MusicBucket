@@ -43,8 +43,8 @@ export function BucketList({ items }: BucketListProps) {
         return (
           <div key={category} className="">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold capitalize text-white">{category}s</h2>
-              <span className="rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-white">
+              <h2 className="text-xl font-semibold capitalize text-gray-900 dark:text-white">{category}s</h2>
+              <span className="rounded-full bg-gray-200 dark:bg-white/10 px-3 py-1 text-sm font-medium text-gray-900 dark:text-white">
                 {categoryItems.length}
               </span>
             </div>
@@ -59,7 +59,7 @@ export function BucketList({ items }: BucketListProps) {
                 return (
                   <div
                     key={item.id}
-                    className={`group relative cursor-pointer overflow-hidden transition-all duration-300 ease-in-out ${isArtist ? '' : 'rounded-lg border border-white/10 bg-white/5 hover:border-purple-500/50 hover:bg-white/10'}`}
+                    className={`group relative cursor-pointer overflow-hidden transition-all duration-300 ease-in-out ${isArtist ? '' : 'rounded-lg border border-gray-200 dark:border-white/10 bg-gray-100 dark:bg-white/5 hover:border-purple-500/50 hover:bg-gray-200 dark:hover:bg-white/10'}`}
                     onClick={handleCardClick}
                   >
                     <div className="flex justify-center p-4">
@@ -76,9 +76,9 @@ export function BucketList({ items }: BucketListProps) {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
 
                     <div className={`absolute bottom-0 left-0 right-0 p-4 ${item.type === 'artist' ? 'text-center' : ''}`}>
-                      <h3 className="truncate font-bold text-white" title={item.name}>{item.name}</h3>
+                      <h3 className="truncate font-bold text-gray-900 dark:text-white" title={item.name}>{item.name}</h3>
                       {item.artists && (
-                        <p className="truncate text-sm text-gray-400">
+                        <p className="truncate text-sm text-gray-500 dark:text-gray-400">
                           {item.artists.join(', ')}
                         </p>
                       )}
@@ -93,9 +93,8 @@ export function BucketList({ items }: BucketListProps) {
                         onClick={() => updatePriority(item.id, 'high')}
                         className={`rounded-full p-2 transition-colors ${item.priority === 'high'
                             ? 'bg-yellow-500/20 text-yellow-400'
-                            : 'bg-black/50 text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400'
+                            : 'bg-gray-200/50 dark:bg-black/50 text-gray-600 dark:text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400'
                           }`}
-                          title="Prioritize"
                       >
                         <Star className="h-4 w-4" />
                       </button>
@@ -103,15 +102,14 @@ export function BucketList({ items }: BucketListProps) {
                         onClick={() => toggleListened(item.id)}
                         className={`rounded-full p-2 transition-colors ${item.completed
                             ? 'bg-green-500/20 text-green-400'
-                            : 'bg-black/50 text-gray-300 hover:bg-green-500/20 hover:text-green-400'
+                            : 'bg-gray-200/50 dark:bg-black/50 text-gray-600 dark:text-gray-300 hover:bg-green-500/20 hover:text-green-400'
                           }`}
-                          title={item.completed ? 'Mark as Unlistened' : 'Mark as Listened'}
                       >
                         <Check className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => removeItem(item.id)}
-                        className="rounded-full bg-black/50 p-2 text-gray-300 transition-colors hover:bg-red-500/20 hover:text-red-400"
+                        className="rounded-full bg-gray-200/50 dark:bg-black/50 p-2 text-gray-600 dark:text-gray-300 transition-colors hover:bg-red-500/20 hover:text-red-400"
                         title="Remove"
                       >
                         <Trash2 className="h-4 w-4" />

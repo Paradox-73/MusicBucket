@@ -10,6 +10,7 @@ import { Switch } from "../ui/switch";
 import { getRecommendation } from "../../../lib/Recommendation_Roulette/spotifyApi";
 import { useState } from "react";
 import { RecommendationDisplay } from "./RecommendationDisplay";
+import { useTheme } from '../../../hooks/useTheme';
 
 const categories = ["Artist", "Album", "Genre", "Track", "Podcast", "Playlist"];
 
@@ -18,6 +19,7 @@ export function SpinWheel() {
   const [selectedCategory, setSelectedCategory] = useState("Track");
   const [useHistory, setUseHistory] = useState(false);
   const [recommendation, setRecommendation] = useState(null);
+  const { theme } = useTheme();
 
   const handleSpin = async () => {
     setIsSpinning(true);
@@ -44,7 +46,7 @@ export function SpinWheel() {
     <div className="flex flex-col items-center gap-8">
       <div className="flex gap-4 items-center">
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-[180px] border-[#00cccc]/50">
+          <SelectTrigger className="w-[180px] border-blue-400/50 dark:border-[#00cccc]/50">
             <SelectValue placeholder="Select category" />
           </SelectTrigger>
           <SelectContent>
@@ -59,25 +61,25 @@ export function SpinWheel() {
           <Switch
             checked={useHistory}
             onCheckedChange={setUseHistory}
-            className="data-[state=checked]:bg-[#800080]"
+            className="data-[state=checked]:bg-purple-600 dark:data-[state=checked]:bg-[#800080]"
           />
-          <span className="text-sm text-gray-400">Use listening history</span>
+          <span className="text-sm text-gray-500 dark:text-gray-400">Use listening history</span>
         </div>
       </div>
 
       <div className="relative w-80 h-80">
         <div
-          className={`absolute inset-0 rounded-full border-4 border-[#00cccc] 
+          className={`absolute inset-0 rounded-full border-4 border-blue-500 dark:border-[#00cccc] 
             ${isSpinning ? "animate-spin" : ""}`}
           style={{
-            background: "conic-gradient(from 0deg, #800080, #00cccc, #800080)",
+            background: theme === 'dark' ? "conic-gradient(from 0deg, #800080, #00cccc, #800080)" : "conic-gradient(from 0deg, #990099, #33ffff, #990099)",
           }}
         />
-        <div className="absolute inset-4 rounded-full bg-black flex items-center justify-center">
+        <div className="absolute inset-4 rounded-full bg-white dark:bg-black flex items-center justify-center">
           <Button
             onClick={handleSpin}
             disabled={isSpinning}
-            className="bg-gradient-to-r from-[#800080] to-[#00cccc] hover:opacity-90"
+            className="bg-gradient-to-r from-purple-600 to-blue-500 dark:from-[#800080] dark:to-[#00cccc] hover:opacity-90"
           >
             {isSpinning ? "Spinning..." : "Spin"}
           </Button>

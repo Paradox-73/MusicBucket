@@ -76,13 +76,14 @@ const Navigation: React.FC = () => {
   };
 
   const navLinks = [
+    { name: 'Dashboard', path: '/dashboard' },
     { name: 'Artist Exploration', path: '/artist-exploration' },
     { name: 'Bucket List', path: '/bucket-list' },
-    { name: 'Culture Clash', path: '/culture-clash' },
-    { name: 'Exploration Score', path: '/exploration-score' },
+    
     { name: 'Rabbit Hole', path: '/rabbit-hole' },
     { name: 'Recommendation Roulette', path: '/recommendation-roulette' },
     { name: 'Roadtrip Mixtape', path: '/roadtrip-mixtape' },
+    { name: 'Culture Clash', path: '/culture-clash' },
     { name: 'About Us', path: '/about' },
     { name: 'Support', path: '/support' },
   ];

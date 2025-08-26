@@ -79,13 +79,13 @@ export function BucketListsGrid() {
   }
 
   return (
-    <div className="p-6 bg-black text-white min-h-screen">
+    <div className="p-6 bg-gray-100 dark:bg-black text-gray-900 dark:text-white min-h-screen">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">My Bucket Lists</h1>
         {!isCreating && (
           <button
             onClick={handleCreateClick}
-            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full transition-colors"
+            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white dark:bg-purple-700 dark:hover:bg-purple-800 font-bold py-2 px-4 rounded-full transition-colors"
           >
             <PlusCircle size={20} />
             Create List
@@ -100,23 +100,23 @@ export function BucketListsGrid() {
             value={newListName}
             onChange={handleInputChange}
             placeholder="Enter list name..."
-            className="flex-grow rounded-lg border border-white/10 bg-white/5 py-2 px-4 text-white placeholder:text-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-500"
+            className="flex-grow rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 py-2 px-4 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-500"
             onBlur={() => setIsCreating(false)} // Optional: hide on blur
           />
-          <button type="submit" className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg">
+          <button type="submit" className="bg-purple-600 hover:bg-purple-700 text-white dark:bg-purple-700 dark:hover:bg-purple-800 font-bold py-2 px-4 rounded-lg">
             Create
           </button>
         </form>
       )}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
         {lists.map((list) => (
-          <Link to={list.id} key={list.id} className="bg-neutral-900 hover:bg-neutral-800 transition-colors rounded-lg p-4 flex flex-col gap-4 group">
-            <div className="relative w-full aspect-square bg-neutral-800 rounded-md flex items-center justify-center group-hover:shadow-lg transition-shadow">
-              <Music size={48} className="text-neutral-500" />
+          <Link to={list.id} key={list.id} className="bg-gray-200 dark:bg-neutral-900 hover:bg-gray-300 dark:hover:bg-neutral-800 transition-colors rounded-lg p-4 flex flex-col gap-4 group">
+            <div className="relative w-full aspect-square bg-gray-300 dark:bg-neutral-800 rounded-md flex items-center justify-center group-hover:shadow-lg transition-shadow">
+              <Music size={48} className="text-gray-500 dark:text-neutral-500" />
             </div>
             <div>
               <p className="font-bold truncate">{list.name}</p>
-              <p className="text-sm text-neutral-400">By You</p>
+              <p className="text-sm text-gray-500 dark:text-neutral-400">By You</p>
             </div>
           </Link>
         ))}

@@ -81,8 +81,12 @@ pnpm-lock.yaml
 .env.development.local
 .env.test.local
 .env.production.local
-error.txt
+
 progress_report.html
 file_structure.txt
 roadmap.txt
-notion
+ error.txt
+notion/
+feature_culture_clash.md
+srs.pdf
+supabase_schema.sql

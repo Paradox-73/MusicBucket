@@ -35,12 +35,6 @@ MusicBucket is a comprehensive music discovery and tracking platform that helps 
 - Discover lesser-known tracks from your favorite artists
 - Generate playlists to deepen your artist knowledge
 
-### Culture Clash
-- Interactive globe interface using Three.js and Globe.GL for immersive geographical music exploration
-- Curated playlists featuring popular songs from selected countries
-- Insights into regional music culture and influential artists
-- Access to global music charts and trending tracks
-
 ### RoadTrip
 - Create location-based mixtapes using MapBox API integration
 - Discover local artists along your planned route
@@ -98,7 +92,6 @@ MusicBucket is a comprehensive music discovery and tracking platform that helps 
      cp Road_Trip_Mixtape/.env.example Road_Trip_Mixtape/.env
      cp Recommendation_Roulette/.env.example Recommendation_Roulette/.env
      cp Artist_Exploration/.env.example Artist_Exploration/.env
-     cp Culture_Clash/.env.example Culture_Clash/.env
      ```
    - Fill in your own API keys and secrets in each .env file
 
@@ -138,7 +131,6 @@ MusicBucket is a comprehensive music discovery and tracking platform that helps 
 - **Real-time Data Processing**: Built efficient algorithms for processing and analyzing music listening data
 - **Interactive Visualizations**: Created dynamic data visualizations using D3.js, Chart.js, and Globe.GL
 - **API Integration**: Developed robust integration with Spotify Web API, MapBox API including rate limiting and error handling
-- **3D Globe Rendering**: Implemented Three.js and Globe.GL for immersive geographical music exploration
 - **Responsive Design**: Implemented mobile-first design principles using Tailwind CSS
 - **Authentication Flow**: Built secure OAuth implementation for Spotify authentication
 - **Database Design**: Created optimized MongoDB schemas for efficient data retrieval and storage
@@ -150,7 +142,6 @@ MusicBucket addresses several key challenges in music discovery and tracking:
 
 1. **Discovery Paralysis**: Simplifies music discovery through interactive and gamified features
 2. **Surface-Level Listening**: Encourages deeper artist exploration through the Artist Depth feature
-3. **Echo Chambers**: Promotes musical diversity through the Culture Clash feature
 4. **Tracking Difficulty**: Provides comprehensive analytics and visualization of listening habits
 5. **Disconnected Experience**: Integrates seamlessly with Spotify for a unified music experience
 6. **Geographic Disconnect**: Bridges the gap between location and music through RoadTrip feature

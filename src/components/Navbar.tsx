@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore';
 import { SpotifyAuth } from '../lib/spotify/auth';
 import { getMe, spotifyApi } from '../lib/spotify';
 import type { SpotifyProfile } from '../types/spotify';
+import ThemeToggle from './ThemeToggle';
 
 const Navbar = () => {
   console.log('Navbar: Component rendering.');
@@ -57,14 +58,15 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-gray-800 text-white p-4">
+    <nav className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white p-4 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
         <Link to="/" className="text-xl font-bold">MusicBucket</Link>
         <div className="flex items-center">
+          <ThemeToggle />
           {spotifyUser ? (
             <div className="relative" ref={dropdownRef}>
               <div
-                className="flex items-center cursor-pointer"
+                className="flex items-center cursor-pointer ml-4"
                 onClick={() => setShowDropdown(!showDropdown)}
               >
                 <img
@@ -75,10 +77,10 @@ const Navbar = () => {
                 <span>{spotifyUser.display_name}</span>
               </div>
               {showDropdown && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg py-1 z-10">
                   <button
                     onClick={handleLogout}
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                    className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-left"
                   >
                     Logout
                   </button>
@@ -86,7 +88,7 @@ const Navbar = () => {
               )}
             </div>
           ) : (
-            <button onClick={handleLogin} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+            <button onClick={handleLogin} className="ml-4 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
               Login with Spotify
             </button>
           )}
