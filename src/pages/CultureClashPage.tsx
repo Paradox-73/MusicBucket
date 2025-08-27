@@ -30,10 +30,10 @@ const CultureClashPage: React.FC = () => {
     <div className="flex flex-col lg:flex-row h-full w-full bg-gray-900 text-white">
       <div className="relative flex-1 flex items-center justify-center p-4">
         <GlobeComponent />
-        <div className="absolute top-4 left-4 z-10">
+        <div className="absolute top-2 left-2 sm:top-4 sm:left-4 z-20">
           <SearchInput onSearch={handleSearch} />
         </div>
-        <div className="absolute bottom-4 right-4 z-10">
+        <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 z-20">
           <SpinButton />
         </div>
       </div>

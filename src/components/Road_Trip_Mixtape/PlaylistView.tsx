@@ -225,7 +225,7 @@ export const PlaylistView: React.FC = () => {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6">
         <div>
           <h2 className="text-2xl font-bold">Your Road Trip Playlist</h2>
           {route && (
@@ -234,7 +234,7 @@ export const PlaylistView: React.FC = () => {
             </p>
           )}
         </div>
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-wrap justify-end gap-2 sm:gap-4 mt-4 sm:mt-0">
           <button
             onClick={handlePlayAll}
             className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -289,7 +289,7 @@ export const PlaylistView: React.FC = () => {
           {playlist.map((track) => (
             <div
               key={track.id}
-              className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+              className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
             >
               <div className="flex items-center space-x-4">
                 <img
@@ -314,7 +314,7 @@ export const PlaylistView: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center space-x-4 text-gray-600 dark:text-gray-400">
+              <div className="flex items-center space-x-2 mt-2 sm:mt-0 text-gray-600 dark:text-gray-400">
                 <Clock className="w-4 h-4" />
                 <span className="text-sm">{formatDuration(track.duration)}</span>
               </div>

@@ -40,7 +40,7 @@ export const CountryInfoPanel: React.FC<CountryInfoPanelProps> = ({ country }) =
       {country.images && country.images.length > 0 && (
         <div className="mt-4">
           <h3 className="text-xl font-semibold mb-2">Visuals</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {country.images.map((image, index) => (
               <img key={index} src={image} alt={`Image ${index + 1}`} className="w-full h-auto rounded-md shadow-md" />
             ))}

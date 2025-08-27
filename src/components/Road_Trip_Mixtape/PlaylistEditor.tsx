@@ -79,8 +79,8 @@ export const PlaylistEditor: React.FC<PlaylistEditorProps> = ({ tracks, onSave }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start space-x-4">
-        <div className="w-32 h-32 relative bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+        <div className="w-24 h-24 sm:w-32 sm:h-32 relative bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
           {image ? (
             <img
               src={URL.createObjectURL(image)}
@@ -120,12 +120,12 @@ export const PlaylistEditor: React.FC<PlaylistEditorProps> = ({ tracks, onSave }
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="flex-1 p-4 border rounded-lg resize-none h-24 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
+          className="flex-1 p-3 sm:p-4 border rounded-lg resize-none h-24 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
           placeholder="Add an optional description"
         />
       </div>
 
-      <div className="flex justify-end space-x-4">
+      <div className="flex justify-center sm:justify-end space-x-2 sm:space-x-4">
         <button
           onClick={handleSave}
           className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 flex items-center space-x-2"

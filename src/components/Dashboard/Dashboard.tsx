@@ -93,14 +93,14 @@ export const Dashboard: React.FC = () => {
   if (error) return <ErrorMessage message={error.message} />;
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
       <UserProfile />
       <MusicTasteAnalyzer />
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mt-8">
         <h2 className="text-3xl font-bold mb-6">Your Spotify Dashboard</h2>
 
-        <div className="flex space-x-4 mb-6">
+        <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
           <select
             className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             value={selectedTimeRange}

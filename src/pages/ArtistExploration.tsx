@@ -161,8 +161,8 @@ const ArtistExploration = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-purple-100 dark:from-gray-900 dark:to-black">
-      <div className="container px-4 py-8 mx-auto">
-        <div className="flex flex-col items-center justify-center space-y-8">
+      <div className="container px-2 sm:px-4 py-4 sm:py-8 mx-auto">
+        <div className="flex flex-col items-center justify-center space-y-4 sm:space-y-8">
           <div className="text-center">
             <div className="flex items-center justify-center mb-4">
               <Music className="w-12 h-12 text-purple-600" />
@@ -233,7 +233,7 @@ const ArtistExploration = () => {
 
           <button
             onClick={() => setShowAchievements(!showAchievements)}
-            className="flex items-center gap-2 text-sm text-green-600 hover:text-green-700 mt-4"
+            className="flex items-center gap-2 text-sm text-green-600 hover:text-green-700 mt-4 bg-green-100 dark:bg-green-800 px-4 py-2 rounded-full shadow hover:shadow-md transition-all duration-200"
           >
             <Music className="w-4 h-4" />
             {showAchievements ? 'Hide' : 'Show'} Achievements

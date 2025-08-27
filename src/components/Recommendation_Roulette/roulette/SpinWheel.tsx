@@ -43,8 +43,8 @@ export function SpinWheel() {
   };
 
   return (
-    <div className="flex flex-col items-center gap-8">
-      <div className="flex gap-4 items-center">
+    <div className="flex flex-col items-center gap-4 sm:gap-8">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-center">
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
           <SelectTrigger className="w-[180px] border-blue-400/50 dark:border-[#00cccc]/50">
             <SelectValue placeholder="Select category" />
@@ -67,7 +67,7 @@ export function SpinWheel() {
         </div>
       </div>
 
-      <div className="relative w-80 h-80">
+      <div className="relative w-64 h-64 sm:w-80 sm:h-80">
         <div
           className={`absolute inset-0 rounded-full border-4 border-blue-500 dark:border-[#00cccc] 
             ${isSpinning ? "animate-spin" : ""}`}

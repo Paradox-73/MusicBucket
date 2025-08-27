@@ -36,7 +36,7 @@ const Footer: React.FC = () => {
 
   return (
     <footer className="bg-gray-50 dark:bg-gray-900 border-t border-primary/10 dark:border-secondary/10">
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-2 sm:px-4 py-12"> {/* Adjusted padding */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
@@ -90,7 +90,7 @@ const Footer: React.FC = () => {
             {/* Connect */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Connect</h3>
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:gap-4"> {/* Adjusted for responsiveness */}
                 {footerLinks.social.map((link) => (
                   <a
                     key={link.name}
@@ -109,7 +109,7 @@ const Footer: React.FC = () => {
             {/* Share */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Spread the Word</h3>
-              <div className="flex gap-4">
+              <div className="flex flex-col gap-2 md:flex-row md:gap-4"> {/* Adjusted for responsiveness */}
                 {footerLinks.share.map((link) => (
                   <a
                     key={link.name}
@@ -128,7 +128,7 @@ const Footer: React.FC = () => {
             {/* Contact */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Contact Us</h3>
-              <div className="flex gap-4">
+              <div className="flex flex-col gap-2 md:flex-row md:gap-4"> {/* Adjusted for responsiveness */}
                 {footerLinks.contact.map((link) => (
                   <a
                     key={link.name}

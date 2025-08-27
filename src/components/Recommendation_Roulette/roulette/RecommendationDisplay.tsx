@@ -18,15 +18,15 @@ export function RecommendationDisplay({ recommendation }: RecommendationDisplayP
 
   return (
     <Card className="p-6 mt-8 bg-gradient-to-br from-purple-200/10 to-blue-200/10 dark:from-[#800080]/10 dark:to-[#00cccc]/10">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
         {recommendation.images?.[0]?.url ? (
           <img
             src={recommendation.images[0].url}
             alt={recommendation.name}
-            className="w-24 h-24 rounded-lg"
+            className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg"
           />
         ) : (
-          <div className="w-24 h-24 rounded-lg bg-gray-200/50 dark:bg-black/50 flex items-center justify-center">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg bg-gray-200/50 dark:bg-black/50 flex items-center justify-center">
             <Music className="w-8 h-8 text-blue-500 dark:text-[#00cccc]" />
           </div>
         )}
@@ -52,7 +52,7 @@ export function RecommendationDisplay({ recommendation }: RecommendationDisplayP
             href={recommendation.external_urls.spotify}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-500 dark:text-[#00cccc] hover:text-purple-600 dark:hover:text-[#800080] transition-colors"
+            className="self-end sm:self-center text-blue-500 dark:text-[#00cccc] hover:text-purple-600 dark:hover:text-[#800080] transition-colors"
           >
             <ExternalLink className="w-6 h-6" />
           </a>

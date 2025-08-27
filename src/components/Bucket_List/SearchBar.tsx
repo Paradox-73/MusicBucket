@@ -42,7 +42,7 @@ export function SearchBar({ listId }: { listId: string }) {
           value={query}
           onChange={handleSearch}
           placeholder="Search artists, albums, tracks..."
-          className="w-full rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 py-2 pl-10 pr-4 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+          className="w-full sm:flex-1 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 py-2 pl-10 pr-4 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
         />
         {isLoading && (
           <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">Searching...</div>

@@ -28,11 +28,11 @@ export function BucketListPanel() {
 
   return (
     <div className="flex h-full flex-col bg-gray-100 dark:bg-black/90" onDragOver={handleDragOver} onDrop={handleDrop}>
-      <header className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 px-6 py-4">
+      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 border-b border-gray-200 dark:border-white/10 px-4 py-3 sm:px-6 sm:py-4">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Your Bucket List</h2>
         <Filters />
       </header>
-      <main className="flex-1 overflow-y-auto p-6">
+      <main className="flex-1 overflow-y-auto p-4 sm:p-6">
         {filteredItems.length > 0 ? (
           <BucketList items={filteredItems} />
         ) : (

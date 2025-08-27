@@ -69,7 +69,7 @@ export function BucketList({ items }: BucketListProps) {
                         className={`object-cover transition-transform duration-300 group-hover:scale-105 ${
                           item.type === 'artist'
                             ? 'h-32 w-32 rounded-full'
-                            : 'h-40 w-full rounded-md'
+                            : 'h-32 sm:h-40 w-full rounded-md'
                         }`}
                       />
                     </div>
@@ -84,9 +84,9 @@ export function BucketList({ items }: BucketListProps) {
                       )}
                     </div>
 
-                    {/* Quick Actions on Hover */}
+                    {/* Quick Actions */}
                     <div 
-                      className="absolute right-2 top-2 flex items-center space-x-1 opacity-0 transition-all duration-300 group-hover:opacity-100"
+                      className="absolute top-2 right-2 flex items-center space-x-1 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300"
                       onClick={(e) => e.stopPropagation()} // Prevent card click when interacting with buttons
                     >
                       <button

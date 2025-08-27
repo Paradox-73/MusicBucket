@@ -190,7 +190,7 @@ const RoadTripMixtape = () => {
             </div>
             <PlaylistView />
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 h-[600px]">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 h-[300px] sm:h-[400px] lg:h-[600px]">
             <TripMap userLocation={userLocation as Location | null} />
           </div>
         </div>

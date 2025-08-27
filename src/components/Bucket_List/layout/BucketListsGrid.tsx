@@ -79,9 +79,9 @@ export function BucketListsGrid() {
   }
 
   return (
-    <div className="p-6 bg-gray-100 dark:bg-black text-gray-900 dark:text-white min-h-screen">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">My Bucket Lists</h1>
+    <div className="p-4 sm:p-6 bg-gray-100 dark:bg-black text-gray-900 dark:text-white min-h-screen">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6">
+        <h1 className="text-3xl font-bold mb-4 sm:mb-0">My Bucket Lists</h1>
         {!isCreating && (
           <button
             onClick={handleCreateClick}
@@ -93,7 +93,7 @@ export function BucketListsGrid() {
         )}
       </div>
       {isCreating && (
-        <form onSubmit={handleCreateList} className="mb-6 flex gap-2">
+        <form onSubmit={handleCreateList} className="mb-6 flex flex-col sm:flex-row gap-2">
           <input
             ref={inputRef}
             type="text"
