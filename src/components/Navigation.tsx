@@ -55,10 +55,9 @@ const Navigation: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile Menu Button */} 
+        {/* Mobile Menu Button */}
         <div className="md:hidden flex items-center space-x-4">
           <ThemeToggle />
-          <SpotifyProfileDropdown /> {/* Use the new component for mobile */} 
           <button
             className="p-2"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -68,7 +67,7 @@ const Navigation: React.FC = () => {
         </div>
         </nav>
 
-        {/* Mobile Navigation */} 
+        {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-primary/10 dark:border-secondary/10">
             <div className="container mx-auto px-4 py-2 space-y-2">
@@ -82,8 +81,8 @@ const Navigation: React.FC = () => {
                   {link.name}
                 </Link>
               ))}
-              {/* Add SpotifyProfileDropdown to mobile menu */} 
-              <div className="py-2">
+              {/* SpotifyProfileDropdown as a menu item */}
+              <div className="block py-2">
                 <SpotifyProfileDropdown />
               </div>
             </div>
