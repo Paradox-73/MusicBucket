@@ -5,16 +5,22 @@ export class SpotifyAuth {
   private static instance: SpotifyAuth;
   private isInitialized: boolean = false;
 
+  
+
   private constructor() {
+    // Immediately try to set access token from current session on instantiation
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session && session.provider_token) {
+        spotifyApi.setAccessToken(session.provider_token);
+        this.isInitialized = true;
+      }
+    });
+
     supabase.auth.onAuthStateChange((event, session) => {
       console.log('SpotifyAuth: onAuthStateChange - Event:', event, 'Session:', session);
-      if (event === 'SIGNED_IN' && session) {
-        const spotifyAccessToken = session.provider_token;
-        console.log('SpotifyAuth: SIGNED_IN - Spotify Access Token:', spotifyAccessToken);
-        if (spotifyAccessToken) {
-          spotifyApi.setAccessToken(spotifyAccessToken);
-          this.isInitialized = true;
-        }
+      if (session && session.provider_token) { // Always use provider_token if session exists
+        spotifyApi.setAccessToken(session.provider_token);
+        this.isInitialized = true;
       } else if (event === 'SIGNED_OUT') {
         console.log('SpotifyAuth: SIGNED_OUT');
         spotifyApi.setAccessToken('');
@@ -34,14 +40,10 @@ export class SpotifyAuth {
     console.log('SpotifyAuth: Initializing...');
     const { data: { session } } = await supabase.auth.getSession();
     console.log('SpotifyAuth: Initial session check - Session:', session);
-    if (session) {
-      const spotifyAccessToken = session.provider_token;
-      console.log('SpotifyAuth: Initial session check - Spotify Access Token:', spotifyAccessToken);
-      if (spotifyAccessToken) {
-        spotifyApi.setAccessToken(spotifyAccessToken);
-        this.isInitialized = true;
-        return true;
-      }
+    if (session && session.provider_token) { // Ensure provider_token is present
+      spotifyApi.setAccessToken(session.provider_token);
+      this.isInitialized = true;
+      return true;
     }
     this.isInitialized = false;
     return false;

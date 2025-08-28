@@ -1,130 +1,159 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { createSpotifyApi } from '../../lib/Dashboard/spotify';
-import { useSpotifyAuthBridge } from '../../lib/spotifyAuth';
-import { SpotifyAuth } from '../../lib/spotify/auth';
-import { LoadingSpinner } from './LoadingSpinner';
-import { ErrorMessage } from './ErrorMessage';
+import { motion } from 'framer-motion';
+import {
+  LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer
+} from 'recharts';
 
-interface Artist {
-  id: string;
-  name: string;
-  popularity: number;
+interface SavedTrack {
+  added_at: string;
+  track: Track;
 }
 
 interface Track {
   id: string;
   name: string;
-  artists: Artist[];
+  artists: { id: string; name: string; }[];
   popularity: number;
+  album: { release_date: string; };
+  duration_ms: number;
 }
 
-const calculateScore = (tracks: Track[], uniqueArtists: Set<string>) => {
-  if (tracks.length === 0) return 0;
+interface Personality {
+  title: string;
+  description: string;
+}
 
-  // Base score from quantity (max 30 points)
-  const quantityScore = Math.min(tracks.length / 1000 * 30, 30);
-  
-  // Artist diversity score (max 20 points)
-  const artistDiversityScore = Math.min(uniqueArtists.size / tracks.length * 20, 20);
-  
-  // Underground score based on inverse popularity (max 50 points)
-  const avgPopularity = tracks.reduce((sum, track) => sum + track.popularity, 0) / tracks.length;
-  const undergroundScore = (100 - avgPopularity) * 0.5; // Lower popularity = higher score
-
-  return Math.round(quantityScore + artistDiversityScore + undergroundScore);
+const getPersonality = (metrics: any): Personality => {
+  if (metrics.avgPopularity < 30 && metrics.avgReleaseYear < 2000) return { title: 'The Underground Archivist', description: "You're a historian of the obscure, digging for gems that time forgot." };
+  if (metrics.avgPopularity < 40) return { title: 'The Underground Vindicator', description: "You champion the unsung heroes of music. If it's not on the radio, it's on your playlist." };
+  if (metrics.avgReleaseYear < 2005) return { title: 'The Archivist', description: "You're a musical historian with a love for the classics and timeless sounds." };
+  if (metrics.artistDiversity > 70) return { title: 'The Explorer', description: "A sonic adventurer, you're constantly seeking new sounds and pushing boundaries." };
+  if (metrics.artistDiversity < 20) return { title: 'The Specialist', description: "You're a connoisseur of your chosen sound, exploring its every nook and cranny." };
+  return { title: 'The Trendsetter', description: "You've got your finger on the pulse, enjoying the most popular sounds of today." };
 };
 
-export const MusicTasteAnalyzer: React.FC = () => {
-  const spotifyAuth = SpotifyAuth.getInstance();
+const calculateMetrics = (tracks: SavedTrack[]) => {
+  if (tracks.length === 0) return null;
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['saved-tracks'],
-    queryFn: async () => {
-      const token = await spotifyAuth.getAccessToken();
-      if (!token) throw new Error('No access token available');
-      const spotifyApi = createSpotifyApi(token);
-      
-      const tracks: Track[] = [];
-      let offset = 0;
-      
-      while (true) {
-        const response = await spotifyApi.getSavedTracks(offset);
-        const { items, total } = response.data;
-        
-        if (!items.length) break;
-        
-        tracks.push(...items.map((item: any) => item.track));
-        
-        if (tracks.length >= total) break;
-        offset += 50;
-      }
-      
-      return tracks;
-    },
+  const totalTracks = tracks.length;
+  const uniqueArtists = new Set(tracks.flatMap(item => item.track.artists.map(artist => artist.id)));
+  const avgPopularity = tracks.reduce((sum, item) => sum + item.track.popularity, 0) / totalTracks;
+  const avgReleaseYear = tracks.reduce((sum, item) => sum + new Date(item.track.album.release_date).getFullYear(), 0) / totalTracks;
+  const artistDiversity = (uniqueArtists.size / totalTracks) * 100;
+  
+  const totalDurationMs = tracks.reduce((sum, item) => sum + (item.track.duration_ms || 0), 0);
+  const avgDurationMs = totalDurationMs / totalTracks;
+
+  const additionsByMonth: { [key: string]: number } = {};
+  tracks.forEach(item => {
+    const month = new Date(item.added_at).toISOString().slice(0, 7);
+    additionsByMonth[month] = (additionsByMonth[month] || 0) + 1;
   });
 
-  if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorMessage message="Failed to analyze music taste" />;
-  if (!data) return null;
+  const monthlyAdditionsData = Object.entries(additionsByMonth)
+    .map(([month, count]) => ({ month, count }))
+    .sort((a, b) => a.month.localeCompare(b.month));
 
-  const uniqueArtists = new Set(
-    data.flatMap(track => track.artists.map(artist => artist.id))
-  );
+  return {
+    totalTracks,
+    uniqueArtists: uniqueArtists.size,
+    avgPopularity: Math.round(avgPopularity),
+    avgReleaseYear: Math.round(avgReleaseYear),
+    artistDiversity: Math.round(artistDiversity),
+    monthlyAdditionsData,
+    avgDurationMs,
+    totalDurationMs,
+  };
+};
 
-  const score = calculateScore(data, uniqueArtists);
+const formatDuration = (ms: number) => {
+  if (isNaN(ms) || ms < 0) return '0:00';
+  const minutes = Math.floor(ms / 60000);
+  const seconds = ((ms % 60000) / 1000).toFixed(0);
+  return `${minutes}:${(parseInt(seconds) < 10 ? '0' : '')}${seconds}`;
+};
 
-  // Calculate variety score
-  const varietyScore = new Set(data.flatMap(track => 
-    track.artists.map(artist => artist.name)
-  )).size / data.length * 100;
+const formatTotalDuration = (ms: number) => {
+  if (isNaN(ms) || ms < 0) return '0 hours';
+  const hours = (ms / (1000 * 60 * 60)).toFixed(1);
+  return `${hours} hours`;
+};
 
-  const sortedByPopularity = [...data].sort((a, b) => b.popularity - a.popularity);
-  const mostPopular = sortedByPopularity.slice(0, 5);
-  const mostUnderground = sortedByPopularity.slice(-5).reverse();
+interface MusicTasteAnalyzerProps {
+  savedTracks: SavedTrack[];
+}
+
+export const MusicTasteAnalyzer: React.FC<MusicTasteAnalyzerProps> = ({ savedTracks }) => {
+  if (!savedTracks || savedTracks.length === 0) return <div className="text-center py-10">Not enough data to analyze your taste.</div>;
+
+  const metrics = calculateMetrics(savedTracks);
+  if (!metrics) return null;
+
+  const personality = getPersonality(metrics);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
-      <h2 className="text-3xl font-bold mb-6">Your Music Taste Analysis</h2>
-      
-      <div className="mb-8">
-        <div className="text-5xl sm:text-6xl font-bold text-green-500 mb-2">{score}/100</div>
-        <p className="text-gray-500 dark:text-gray-400">Based on library size, artist diversity, and music obscurity</p>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
+    >
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold mb-2">{personality.title}</h2>
+        <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">{personality.description}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
-        <div>
-          <h3 className="text-xl font-semibold mb-4">Library Stats</h3>
-          <ul className="space-y-2">
-            <li>Total Tracks: {data.length}</li>
-            <li>Unique Artists: {uniqueArtists.size}</li>
-            <li>Artist Variety Score: {Math.round(varietyScore)}/100</li>
-            <li>Average Track Popularity: {Math.round(data.reduce((sum, track) => sum + track.popularity, 0) / data.length)}/100</li>
-          </ul>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 text-center mb-10">
+        <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+          <div className="text-3xl font-bold">{metrics.totalTracks}</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">Unique Library Tracks</div>
         </div>
-
-        <div>
-          <h3 className="text-xl font-semibold mb-4">Most Popular Tracks</h3>
-          <ul className="space-y-2">
-            {mostPopular.map(track => (
-              <li key={track.id} className="text-sm">
-                {track.name} - {track.artists[0].name} ({track.popularity}/100)
-              </li>
-            ))}
-          </ul>
+        <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+          <div className="text-3xl font-bold">{metrics.uniqueArtists}</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">Unique Artists</div>
         </div>
-
-        <div>
-          <h3 className="text-xl font-semibold mb-4">Most Underground Tracks</h3>
-          <ul className="space-y-2">
-            {mostUnderground.map(track => (
-              <li key={track.id} className="text-sm">
-                {track.name} - {track.artists[0].name} ({track.popularity}/100)
-              </li>
-            ))}
-          </ul>
+        <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+          <div className="text-3xl font-bold">{metrics.avgPopularity}/100</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">Avg. Popularity</div>
+        </div>
+        <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+          <div className="text-3xl font-bold">{metrics.avgReleaseYear}</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">Avg. Release Year</div>
+        </div>
+        <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+          <div className="text-3xl font-bold">{formatDuration(metrics.avgDurationMs)}</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">Avg. Song Length</div>
+        </div>
+        <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+          <div className="text-3xl font-bold">{formatTotalDuration(metrics.totalDurationMs)}</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">Total Listening Time</div>
         </div>
       </div>
-    </div>
+
+      <div>
+        <h3 className="text-xl font-semibold mb-4 text-center">Your Library Growth</h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={metrics.monthlyAdditionsData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+            <XAxis dataKey="month" />
+            <YAxis />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: 'rgba(0, 0, 0, 0.8)', 
+                borderColor: '#00cccc'
+              }} 
+            />
+            <Legend />
+            <Line 
+              type="monotone" 
+              dataKey="count" 
+              stroke="#800080" 
+              strokeWidth={2} 
+              name="Tracks Added" 
+              activeDot={{ r: 8, stroke: '#00cccc', strokeWidth: 2, fill: '#800080' }} 
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </motion.div>
   );
 };

@@ -85,8 +85,11 @@ pnpm-lock.yaml
 progress_report.html
 file_structure.txt
 roadmap.txt
- error.txt
+
 notion/
 feature_culture_clash.md
-srs.pdf
+error.txt
 supabase_schema.sql
+MusicBucket_SRS.md
+Dashboard_Improvement_Ideas.md
+srs.pdf

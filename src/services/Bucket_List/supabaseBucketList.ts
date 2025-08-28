@@ -3,13 +3,14 @@ import type { BucketItem } from '../../types/Bucket_List/bucket';
 
 const BUCKET_LIST_ITEMS_TABLE = 'bucket_list_items';
 const BUCKET_LISTS_TABLE = 'bucket_lists';
+const BUCKET_LIST_COVERS_BUCKET = 'bucket_list_covers'; // New bucket for covers
 
 // --- New Functions for Managing Bucket Lists ---
 
 export async function getBucketLists(userId: string) {
   const { data, error } = await supabase
     .from(BUCKET_LISTS_TABLE)
-    .select('*')
+    .select('*, items:bucket_list_items(*)')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
@@ -43,10 +44,10 @@ export async function getPublicBucketList(listId: string) {
 
 
 
-export async function createBucketList(name: string, userId: string) {
+export async function createBucketList(name: string, userId: string, cover_image_url?: string) {
     const { data, error } = await supabase
         .from(BUCKET_LISTS_TABLE)
-        .insert([{ name, user_id: userId }])
+        .insert([{ name, user_id: userId, cover_image_url }])
         .select()
         .single();
 
@@ -57,7 +58,7 @@ export async function createBucketList(name: string, userId: string) {
     return data;
 }
 
-export async function updateBucketList(listId: string, updates: { name?: string; is_public?: boolean }) {
+export async function updateBucketList(listId: string, updates: { name?: string; is_public?: boolean; cover_image_url?: string }) {
     const { data, error } = await supabase
         .from(BUCKET_LISTS_TABLE)
         .update(updates)
@@ -78,6 +79,31 @@ export async function deleteBucketList(listId: string) {
         console.error('Supabase deleteBucketList error:', error);
         throw error;
     }
+}
+
+export async function uploadBucketListCover(file: File, userId: string, listId: string): Promise<string> {
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${listId}.${fileExt}`;
+  const filePath = `${userId}/${fileName}`;
+
+  const { data, error } = await supabase.storage
+    .from(BUCKET_LIST_COVERS_BUCKET)
+    .upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: true,
+    });
+
+  if (error) {
+    console.error('Supabase uploadBucketListCover error:', error);
+    throw error;
+  }
+
+  // Get public URL
+  const { data: publicUrlData } = supabase.storage
+    .from(BUCKET_LIST_COVERS_BUCKET)
+    .getPublicUrl(filePath);
+
+  return publicUrlData.publicUrl;
 }
 
 

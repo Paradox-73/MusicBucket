@@ -1,19 +1,23 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import { createSpotifyApi } from '../../lib/Dashboard/spotify';
 import { SpotifyAuth } from '../../lib/spotify/auth';
 import { UserProfile } from './UserProfile';
 import { MusicTasteAnalyzer } from './MusicTasteAnalyzer';
-import { LoadingSpinner } from './LoadingSpinner';
 import { ErrorMessage } from './ErrorMessage';
+import { TopArtistCard } from './TopArtistCard';
+import { TopTrackCard } from './TopTrackCard';
+import { SkeletonCard } from './SkeletonCard';
+import { PopularityHighlights } from './PopularityHighlights';
+import { LoadingSpinner } from './LoadingSpinner';
+import { DecadeChart } from './DecadeChart';
+import { PlaylistMetrics } from './PlaylistMetrics';
 
 type TimeRange = 'short_term' | 'medium_term' | 'long_term';
-type FilterOption = 'listening_history' | 'liked_playlists';
 
 export const Dashboard: React.FC = () => {
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>('medium_term');
-  const [filterOption, setFilterOption] = useState<FilterOption>('listening_history');
-
   const spotifyAuth = SpotifyAuth.getInstance();
 
   const { data: topArtists, isLoading: isLoadingArtists, error: errorArtists } = useQuery({
@@ -38,43 +42,79 @@ export const Dashboard: React.FC = () => {
     },
   });
 
-  // const { data: recentlyPlayed, isLoading: isLoadingRecentlyPlayed, error: errorRecentlyPlayed } = useQuery({
-  //   queryKey: ['recentlyPlayed'],
-  //   queryFn: async () => {
-  //     const token = await spotifyAuth.getAccessToken();
-  //     if (!token) throw new Error('No access token available');
-  //     const spotifyApi = createSpotifyApi(token);
-  //     const response = await spotifyApi.getRecentlyPlayedTracks(50);
-  //     return response.data.items.map((item: any) => item.track);
-  //   },
-  //   enabled: filterOption === 'listening_history',
-  // });
-
-  const { data: likedTracks, isLoading: isLoadingLikedTracks, error: errorLikedTracks } = useQuery({
-    queryKey: ['likedTracks'],
+  const { data: allTracks, isLoading: isLoadingAllTracks, error: errorAllTracks } = useQuery({
+    queryKey: ['all-tracks-analysis'],
     queryFn: async () => {
       const token = await spotifyAuth.getAccessToken();
       if (!token) throw new Error('No access token available');
       const spotifyApi = createSpotifyApi(token);
-      const tracks: any[] = [];
+      
+      const allTracks = new Map<string, any>();
+
+      // 1. Fetch all user's playlists
+      let playlists: any[] = [];
       let offset = 0;
       while (true) {
-        const response = await spotifyApi.getSavedTracks(offset);
+        const response = await spotifyApi.getPlaylists(offset, 50);
         const { items, total } = response.data;
         if (!items.length) break;
-        tracks.push(...items.map((item: any) => item.track));
-        if (tracks.length >= total) break;
+        playlists.push(...items);
+        if (playlists.length >= total) break;
         offset += 50;
       }
-      return tracks;
+
+      // 2. Fetch tracks for each playlist
+      for (const playlist of playlists) {
+        if (!playlist.id) continue;
+        let tracksOffset = 0;
+        while (true) {
+          try {
+            const response = await spotifyApi.getPlaylistTracks(playlist.id, tracksOffset, 100);
+            const { items } = response.data;
+            if (!items.length) break;
+            items.forEach(item => {
+              if (item.track && item.track.id) {
+                allTracks.set(item.track.id, { ...item, track: { ...item.track, album: item.track.album || {} } });
+              }
+            });
+            if (items.length < 100) break;
+            tracksOffset += 100;
+          } catch (error) {
+            console.error(`Failed to fetch tracks for playlist ${playlist.id}`, error);
+            break; 
+          }
+        }
+      }
+
+      // 3. Fetch user's saved tracks
+      offset = 0;
+      while (true) {
+        try {
+          const response = await spotifyApi.getSavedTracks(offset, 50);
+          const { items } = response.data;
+          if (!items.length) break;
+          items.forEach(item => {
+            if (item.track && item.track.id) {
+              allTracks.set(item.track.id, { ...item, track: { ...item.track, album: item.track.album || {} } });
+            }
+          });
+          if (items.length < 50) break;
+          offset += 50;
+        } catch (error) {
+          console.error('Failed to fetch saved tracks', error);
+          break;
+        }
+      }
+
+      return Array.from(allTracks.values());
     },
-    enabled: filterOption === 'liked_playlists',
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  const isLoading = isLoadingArtists || isLoadingTracks || isLoadingLikedTracks;
-  const error = errorArtists || errorTracks || errorLikedTracks;
+  const error = errorArtists || errorTracks || errorAllTracks;
 
   const getTopGenres = (artists: any[]) => {
+    if (!artists) return [];
     const genreCounts: { [key: string]: number } = {};
     artists.forEach(artist => {
       artist.genres.forEach((genre: string) => {
@@ -87,88 +127,96 @@ export const Dashboard: React.FC = () => {
       .map(([genre]) => genre);
   };
 
-  const displayedTracks = likedTracks;
+  const topGenres = getTopGenres(topArtists);
 
-  if (isLoading) return <LoadingSpinner />;
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  };
+
+  const cardVariant = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+  };
+
   if (error) return <ErrorMessage message={error.message} />;
 
   return (
     <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
       <UserProfile />
-      <MusicTasteAnalyzer />
-
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mt-8">
-        <h2 className="text-3xl font-bold mb-6">Your Spotify Dashboard</h2>
-
-        <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
-          <select
-            className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            value={selectedTimeRange}
-            onChange={(e) => setSelectedTimeRange(e.target.value as TimeRange)}
-          >
-            <option value="short_term">Last 4 Weeks</option>
-            <option value="medium_term">Last 6 Months</option>
-            <option value="long_term">All Time</option>
-          </select>
-
-          <select
-            className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            value={filterOption}
-            onChange={(e) => setFilterOption(e.target.value as FilterOption)}
-          >
-            <option value="listening_history">Listening History</option>
-            <option value="liked_playlists">Liked Playlists</option>
-          </select>
+      
+      <motion.div variants={containerVariants} initial="hidden" animate="visible">
+        <div className="mb-8">
+          {isLoadingAllTracks ? <div className="w-full h-96 bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center"><LoadingSpinner/></div> : <MusicTasteAnalyzer savedTracks={allTracks || []} />}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <div>
-            <h3 className="text-xl font-semibold mb-4">Top Artists</h3>
-            <ul className="space-y-2">
-              {topArtists?.map((artist: any) => (
-                <li key={artist.id} className="text-sm">
-                  {artist.name}
-                </li>
-              ))}
-            </ul>
+        <motion.div variants={cardVariant} className="mb-8">
+          {isLoadingAllTracks ? <div className="w-full h-96 bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center"><LoadingSpinner/></div> : <DecadeChart tracks={allTracks || []} />}
+        </motion.div>
+
+        <motion.div variants={cardVariant} className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-baseline mb-6">
+            <h2 className="text-3xl font-bold">Your Top Charts</h2>
+            <select
+              className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white mt-4 sm:mt-0"
+              value={selectedTimeRange}
+              onChange={(e) => setSelectedTimeRange(e.target.value as TimeRange)}
+            >
+              <option value="short_term">Last 4 Weeks</option>
+              <option value="medium_term">Last 6 Months</option>
+              <option value="long_term">All Time</option>
+            </select>
           </div>
 
-          <div>
-            <h3 className="text-xl font-semibold mb-4">Top Tracks</h3>
-            <ul className="space-y-2">
-              {topTracks?.map((track: any) => (
-                <li key={track.id} className="text-sm">
-                  {track.name} - {track.artists.map((artist: any) => artist.name).join(', ')}
-                </li>
-              ))}
-            </ul>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+              <h3 className="text-xl font-semibold mb-4">Top Artists</h3>
+              <div className="space-y-3">
+                {isLoadingArtists 
+                  ? [...Array(5)].map((_, i) => <SkeletonCard key={i} />) 
+                  : topArtists?.slice(0, 5).map((artist: any, index: number) => (
+                      <TopArtistCard key={artist.id} artist={artist} rank={index + 1} />
+                    ))}
+              </div>
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold mb-4">Top Tracks</h3>
+              <div className="space-y-3">
+                {isLoadingTracks
+                  ? [...Array(5)].map((_, i) => <SkeletonCard key={i} />)
+                  : topTracks?.slice(0, 5).map((track: any, index: number) => (
+                      <TopTrackCard key={track.id} track={track} rank={index + 1} />
+                    ))}
+              </div>
+            </div>
           </div>
+        </motion.div>
 
-          <div>
-            <h3 className="text-xl font-semibold mb-4">Top Genres</h3>
-            <ul className="space-y-2">
-              {topArtists && getTopGenres(topArtists).map((genre: string) => (
-                <li key={genre} className="text-sm">
-                  {genre}
-                </li>
-              ))}
-            </ul>
-          </div>
+        <div className="mb-8">
+          { (isLoadingAllTracks || isLoadingArtists) 
+            ? <div className="w-full h-96 bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center"><LoadingSpinner/></div> 
+            : <PopularityHighlights savedTracks={allTracks || []} topArtists={topArtists || []} />
+          }
         </div>
 
-        {/* <div className="mt-8">
-          <h3 className="text-xl font-semibold mb-4">
-            {filterOption === 'listening_history' ? 'Recently Played Tracks' : 'Liked Tracks'}
-          </h3>
-          <ul className="space-y-2">
-            {displayedTracks?.map((track: any) => (
-              <li key={track.id} className="text-sm">
-                {track.name} - {track.artists.map((artist: any) => artist.name).join(', ')}
-              </li>
-            ))}
-          </ul>
-        </div> */}
-      </div>
+        <motion.div variants={cardVariant} className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+          <h2 className="text-2xl font-bold mb-4">Top Genres</h2>
+          <div className="flex flex-wrap gap-2">
+            {isLoadingArtists
+              ? <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-full animate-pulse"></div>
+              : topGenres.map(genre => (
+                  <span key={genre} className="bg-purple-600 text-white px-3 py-1 rounded-full text-sm font-semibold capitalize">
+                    {genre}
+                  </span>
+                ))}
+          </div>
+        </motion.div>
+
+        <motion.div variants={cardVariant} className="mt-8">
+          <PlaylistMetrics />
+        </motion.div>
+
+      </motion.div>
     </div>
   );
 };

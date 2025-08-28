@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { AuthState } from '../types/auth';
 import { supabase } from '../lib/supabase';
+import { upsertProfile } from '../services/Auth/supabaseAuth';
 
 export const useAuthStore = create<AuthState>((set) => {
   // Initial state
@@ -25,6 +26,13 @@ export const useAuthStore = create<AuthState>((set) => {
         loading: false,
       });
       console.log('AuthStore: State updated - User:', session?.user, 'Session:', session); // Add this
+      if (session?.user) {
+        try {
+          upsertProfile(session.user);
+        } catch (e) {
+          console.error('Failed to upsert profile:', e);
+        }
+      }
     } else if (event === 'SIGNED_OUT') {
       console.log('AuthStore: Handling SIGNED_OUT.'); // Add this
       set({

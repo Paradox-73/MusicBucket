@@ -75,9 +75,10 @@ export const createSpotifyApi = (accessToken: string) => {
 
   return {
     getCurrentUser: () => api.get('/me'),
-    getPlaylists: () => api.get('/me/playlists'),
-    getSavedTracks: (offset = 0) => 
-      api.get(`/me/tracks?limit=50&offset=${offset}`),
+    getPlaylists: (offset: number = 0, limit: number = 50) => api.get(`/me/playlists?offset=${offset}&limit=${limit}`),
+    getPlaylistTracks: (playlistId: string, offset: number = 0, limit: number = 100) => api.get(`/playlists/${playlistId}/tracks?offset=${offset}&limit=${limit}`),
+    getSavedTracks: (offset: number = 0, limit: number = 50) => api.get(`/me/tracks?limit=${limit}&offset=${offset}`),
+    getAudioFeaturesForTracks: (trackIds: string[]) => api.get(`/audio-features?ids=${trackIds.join(',')}`),
     getRecentlyPlayed: () => 
       api.get('/me/player/recently-played'),
     getTopArtists: (time_range: 'short_term' | 'medium_term' | 'long_term', limit: number = 20) => api.get(`/me/top/artists?time_range=${time_range}&limit=${limit}`),
