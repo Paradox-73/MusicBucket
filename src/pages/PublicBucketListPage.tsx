@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { getPublicBucketList, createBucketList, addItemToBucketList, getBucketLists } from '../services/Bucket_List/supabaseBucketList';
-import { Music, Twitter, Copy, Save, Whatsapp, Instagram } from 'lucide-react';
+import { Music, Twitter, Copy, Save, Phone, Instagram } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -197,7 +197,7 @@ export function PublicBucketListPage() {
                 onClick={handleShareWhatsapp}
                 className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
               >
-                <Share2 size={20} /> WhatsApp
+                <Phone size={20} /> WhatsApp
               </button>
               <button
                 onClick={handleShareInstagram}
@@ -213,34 +213,30 @@ export function PublicBucketListPage() {
       <div className="flex flex-col gap-2">
         {list.items && list.items.length > 0 ? (
           list.items.map((item, index) => (
-            <div key={item.id} className="grid grid-cols-[2rem_1fr_auto] items-center gap-4 p-4 rounded-lg shadow-sm bg-gray-50 dark:bg-gray-800 hover:shadow-md transition-shadow duration-200">
-              <span className="text-gray-700 dark:text-gray-300 font-semibold text-left">{index + 1}.</span>
-              <div className="flex items-center gap-4">
-                {item.imageUrl ? (
-                  <img src={item.imageUrl} alt={item.title} className="w-16 h-16 object-cover rounded-md" />
-                ) : (
-                  <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-md flex items-center justify-center">
-                    <Music size={32} className="text-gray-500 dark:text-gray-400" />
+            <a 
+              key={item.id} 
+              href={item.spotify_id ? `https://open.spotify.com/${item.type === 'track' ? 'track' : 'artist'}/${item.spotify_id}` : undefined}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`block ${item.spotify_id ? 'cursor-pointer' : 'cursor-default'}`}>
+              <div className="grid grid-cols-[2rem_1fr_auto] items-center gap-4 p-4 rounded-lg shadow-sm bg-gray-50 dark:bg-gray-800 hover:shadow-md transition-shadow duration-200">
+                <span className="text-gray-700 dark:text-gray-300 font-semibold text-left">{index + 1}.</span>
+                <div className="flex items-center gap-4">
+                  {item.imageUrl ? (
+                    <img src={item.imageUrl} alt={item.title} className="w-16 h-16 object-cover rounded-md" />
+                  ) : (
+                    <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-md flex items-center justify-center">
+                      <Music size={32} className="text-gray-500 dark:text-gray-400" />
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-bold text-lg text-gray-900 dark:text-white">{item.title}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{item.artists?.map(a => a.name).join(', ')}</p>
                   </div>
-                )}
-                <div>
-                  <p className="font-bold text-lg text-gray-900 dark:text-white">{item.title}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{item.artists?.map(a => a.name).join(', ')}</p>
                 </div>
+                <span className="text-xs font-semibold px-3 py-1 rounded-full bg-primary-light/20 text-primary dark:bg-primary-dark/50 dark:text-primary-light capitalize">{item.type}</span>
               </div>
-              <span className="text-xs font-semibold px-3 py-1 rounded-full bg-primary-light/20 text-primary dark:bg-primary-dark/50 dark:text-primary-light capitalize">{item.type}</span>
-              {item.spotify_id && (
-                <a
-                  href={`https://open.spotify.com/${item.type === 'track' ? 'track' : 'artist'}/${item.spotify_id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ml-auto p-2 rounded-full bg-green-500 text-white hover:bg-green-600 transition-colors"
-                  aria-label="Listen on Spotify"
-                >
-                  <Music size={20} />
-                </a>
-              )}
-            </div>
+            </a>
           ))
         ) : (
           <div className="text-center text-gray-500 dark:text-neutral-400 mt-8">

@@ -1,8 +1,5 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import {
-  LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer
-} from 'recharts';
 
 interface SavedTrack {
   added_at: string;
@@ -32,7 +29,7 @@ const getPersonality = (metrics: any): Personality => {
   return { title: 'The Trendsetter', description: "You've got your finger on the pulse, enjoying the most popular sounds of today." };
 };
 
-const calculateMetrics = (tracks: SavedTrack[]) => {
+export const calculateMusicTasteMetrics = (tracks: SavedTrack[]) => {
   if (tracks.length === 0) return null;
 
   const totalTracks = tracks.length;
@@ -86,7 +83,7 @@ interface MusicTasteAnalyzerProps {
 export const MusicTasteAnalyzer: React.FC<MusicTasteAnalyzerProps> = ({ savedTracks }) => {
   if (!savedTracks || savedTracks.length === 0) return <div className="text-center py-10">Not enough data to analyze your taste.</div>;
 
-  const metrics = calculateMetrics(savedTracks);
+  const metrics = calculateMusicTasteMetrics(savedTracks);
   if (!metrics) return null;
 
   const personality = getPersonality(metrics);
@@ -128,31 +125,6 @@ export const MusicTasteAnalyzer: React.FC<MusicTasteAnalyzerProps> = ({ savedTra
           <div className="text-3xl font-bold">{formatTotalDuration(metrics.totalDurationMs)}</div>
           <div className="text-sm text-gray-500 dark:text-gray-400">Total Listening Time</div>
         </div>
-      </div>
-
-      <div>
-        <h3 className="text-xl font-semibold mb-4 text-center">Your Library Growth</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={metrics.monthlyAdditionsData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: 'rgba(0, 0, 0, 0.8)', 
-                borderColor: '#00cccc'
-              }} 
-            />
-            <Legend />
-            <Line 
-              type="monotone" 
-              dataKey="count" 
-              stroke="#800080" 
-              strokeWidth={2} 
-              name="Tracks Added" 
-              activeDot={{ r: 8, stroke: '#00cccc', strokeWidth: 2, fill: '#800080' }} 
-            />
-          </LineChart>
-        </ResponsiveContainer>
       </div>
     </motion.div>
   );

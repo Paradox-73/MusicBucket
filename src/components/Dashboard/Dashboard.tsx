@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { createSpotifyApi } from '../../lib/Dashboard/spotify';
 import { SpotifyAuth } from '../../lib/spotify/auth';
 import { UserProfile } from './UserProfile';
-import { MusicTasteAnalyzer } from './MusicTasteAnalyzer';
+import { MusicTasteAnalyzer, calculateMusicTasteMetrics } from './MusicTasteAnalyzer';
 import { ErrorMessage } from './ErrorMessage';
 import { TopArtistCard } from './TopArtistCard';
 import { TopTrackCard } from './TopTrackCard';
@@ -13,14 +13,89 @@ import { PopularityHighlights } from './PopularityHighlights';
 import { LoadingSpinner } from './LoadingSpinner';
 import { DecadeChart } from './DecadeChart';
 import { PlaylistMetrics } from './PlaylistMetrics';
+import { LibraryGrowthChart } from './LibraryGrowthChart';
 
 type TimeRange = 'short_term' | 'medium_term' | 'long_term';
 type PlaylistOwnershipFilter = 'all' | 'mine' | 'others';
+
+const fetchAllTracks = async (spotifyAuth: SpotifyAuth, playlistOwnershipFilter: PlaylistOwnershipFilter, userId: string | undefined) => {
+  const token = await spotifyAuth.getAccessToken();
+  if (!token) throw new Error('No access token available');
+  const spotifyApi = createSpotifyApi(token);
+  
+  const allTracks = new Map<string, any>();
+
+  // 1. Fetch all user's playlists
+  const playlists: any[] = [];
+  let offset = 0;
+  while (true) {
+    const response = await spotifyApi.getPlaylists(offset, 50);
+    const { items, total } = response.data;
+    if (!items.length) break;
+    playlists.push(...items);
+    if (playlists.length >= total) break;
+    offset += 50;
+  }
+
+  // Filter playlists based on ownership
+  let filteredPlaylists = playlists;
+  if (playlistOwnershipFilter === 'mine' && userId) {
+    filteredPlaylists = playlists.filter(playlist => playlist.owner.id === userId);
+  } else if (playlistOwnershipFilter === 'others' && userId) {
+    filteredPlaylists = playlists.filter(playlist => playlist.owner.id !== userId);
+  }
+
+  // 2. Fetch tracks for each (filtered) playlist
+  for (const playlist of filteredPlaylists) {
+    if (!playlist.id) continue;
+    let tracksOffset = 0;
+    while (true) {
+      try {
+        const response = await spotifyApi.getPlaylistTracks(playlist.id, tracksOffset, 100);
+        const { items } = response.data;
+        if (!items.length) break;
+        items.forEach(item => {
+          if (item.track && item.track.id) {
+            allTracks.set(item.track.id, { ...item, track: { ...item.track, album: item.track.album || {} } });
+          }
+        });
+        if (items.length < 100) break;
+        tracksOffset += 100;
+      } catch (error) {
+        console.error(`Failed to fetch tracks for playlist ${playlist.id}`, error);
+        break; 
+      }
+    }
+  }
+
+  // 3. Fetch user's saved tracks (always included, regardless of playlist filter)
+  offset = 0;
+  while (true) {
+    try {
+      const response = await spotifyApi.getSavedTracks(offset, 50);
+      const { items } = response.data;
+      if (!items.length) break;
+      items.forEach(item => {
+        if (item.track && item.track.id) {
+          allTracks.set(item.track.id, { ...item, track: { ...item.track, album: item.track.album || {} } });
+        }
+      });
+      if (items.length < 50) break;
+      offset += 50;
+    } catch (error) {
+      console.error('Failed to fetch saved tracks', error);
+      break;
+    }
+  }
+
+  return Array.from(allTracks.values());
+};
 
 export const Dashboard: React.FC = () => {
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>('medium_term');
   const [playlistOwnershipFilter, setPlaylistOwnershipFilter] = useState<PlaylistOwnershipFilter>('all');
   const spotifyAuth = SpotifyAuth.getInstance();
+  const queryClient = useQueryClient();
 
   const { data: currentUser, isLoading: isLoadingUser, error: errorUser } = useQuery({
     queryKey: ['currentUser'],
@@ -33,6 +108,21 @@ export const Dashboard: React.FC = () => {
     },
     staleTime: Infinity, // User data doesn't change often
   });
+
+  useEffect(() => {
+    if (currentUser?.id) {
+      const filters: PlaylistOwnershipFilter[] = ['all', 'mine', 'others'];
+      filters.forEach(filter => {
+        if (filter !== playlistOwnershipFilter) {
+          queryClient.prefetchQuery({
+            queryKey: ['all-tracks-analysis', filter, currentUser.id],
+            queryFn: () => fetchAllTracks(spotifyAuth, filter, currentUser.id),
+            staleTime: 1000 * 60 * 5, // 5 minutes
+          });
+        }
+      });
+    }
+  }, [currentUser?.id, playlistOwnershipFilter, queryClient, spotifyAuth]);
 
   const { data: topArtists, isLoading: isLoadingArtists, error: errorArtists } = useQuery({
     queryKey: ['topArtists', selectedTimeRange],
@@ -58,81 +148,12 @@ export const Dashboard: React.FC = () => {
 
   const { data: allTracks, isLoading: isLoadingAllTracks, error: errorAllTracks } = useQuery({
     queryKey: ['all-tracks-analysis', playlistOwnershipFilter, currentUser?.id],
-    queryFn: async () => {
-      const token = await spotifyAuth.getAccessToken();
-      if (!token) throw new Error('No access token available');
-      const spotifyApi = createSpotifyApi(token);
-      
-      const allTracks = new Map<string, any>();
-
-      // 1. Fetch all user's playlists
-      const playlists: any[] = [];
-      let offset = 0;
-      while (true) {
-        const response = await spotifyApi.getPlaylists(offset, 50);
-        const { items, total } = response.data;
-        if (!items.length) break;
-        playlists.push(...items);
-        if (playlists.length >= total) break;
-        offset += 50;
-      }
-
-      // Filter playlists based on ownership
-      let filteredPlaylists = playlists;
-      if (playlistOwnershipFilter === 'mine' && currentUser?.id) {
-        filteredPlaylists = playlists.filter(playlist => playlist.owner.id === currentUser.id);
-      } else if (playlistOwnershipFilter === 'others' && currentUser?.id) {
-        filteredPlaylists = playlists.filter(playlist => playlist.owner.id !== currentUser.id);
-      }
-
-      // 2. Fetch tracks for each (filtered) playlist
-      for (const playlist of filteredPlaylists) {
-        if (!playlist.id) continue;
-        let tracksOffset = 0;
-        while (true) {
-          try {
-            const response = await spotifyApi.getPlaylistTracks(playlist.id, tracksOffset, 100);
-            const { items } = response.data;
-            if (!items.length) break;
-            items.forEach(item => {
-              if (item.track && item.track.id) {
-                allTracks.set(item.track.id, { ...item, track: { ...item.track, album: item.track.album || {} } });
-              }
-            });
-            if (items.length < 100) break;
-            tracksOffset += 100;
-          } catch (error) {
-            console.error(`Failed to fetch tracks for playlist ${playlist.id}`, error);
-            break; 
-          }
-        }
-      }
-
-      // 3. Fetch user's saved tracks (always included, regardless of playlist filter)
-      offset = 0;
-      while (true) {
-        try {
-          const response = await spotifyApi.getSavedTracks(offset, 50);
-          const { items } = response.data;
-          if (!items.length) break;
-          items.forEach(item => {
-            if (item.track && item.track.id) {
-              allTracks.set(item.track.id, { ...item, track: { ...item.track, album: item.track.album || {} } });
-            }
-          });
-          if (items.length < 50) break;
-          offset += 50;
-        } catch (error) {
-          console.error('Failed to fetch saved tracks', error);
-          break;
-        }
-      }
-
-      return Array.from(allTracks.values());
-    },
+    queryFn: () => fetchAllTracks(spotifyAuth, playlistOwnershipFilter, currentUser?.id),
     staleTime: 1000 * 60 * 5, // 5 minutes
     enabled: !!currentUser, // Only run this query if currentUser is available
   });
+
+  const musicTasteMetrics = allTracks ? calculateMusicTasteMetrics(allTracks) : null;
 
   const error = errorArtists || errorTracks || errorAllTracks || errorUser;
 
@@ -169,40 +190,20 @@ export const Dashboard: React.FC = () => {
     <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
       <UserProfile />
       
-      <div className="flex flex-col sm:flex-row gap-4 mb-8">
-        <select
-          className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          value={selectedTimeRange}
-          onChange={(e) => setSelectedTimeRange(e.target.value as TimeRange)}
-        >
-          <option value="short_term">Last 4 Weeks</option>
-          <option value="medium_term">Last 6 Months</option>
-          <option value="long_term">All Time</option>
-        </select>
-        <select
-          className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          value={playlistOwnershipFilter}
-          onChange={(e) => setPlaylistOwnershipFilter(e.target.value as PlaylistOwnershipFilter)}
-        >
-          <option value="all">All Playlists</option>
-          <option value="mine">My Playlists</option>
-          <option value="others">Other Playlists</option>
-        </select>
-      </div>
-
       <motion.div variants={containerVariants} initial="hidden" animate="visible">
-        <div className="mb-8">
-          {isLoadingAllTracks ? <div className="w-full h-96 bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center"><LoadingSpinner/></div> : <MusicTasteAnalyzer savedTracks={allTracks || []} />}
-        </div>
-
-        <motion.div variants={cardVariant} className="mb-8">
-          {isLoadingAllTracks ? <div className="w-full h-96 bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center"><LoadingSpinner/></div> : <DecadeChart tracks={allTracks || []} />}
-        </motion.div>
 
         <motion.div variants={cardVariant} className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-8">
           <div className="flex flex-col sm:flex-row justify-between items-baseline mb-6">
             <h2 className="text-3xl font-bold">Your Top Charts</h2>
-            {/* The selects were moved up here */}
+            <select
+              className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              value={selectedTimeRange}
+              onChange={(e) => setSelectedTimeRange(e.target.value as TimeRange)}
+            >
+              <option value="short_term">Last 4 Weeks</option>
+              <option value="medium_term">Last 6 Months</option>
+              <option value="long_term">All Time</option>
+            </select>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -229,14 +230,7 @@ export const Dashboard: React.FC = () => {
           </div>
         </motion.div>
 
-        <div className="mb-8">
-          { (isLoadingAllTracks || isLoadingArtists) 
-            ? <div className="w-full h-96 bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center"><LoadingSpinner/></div> 
-            : <PopularityHighlights savedTracks={allTracks || []} topArtists={topArtists || []} />
-          }
-        </div>
-
-        <motion.div variants={cardVariant} className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+        <motion.div variants={cardVariant} className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-8">
           <h2 className="text-2xl font-bold mb-4">Top Genres</h2>
           <div className="flex flex-wrap gap-2">
             {isLoadingArtists
@@ -249,7 +243,39 @@ export const Dashboard: React.FC = () => {
           </div>
         </motion.div>
 
-        <motion.div variants={cardVariant} className="mt-8">
+        <div className="mb-8">
+          { (isLoadingAllTracks || isLoadingArtists) 
+            ? <div className="w-full h-96 bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center"><LoadingSpinner/></div> 
+            : <PopularityHighlights savedTracks={allTracks || []} topArtists={topArtists || []} />
+          }
+        </div>
+
+        <div className="flex flex-col sm:flex-row justify-between items-baseline my-8">
+          <h2 className="text-3xl font-bold">Your Library</h2>
+          <select
+            className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            value={playlistOwnershipFilter}
+            onChange={(e) => setPlaylistOwnershipFilter(e.target.value as PlaylistOwnershipFilter)}
+          >
+            <option value="all">All Playlists</option>
+            <option value="mine">My Playlists</option>
+            <option value="others">Other Playlists</option>
+          </select>
+        </div>
+
+        <div className="mb-8">
+          {isLoadingAllTracks ? <div className="w-full h-96 bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center"><LoadingSpinner/></div> : <MusicTasteAnalyzer savedTracks={allTracks || []} />}
+        </div>
+
+        <motion.div variants={cardVariant} className="mb-8">
+          {musicTasteMetrics && <LibraryGrowthChart data={musicTasteMetrics.monthlyAdditionsData} />}
+        </motion.div>
+
+        <motion.div variants={cardVariant} className="mb-8">
+          {isLoadingAllTracks ? <div className="w-full h-96 bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center"><LoadingSpinner/></div> : <DecadeChart tracks={allTracks || []} />}
+        </motion.div>
+
+        <motion.div variants={cardVariant}>
           <PlaylistMetrics playlistOwnershipFilter={playlistOwnershipFilter} />
         </motion.div>
 
