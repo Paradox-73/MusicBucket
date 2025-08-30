@@ -1,14 +1,14 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
 import { SpotifyAuth } from '../lib/spotify/auth';
 import { getMe, spotifyApi } from '../lib/spotify';
 import type { SpotifyProfile } from '../types/spotify';
 import ThemeToggle from './ThemeToggle';
+import { useAuth } from '../hooks/useAuth'; // Import useAuth
 
 const Navbar = () => {
   console.log('Navbar: Component rendering.');
-  const { user } = useAuthStore();
+  const { user, accessToken } = useAuth(); // Use accessToken from useAuth
   const [spotifyUser, setSpotifyUser] = useState<SpotifyProfile | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -28,10 +28,9 @@ const Navbar = () => {
 
   useEffect(() => {
     console.log('Navbar: user state changed:', user);
-    const currentSpotifyAccessToken = spotifyApi.getAccessToken();
-    console.log('Navbar: Spotify Access Token directly from spotifyApi:', currentSpotifyAccessToken);
+    console.log('Navbar: Spotify Access Token from useAuth:', accessToken);
 
-    if (user && currentSpotifyAccessToken) {
+    if (user && accessToken) {
       console.log('Navbar: Fetching Spotify profile...');
       getMe().then(profile => {
         if (profile) {
@@ -46,7 +45,7 @@ const Navbar = () => {
       console.log('Navbar: Supabase user logged out, clearing Spotify user.');
       setSpotifyUser(null);
     }
-  }, [user, spotifyApi.getAccessToken()]);
+  }, [user, accessToken]); // React to changes in user and accessToken
 
   const handleLogin = () => {
     SpotifyAuth.getInstance().authenticate();

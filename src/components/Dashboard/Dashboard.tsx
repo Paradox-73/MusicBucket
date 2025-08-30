@@ -15,10 +15,24 @@ import { DecadeChart } from './DecadeChart';
 import { PlaylistMetrics } from './PlaylistMetrics';
 
 type TimeRange = 'short_term' | 'medium_term' | 'long_term';
+type PlaylistOwnershipFilter = 'all' | 'mine' | 'others';
 
 export const Dashboard: React.FC = () => {
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>('medium_term');
+  const [playlistOwnershipFilter, setPlaylistOwnershipFilter] = useState<PlaylistOwnershipFilter>('all');
   const spotifyAuth = SpotifyAuth.getInstance();
+
+  const { data: currentUser, isLoading: isLoadingUser, error: errorUser } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: async () => {
+      const token = await spotifyAuth.getAccessToken();
+      if (!token) throw new Error('No access token available');
+      const spotifyApi = createSpotifyApi(token);
+      const response = await spotifyApi.getCurrentUser();
+      return response.data;
+    },
+    staleTime: Infinity, // User data doesn't change often
+  });
 
   const { data: topArtists, isLoading: isLoadingArtists, error: errorArtists } = useQuery({
     queryKey: ['topArtists', selectedTimeRange],
@@ -43,7 +57,7 @@ export const Dashboard: React.FC = () => {
   });
 
   const { data: allTracks, isLoading: isLoadingAllTracks, error: errorAllTracks } = useQuery({
-    queryKey: ['all-tracks-analysis'],
+    queryKey: ['all-tracks-analysis', playlistOwnershipFilter, currentUser?.id],
     queryFn: async () => {
       const token = await spotifyAuth.getAccessToken();
       if (!token) throw new Error('No access token available');
@@ -52,7 +66,7 @@ export const Dashboard: React.FC = () => {
       const allTracks = new Map<string, any>();
 
       // 1. Fetch all user's playlists
-      let playlists: any[] = [];
+      const playlists: any[] = [];
       let offset = 0;
       while (true) {
         const response = await spotifyApi.getPlaylists(offset, 50);
@@ -63,8 +77,16 @@ export const Dashboard: React.FC = () => {
         offset += 50;
       }
 
-      // 2. Fetch tracks for each playlist
-      for (const playlist of playlists) {
+      // Filter playlists based on ownership
+      let filteredPlaylists = playlists;
+      if (playlistOwnershipFilter === 'mine' && currentUser?.id) {
+        filteredPlaylists = playlists.filter(playlist => playlist.owner.id === currentUser.id);
+      } else if (playlistOwnershipFilter === 'others' && currentUser?.id) {
+        filteredPlaylists = playlists.filter(playlist => playlist.owner.id !== currentUser.id);
+      }
+
+      // 2. Fetch tracks for each (filtered) playlist
+      for (const playlist of filteredPlaylists) {
         if (!playlist.id) continue;
         let tracksOffset = 0;
         while (true) {
@@ -86,7 +108,7 @@ export const Dashboard: React.FC = () => {
         }
       }
 
-      // 3. Fetch user's saved tracks
+      // 3. Fetch user's saved tracks (always included, regardless of playlist filter)
       offset = 0;
       while (true) {
         try {
@@ -109,9 +131,10 @@ export const Dashboard: React.FC = () => {
       return Array.from(allTracks.values());
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
+    enabled: !!currentUser, // Only run this query if currentUser is available
   });
 
-  const error = errorArtists || errorTracks || errorAllTracks;
+  const error = errorArtists || errorTracks || errorAllTracks || errorUser;
 
   const getTopGenres = (artists: any[]) => {
     if (!artists) return [];
@@ -140,11 +163,33 @@ export const Dashboard: React.FC = () => {
   };
 
   if (error) return <ErrorMessage message={error.message} />;
+  if (isLoadingUser) return <LoadingSpinner />;
 
   return (
     <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
       <UserProfile />
       
+      <div className="flex flex-col sm:flex-row gap-4 mb-8">
+        <select
+          className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          value={selectedTimeRange}
+          onChange={(e) => setSelectedTimeRange(e.target.value as TimeRange)}
+        >
+          <option value="short_term">Last 4 Weeks</option>
+          <option value="medium_term">Last 6 Months</option>
+          <option value="long_term">All Time</option>
+        </select>
+        <select
+          className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          value={playlistOwnershipFilter}
+          onChange={(e) => setPlaylistOwnershipFilter(e.target.value as PlaylistOwnershipFilter)}
+        >
+          <option value="all">All Playlists</option>
+          <option value="mine">My Playlists</option>
+          <option value="others">Other Playlists</option>
+        </select>
+      </div>
+
       <motion.div variants={containerVariants} initial="hidden" animate="visible">
         <div className="mb-8">
           {isLoadingAllTracks ? <div className="w-full h-96 bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center"><LoadingSpinner/></div> : <MusicTasteAnalyzer savedTracks={allTracks || []} />}
@@ -157,15 +202,7 @@ export const Dashboard: React.FC = () => {
         <motion.div variants={cardVariant} className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-8">
           <div className="flex flex-col sm:flex-row justify-between items-baseline mb-6">
             <h2 className="text-3xl font-bold">Your Top Charts</h2>
-            <select
-              className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white mt-4 sm:mt-0"
-              value={selectedTimeRange}
-              onChange={(e) => setSelectedTimeRange(e.target.value as TimeRange)}
-            >
-              <option value="short_term">Last 4 Weeks</option>
-              <option value="medium_term">Last 6 Months</option>
-              <option value="long_term">All Time</option>
-            </select>
+            {/* The selects were moved up here */}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -213,7 +250,7 @@ export const Dashboard: React.FC = () => {
         </motion.div>
 
         <motion.div variants={cardVariant} className="mt-8">
-          <PlaylistMetrics />
+          <PlaylistMetrics playlistOwnershipFilter={playlistOwnershipFilter} />
         </motion.div>
 
       </motion.div>

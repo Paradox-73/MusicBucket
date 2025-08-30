@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { createSpotifyApi } from '../../lib/Dashboard/spotify';
 import { SpotifyAuth } from '../../lib/spotify/auth';
@@ -25,6 +25,7 @@ interface PlaylistTrack {
 
 interface PlaylistCardProps {
   playlist: Playlist;
+  onMetricsCalculated: (playlistId: string, metrics: any) => void;
 }
 
 const calculateMetrics = (tracks: PlaylistTrack[]) => {
@@ -50,7 +51,7 @@ const calculateMetrics = (tracks: PlaylistTrack[]) => {
   };
 };
 
-export const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist }) => {
+export const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, onMetricsCalculated }) => {
   const spotifyAuth = SpotifyAuth.getInstance();
 
   const { data: tracks, isLoading } = useQuery({
@@ -75,6 +76,17 @@ export const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist }) => {
   });
 
   const metrics = tracks ? calculateMetrics(tracks) : null;
+
+  useEffect(() => {
+    if (metrics) {
+      onMetricsCalculated(playlist.id, {
+        trackCount: metrics.totalTracks,
+        avgPopularity: metrics.avgPopularity,
+        avgReleaseYear: metrics.avgReleaseYear,
+        avgDurationMin: metrics.avgDurationMin,
+      });
+    }
+  }, [metrics, playlist.id, onMetricsCalculated]);
 
   return (
     <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">

@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useAuthStore } from '../store/authStore';
 import { SpotifyAuth } from '../lib/spotify/auth';
-import { getMe, spotifyApi } from '../lib/spotify';
+import { getMe } from '../lib/spotify';
 import type { SpotifyProfile } from '../types/spotify';
+import { useAuth } from '../hooks/useAuth'; // Import useAuth
 
 const SpotifyProfileDropdown: React.FC = () => {
-  const { user } = useAuthStore();
+  const { user, accessToken } = useAuth(); // Use user and accessToken from useAuth
   const [spotifyUser, setSpotifyUser] = useState<SpotifyProfile | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -28,8 +28,7 @@ const SpotifyProfileDropdown: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const currentSpotifyAccessToken = spotifyApi.getAccessToken();
-    if (user && currentSpotifyAccessToken) {
+    if (user && accessToken) {
       getMe().then(profile => {
         if (profile) {
           setSpotifyUser(profile);
@@ -40,7 +39,7 @@ const SpotifyProfileDropdown: React.FC = () => {
     } else if (!user) {
       setSpotifyUser(null);
     }
-  }, [user, spotifyApi.getAccessToken()]);
+  }, [user, accessToken]); // React to changes in user and accessToken
 
   const handleLogin = () => {
     SpotifyAuth.getInstance().authenticate();

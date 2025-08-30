@@ -164,3 +164,96 @@ export const getTrack = async (trackId: string) => {
     return null;
   }
 };
+
+export const getMyFollowedArtists = async () => {
+  try {
+    let artists: SpotifyApi.ArtistObjectFull[] = [];
+    let response;
+    let after: string | undefined = undefined;
+
+    do {
+      response = await spotifyApi.getFollowedArtists({ limit: 50, after });
+      if (response && response.artists) {
+        artists = artists.concat(response.artists.items);
+        after = response.artists.cursors.after;
+      }
+    } while (after);
+
+    return artists;
+  } catch (error) {
+    console.error('Error getting followed artists:', error);
+    return [];
+  }
+};
+
+export const getMySavedAlbums = async () => {
+  try {
+    let albums: SpotifyApi.SavedAlbumObject[] = [];
+    let response;
+    let offset = 0;
+
+    do {
+      response = await spotifyApi.getMySavedAlbums({ limit: 50, offset });
+      if (response && response.items) {
+        albums = albums.concat(response.items);
+        offset += response.items.length;
+      }
+    } while (response && response.next);
+
+    return albums;
+  } catch (error) {
+    console.error('Error getting saved albums:', error);
+    return [];
+  }
+};
+
+export const getAlbumTracks = async (albumId: string) => {
+  try {
+    let tracks: SpotifyApi.TrackObjectSimplified[] = [];
+    let response;
+    let offset = 0;
+
+    do {
+      response = await spotifyApi.getAlbumTracks(albumId, { limit: 50, offset });
+      if (response && response.items) {
+        tracks = tracks.concat(response.items);
+        offset += response.items.length;
+      }
+    } while (response && response.next);
+
+    return tracks;
+  } catch (error) {
+    console.error('Error getting album tracks:', error);
+    return [];
+  }
+};
+
+export const getSeveralArtists = async (artistIds: string[]) => {
+  try {
+    const response = await spotifyApi.getArtists(artistIds);
+    return response.artists;
+  } catch (error) {
+    console.error('Error getting several artists:', error);
+    return [];
+  }
+};
+
+export const getSeveralAlbums = async (albumIds: string[]) => {
+  try {
+    const response = await spotifyApi.getAlbums(albumIds);
+    return response.albums;
+  } catch (error) {
+    console.error('Error getting several albums:', error);
+    return [];
+  }
+};
+
+export const getSeveralTracks = async (trackIds: string[]) => {
+  try {
+    const response = await spotifyApi.getTracks(trackIds);
+    return response.tracks;
+  } catch (error) {
+    console.error('Error getting several tracks:', error);
+    return [];
+  }
+};

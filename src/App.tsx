@@ -46,6 +46,10 @@ import { SpotifyAuth } from './lib/spotify/auth';
 import { AuthCallback } from './components/Bucket_List/AuthCallback';
 import CultureClashPage from './pages/CultureClashPage';
 import PublicBucketListPage from './pages/PublicBucketListPage';
+import TierMakerPage from './pages/TierMakerPage';
+import PublicTierListPage from './pages/PublicTierListPage';
+
+const isProduction = import.meta.env.PROD;
 
 function App() {
   useEffect(() => {
@@ -58,20 +62,22 @@ function App() {
       <Route path="/bucket-list/callback" element={<AuthCallback />} />
       <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
-        <Route path="artist-exploration" element={<ArtistExploration />} />
+        <Route path="artist-exploration" element={isProduction ? <ComingSoon /> : <ArtistExploration />} />
         <Route path="bucket-list/*" element={<BucketList />} />
         <Route path="dashboard/*" element={<Dashboard />} />
         <Route path="rabbit-hole" element={<ComingSoon />} />
-        <Route path="recommendation-roulette" element={<RecommendationRoulette />} />
+        <Route path="recommendation-roulette" element={isProduction ? <ComingSoon /> : <RecommendationRoulette />} />
         <Route path="roadtrip-mixtape" element={<RoadTripMixtape />} />
-        <Route path="about" element={<AboutUs />} />
-        <Route path="support" element={<Support />} />
-        <Route path="privacy" element={<Legal />} />
-        <Route path="terms" element={<Legal />} />
+        <Route path="tiermaker" element={isProduction ? <ComingSoon /> : <TierMakerPage />} />
+        <Route path="about" element={isProduction ? <ComingSoon /> : <AboutUs />} />
+        <Route path="support" element={isProduction ? <ComingSoon /> : <Support />} />
+        <Route path="privacy" element={isProduction ? <ComingSoon /> : <Legal />} />
+        <Route path="terms" element={isProduction ? <ComingSoon /> : <Legal />} />
         <Route path="profile" element={<ComingSoon />} />
-        <Route path="culture-clash" element={<CultureClashPage />} />
+        <Route path="culture-clash" element={isProduction ? <ComingSoon /> : <CultureClashPage />} />
       </Route>
       <Route path="/bucketlist/share/:id" element={<PublicBucketListPage />} />
+      <Route path="/tiermaker/share/:id" element={isProduction ? <ComingSoon /> : <PublicTierListPage />} />
     </Routes>
   );
 }

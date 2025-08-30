@@ -17,6 +17,7 @@ const Navigation: React.FC = () => {
     { name: 'Dashboard', path: '/dashboard' },
     { name: 'Artist Exploration', path: '/artist-exploration' },
     { name: 'Bucket List', path: '/bucket-list' },
+    { name: 'Tier Maker', path: '/tiermaker' },
     
     { name: 'Rabbit Hole', path: '/rabbit-hole' },
     { name: 'Recommendation Roulette', path: '/recommendation-roulette' },
