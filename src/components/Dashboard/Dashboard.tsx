@@ -14,16 +14,21 @@ import { LoadingSpinner } from './LoadingSpinner';
 import { DecadeChart } from './DecadeChart';
 import { PlaylistMetrics } from './PlaylistMetrics';
 import { LibraryGrowthChart } from './LibraryGrowthChart';
+import { ArtistNetworkGraph } from './ArtistNetworkGraph';
+import { useColor } from 'color-thief-react';
+import { Achievements } from './Achievements';
+import { checkAndAwardAchievements } from '../../services/AchievementService';
 
 type TimeRange = 'short_term' | 'medium_term' | 'long_term';
 type PlaylistOwnershipFilter = 'all' | 'mine' | 'others';
 
-const fetchAllTracks = async (spotifyAuth: SpotifyAuth, playlistOwnershipFilter: PlaylistOwnershipFilter, userId: string | undefined) => {
+const fetchAllTracks = async (spotifyAuth: SpotifyAuth, playlistOwnershipFilter: PlaylistOwnershipFilter, userId: string | undefined, setIsRateLimited: (isRateLimited: boolean) => void) => {
+  
   const token = await spotifyAuth.getAccessToken();
   if (!token) throw new Error('No access token available');
-  const spotifyApi = createSpotifyApi(token);
+  const spotifyApi = createSpotifyApi(token, setIsRateLimited);
   
-  const allTracks = new Map<string, any>();
+  const allTracks: any[] = [];
 
   // 1. Fetch all user's playlists
   const playlists: any[] = [];
@@ -35,6 +40,7 @@ const fetchAllTracks = async (spotifyAuth: SpotifyAuth, playlistOwnershipFilter:
     playlists.push(...items);
     if (playlists.length >= total) break;
     offset += 50;
+    await sleep(200); // Add delay
   }
 
   // Filter playlists based on ownership
@@ -56,11 +62,12 @@ const fetchAllTracks = async (spotifyAuth: SpotifyAuth, playlistOwnershipFilter:
         if (!items.length) break;
         items.forEach(item => {
           if (item.track && item.track.id) {
-            allTracks.set(item.track.id, { ...item, track: { ...item.track, album: item.track.album || {} } });
+            allTracks.push({ ...item, track: { ...item.track, album: item.track.album || {} } });
           }
         });
         if (items.length < 100) break;
         tracksOffset += 100;
+        await sleep(200); // Add delay
       } catch (error) {
         console.error(`Failed to fetch tracks for playlist ${playlist.id}`, error);
         break; 
@@ -68,27 +75,30 @@ const fetchAllTracks = async (spotifyAuth: SpotifyAuth, playlistOwnershipFilter:
     }
   }
 
-  // 3. Fetch user's saved tracks (always included, regardless of playlist filter)
-  offset = 0;
-  while (true) {
-    try {
-      const response = await spotifyApi.getSavedTracks(offset, 50);
-      const { items } = response.data;
-      if (!items.length) break;
-      items.forEach(item => {
-        if (item.track && item.track.id) {
-          allTracks.set(item.track.id, { ...item, track: { ...item.track, album: item.track.album || {} } });
-        }
-      });
-      if (items.length < 50) break;
-      offset += 50;
-    } catch (error) {
-      console.error('Failed to fetch saved tracks', error);
-      break;
+  // 3. Fetch user's saved tracks only when filter is 'all'
+  if (playlistOwnershipFilter === 'all') {
+    offset = 0;
+    while (true) {
+      try {
+        const response = await spotifyApi.getSavedTracks(offset, 50);
+        const { items } = response.data;
+        if (!items.length) break;
+        items.forEach(item => {
+          if (item.track && item.track.id) {
+            allTracks.push({ ...item, track: { ...item.track, album: item.track.album || {} } });
+          }
+        });
+        if (items.length < 50) break;
+        offset += 50;
+        await sleep(200); // Add delay
+      } catch (error) {
+        console.error('Failed to fetch saved tracks', error);
+        break;
+      }
     }
   }
 
-  return Array.from(allTracks.values());
+  return allTracks;
 };
 
 export const Dashboard: React.FC = () => {
@@ -97,16 +107,25 @@ export const Dashboard: React.FC = () => {
   const spotifyAuth = SpotifyAuth.getInstance();
   const queryClient = useQueryClient();
 
+  const [isRateLimited, setIsRateLimited] = useState(false);
+
   const { data: currentUser, isLoading: isLoadingUser, error: errorUser } = useQuery({
     queryKey: ['currentUser'],
     queryFn: async () => {
       const token = await spotifyAuth.getAccessToken();
       if (!token) throw new Error('No access token available');
-      const spotifyApi = createSpotifyApi(token);
+      const spotifyApi = createSpotifyApi(token, setIsRateLimited);
       const response = await spotifyApi.getCurrentUser();
       return response.data;
     },
     staleTime: Infinity, // User data doesn't change often
+  });
+
+  const { data: allTracks, isLoading: isLoadingAllTracks, error: errorAllTracks } = useQuery({
+    queryKey: ['all-tracks-analysis', playlistOwnershipFilter, currentUser?.id],
+    queryFn: () => fetchAllTracks(spotifyAuth, playlistOwnershipFilter, currentUser?.id, setIsRateLimited),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    enabled: !!currentUser, // Only run this query if currentUser is available
   });
 
   useEffect(() => {
@@ -116,7 +135,7 @@ export const Dashboard: React.FC = () => {
         if (filter !== playlistOwnershipFilter) {
           queryClient.prefetchQuery({
             queryKey: ['all-tracks-analysis', filter, currentUser.id],
-            queryFn: () => fetchAllTracks(spotifyAuth, filter, currentUser.id),
+            queryFn: () => fetchAllTracks(spotifyAuth, filter, currentUser.id, setIsRateLimited),
             staleTime: 1000 * 60 * 5, // 5 minutes
           });
         }
@@ -124,33 +143,35 @@ export const Dashboard: React.FC = () => {
     }
   }, [currentUser?.id, playlistOwnershipFilter, queryClient, spotifyAuth]);
 
+  useEffect(() => {
+    if (currentUser && allTracks && !isLoadingAllTracks) {
+      checkAndAwardAchievements(currentUser.id, allTracks);
+    }
+  }, [currentUser, allTracks, isLoadingAllTracks]);
+
   const { data: topArtists, isLoading: isLoadingArtists, error: errorArtists } = useQuery({
     queryKey: ['topArtists', selectedTimeRange],
     queryFn: async () => {
       const token = await spotifyAuth.getAccessToken();
       if (!token) throw new Error('No access token available');
-      const spotifyApi = createSpotifyApi(token);
+      const spotifyApi = createSpotifyApi(token, setIsRateLimited);
       const response = await spotifyApi.getTopArtists(selectedTimeRange, 50);
       return response.data.items;
     },
   });
+
+  const topArtistImage = topArtists?.[0]?.images?.[0]?.url || '/path/to/default-artist-image.png'; // Add a default image path
+  const { data: color } = useColor(topArtistImage, 'hex', { crossOrigin: 'anonymous' });
 
   const { data: topTracks, isLoading: isLoadingTracks, error: errorTracks } = useQuery({
     queryKey: ['topTracks', selectedTimeRange],
     queryFn: async () => {
       const token = await spotifyAuth.getAccessToken();
       if (!token) throw new Error('No access token available');
-      const spotifyApi = createSpotifyApi(token);
+      const spotifyApi = createSpotifyApi(token, setIsRateLimited);
       const response = await spotifyApi.getTopTracks(selectedTimeRange, 50);
       return response.data.items;
     },
-  });
-
-  const { data: allTracks, isLoading: isLoadingAllTracks, error: errorAllTracks } = useQuery({
-    queryKey: ['all-tracks-analysis', playlistOwnershipFilter, currentUser?.id],
-    queryFn: () => fetchAllTracks(spotifyAuth, playlistOwnershipFilter, currentUser?.id),
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    enabled: !!currentUser, // Only run this query if currentUser is available
   });
 
   const musicTasteMetrics = allTracks ? calculateMusicTasteMetrics(allTracks) : null;
@@ -187,8 +208,14 @@ export const Dashboard: React.FC = () => {
   if (isLoadingUser) return <LoadingSpinner />;
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8" style={{ '--theme-color': color, transition: 'background-color 0.5s ease' } as React.CSSProperties}>
+      {isRateLimited && (
+        <div className="bg-yellow-500 text-white text-center p-2 rounded-lg mb-4">
+          Spotify API rate limit reached. Retrying...
+        </div>
+      )}
       <UserProfile />
+      <Achievements userId={currentUser?.id} />
       
       <motion.div variants={containerVariants} initial="hidden" animate="visible">
 
@@ -243,12 +270,7 @@ export const Dashboard: React.FC = () => {
           </div>
         </motion.div>
 
-        <div className="mb-8">
-          { (isLoadingAllTracks || isLoadingArtists) 
-            ? <div className="w-full h-96 bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center"><LoadingSpinner/></div> 
-            : <PopularityHighlights savedTracks={allTracks || []} topArtists={topArtists || []} />
-          }
-        </div>
+        
 
         <div className="flex flex-col sm:flex-row justify-between items-baseline my-8">
           <h2 className="text-3xl font-bold">Your Library</h2>
@@ -278,6 +300,13 @@ export const Dashboard: React.FC = () => {
         <motion.div variants={cardVariant}>
           <PlaylistMetrics playlistOwnershipFilter={playlistOwnershipFilter} />
         </motion.div>
+
+        <div className="mb-8">
+          { (isLoadingAllTracks || isLoadingArtists) 
+            ? <div className="w-full h-96 bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center"><LoadingSpinner/></div> 
+            : <PopularityHighlights savedTracks={allTracks || []} topArtists={topArtists || []} />
+          }
+        </div>
 
       </motion.div>
     </div>

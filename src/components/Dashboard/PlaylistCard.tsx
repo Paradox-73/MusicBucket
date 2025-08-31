@@ -91,7 +91,7 @@ const calculateMetrics = (tracks: PlaylistTrack[]) => {
 };
 
 export const PlaylistCard: React.FC<PlaylistCardProps> = ({ playlist, tracks, onMetricsCalculated }) => {
-  const metrics = calculateMetrics(tracks);
+  const metrics = React.useMemo(() => calculateMetrics(tracks), [tracks]);
 
   useEffect(() => {
     if (metrics) {

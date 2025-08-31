@@ -69,10 +69,10 @@ function App() {
         <Route path="recommendation-roulette" element={isProduction ? <ComingSoon /> : <RecommendationRoulette />} />
         <Route path="roadtrip-mixtape" element={<RoadTripMixtape />} />
         <Route path="tiermaker" element={isProduction ? <ComingSoon /> : <TierMakerPage />} />
-        <Route path="about" element={isProduction ? <ComingSoon /> : <AboutUs />} />
-        <Route path="support" element={isProduction ? <ComingSoon /> : <Support />} />
-        <Route path="privacy" element={isProduction ? <ComingSoon /> : <Legal />} />
-        <Route path="terms" element={isProduction ? <ComingSoon /> : <Legal />} />
+        <Route path="about" element={<AboutUs />} />
+        <Route path="support" element={<Support />} />
+        <Route path="privacy" element={<Legal />} />
+        <Route path="terms" element={<Legal />} />
         <Route path="profile" element={<ComingSoon />} />
         <Route path="culture-clash" element={isProduction ? <ComingSoon /> : <CultureClashPage />} />
       </Route>

@@ -152,7 +152,7 @@ export function PublicBucketListPage() {
             className="absolute inset-0 w-full h-full object-cover opacity-10"
           />
         )}
-        <div className="relative z-10 flex items-center gap-6">
+        <div className="relative z-10 flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
           <div className="w-24 h-24 flex-shrink-0 rounded-full bg-primary/20 flex items-center justify-center">
             {list.items && list.items.length > 0 && list.items[0].imageUrl ? (
               <img src={list.items[0].imageUrl} alt={list.items[0].title} className="w-20 h-20 rounded-full object-cover" />
@@ -165,7 +165,7 @@ export function PublicBucketListPage() {
             <h1 className="text-4xl md:text-5xl font-extrabold mt-1">{list.name}</h1>
             {list.creator_name && <p className="text-gray-600 dark:text-gray-300 text-lg">by {list.creator_name}</p>}
             <p className="text-gray-700 dark:text-gray-200 mt-2 text-lg">A curated collection of musical gems shared with you.</p>
-            <div className="mt-4 flex gap-3">
+            <div className="mt-4 flex flex-wrap justify-center sm:justify-start gap-2 sm:gap-3">
               {user ? (
                 <button
                   onClick={handleSaveList}
@@ -219,9 +219,9 @@ export function PublicBucketListPage() {
               target="_blank"
               rel="noopener noreferrer"
               className={`block ${item.spotify_id ? 'cursor-pointer' : 'cursor-default'}`}>
-              <div className="grid grid-cols-[2rem_1fr_auto] items-center gap-4 p-4 rounded-lg shadow-sm bg-gray-50 dark:bg-gray-800 hover:shadow-md transition-shadow duration-200">
+              <div className="grid grid-cols-[2rem_1fr_auto] sm:grid-cols-[2rem_1fr_auto] items-center gap-2 sm:gap-4 p-3 sm:p-4 rounded-lg shadow-sm bg-gray-50 dark:bg-gray-800 hover:shadow-md transition-shadow duration-200">
                 <span className="text-gray-700 dark:text-gray-300 font-semibold text-left">{index + 1}.</span>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 sm:gap-4">
                   {item.imageUrl ? (
                     <img src={item.imageUrl} alt={item.title} className="w-16 h-16 object-cover rounded-md" />
                   ) : (

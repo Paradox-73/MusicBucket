@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { PlusCircle, Music, Trash2 } from 'lucide-react';
-import { getBucketLists, createBucketList, deleteBucketList, uploadBucketListCover, updateBucketList } from '../../../services/Bucket_List/supabaseBucketList';
+import { getBucketLists, createBucketList, deleteBucketList, updateBucketList } from '../../../services/Bucket_List/supabaseBucketList';
 import { useAuth } from '../../../hooks/useAuth';
 
 interface BucketListItemForGrid {
@@ -13,7 +13,7 @@ interface BucketList {
   name: string;
   created_at: string;
   items?: BucketListItemForGrid[]; // Added items for image display
-  cover_image_url?: string; // Added cover image URL
+  
 }
 
 export function BucketListsGrid() {
@@ -21,9 +21,9 @@ export function BucketListsGrid() {
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [newListName, setNewListName] = useState('');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { user } = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
@@ -46,7 +46,7 @@ export function BucketListsGrid() {
         setLists(bucketLists);
       }
     } catch (error) {
-      console.error('Error fetching bucket lists:', error);
+      console.error('Error fetching bucket lists after creation:', error);
     } finally {
       setLoading(false);
     }
@@ -84,28 +84,21 @@ export function BucketListsGrid() {
       // 1. Create the bucket list
       const newBucketList = await createBucketList(newListName, user.id);
 
-      // 2. If a file is selected, upload it and update the bucket list
-      if (selectedFile && newBucketList) {
-        const coverImageUrl = await uploadBucketListCover(selectedFile, user.id, newBucketList.id);
-        await updateBucketList(newBucketList.id, { cover_image_url: coverImageUrl });
-      }
+      
 
       console.log('handleCreateList: createBucketList call successful.');
-      fetchLists();
       setNewListName('');
-      setSelectedFile(null);
       setIsCreating(false);
+
+      // Redirect to the newly created bucket list's detail page
+      navigate(`/bucket-list/${newBucketList.id}`);
     } catch (error) {
       console.error('handleCreateList: Error creating bucket list:', error);
       alert('Failed to create list. Please try again.');
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
-    }
-  };
+  
 
   const handleDeleteList = async (listId: string, listName: string) => {
     if (!user) return;
@@ -147,16 +140,18 @@ export function BucketListsGrid() {
             onChange={handleInputChange}
             placeholder="Enter list name..."
             className="flex-grow rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 py-2 px-4 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-500"
-            onBlur={() => setIsCreating(false)} // Optional: hide on blur
+            
           />
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="flex-grow rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 py-2 px-4 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-500"
-          />
+          
           <button type="submit" className="bg-purple-600 hover:bg-purple-700 text-white dark:bg-purple-700 dark:hover:bg-purple-800 font-bold py-2 px-4 rounded-lg">
             Create
+          </button>
+          <button
+            type="button" // Important: Prevent form submission
+            onClick={() => setIsCreating(false)}
+            className="bg-gray-400 hover:bg-gray-500 text-white dark:bg-gray-600 dark:hover:bg-gray-700 font-bold py-2 px-4 rounded-lg"
+          >
+            Cancel
           </button>
         </form>
       )}
