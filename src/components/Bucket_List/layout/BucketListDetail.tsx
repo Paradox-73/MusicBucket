@@ -5,13 +5,14 @@ import { useAuth } from '../../../hooks/useAuth';
 import { useSpotifyStore } from '../../../store/Bucket_List/spotify';
 import { SearchPanel } from './SearchPanel';
 import { BucketListPanel } from './BucketListPanel';
-import { ArrowLeft, Edit, Share2, Globe, Lock } from 'lucide-react';
+import { ArrowLeft, Edit, Share2, Globe, Lock, Pencil } from 'lucide-react';
 
 // Define the type for a single bucket list
 interface BucketList {
   id: string;
   name: string;
   is_public: boolean;
+  description?: string; // Added for bucket list description
 }
 
 export function BucketListDetail() {
@@ -21,6 +22,14 @@ export function BucketListDetail() {
   const { user } = useAuth();
   const { setCurrentListId, loadListItems } = useSpotifyStore();
 
+  // New state for renaming
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedListName, setEditedListName] = useState('');
+
+  // New state for description
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [editedDescription, setEditedDescription] = useState('');
+
   useEffect(() => {
     if (user && listId) {
       setCurrentListId(listId);
@@ -28,6 +37,12 @@ export function BucketListDetail() {
       fetchListDetails();
     }
   }, [user, listId, setCurrentListId, loadListItems]);
+
+  useEffect(() => {
+    if (list) {
+      setEditedDescription(list.description || '');
+    }
+  }, [list]);
 
   const fetchListDetails = async () => {
     if (!user || !listId) return;
@@ -40,6 +55,70 @@ export function BucketListDetail() {
       console.error('Error fetching bucket list details:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleStartEditingName = () => {
+    if (list) {
+      setIsEditingName(true);
+      setEditedListName(list.name);
+    }
+  };
+
+  const handleCancelEditingName = () => {
+    setIsEditingName(false);
+    if (list) {
+      setEditedListName(list.name); // Reset to original name
+    }
+  };
+
+  const handleSaveName = async () => {
+    if (!list || !editedListName.trim()) {
+      alert('List name cannot be empty.');
+      return;
+    }
+    if (editedListName === list.name) {
+      setIsEditingName(false); // No change, just exit editing
+      return;
+    }
+
+    try {
+      const updatedList = await updateBucketList(list.id, { name: editedListName });
+      setList(updatedList); // Update the local state with the new name
+      setIsEditingName(false); // Exit editing mode
+    } catch (error) {
+      console.error('Error renaming bucket list:', error);
+      alert('Failed to rename list. Please try again.');
+    }
+  };
+
+  const handleStartEditingDescription = () => {
+    if (list) {
+      setIsEditingDescription(true);
+      setEditedDescription(list.description || '');
+    }
+  };
+
+  const handleCancelEditingDescription = () => {
+    setIsEditingDescription(false);
+    if (list) {
+      setEditedDescription(list.description || ''); // Reset to original description
+    }
+  };
+
+  const handleSaveDescription = async () => {
+    if (!list) {
+      alert('Bucket list not found.');
+      return;
+    }
+
+    try {
+      const updatedList = await updateBucketList(list.id, { description: editedDescription.trim() });
+      setList(updatedList); // Update the local state with the new description
+      setIsEditingDescription(false); // Exit editing mode
+    } catch (error) {
+      console.error('Error updating bucket list description:', error);
+      alert('Failed to update description. Please try again.');
     }
   };
 
@@ -62,7 +141,14 @@ export function BucketListDetail() {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600 h-12 w-12"></div>
+          <p className="text-gray-600 dark:text-gray-300">Loading Bucket List details...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!list) {
@@ -77,7 +163,38 @@ export function BucketListDetail() {
                 Back to My Lists
             </Link>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-                <h1 className="text-2xl font-bold">{list.name}</h1>
+                {isEditingName ? (
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="text"
+                            value={editedListName}
+                            onChange={(e) => setEditedListName(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    handleSaveName();
+                                }
+                                if (e.key === 'Escape') {
+                                    handleCancelEditingName();
+                                }
+                            }}
+                            className="text-2xl font-bold p-1 rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white"
+                            autoFocus
+                        />
+                        <button onClick={handleSaveName} className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full">
+                            Save
+                        </button>
+                        <button onClick={handleCancelEditingName} className="bg-gray-400 hover:bg-gray-500 text-white p-2 rounded-full">
+                            Cancel
+                        </button>
+                    </div>
+                ) : (
+                    <h1 className="text-2xl font-bold">{list.name}</h1>
+                )}
+                {!isEditingName && (
+                    <button onClick={handleStartEditingName} className="text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                        <Pencil size={20} />
+                    </button>
+                )}
                 <div className="flex items-center gap-2">
                     <button onClick={handleTogglePublic} className="flex items-center gap-1 text-sm">
                         {list.is_public ? <><Globe size={16} /> Public</> : <><Lock size={16} /> Private</>}
@@ -88,6 +205,51 @@ export function BucketListDetail() {
                 </div>
             </div>
         </header>
+
+        <section className="p-4 sm:p-6 bg-gray-200 dark:bg-gray-800 rounded-lg shadow-lg mb-8">
+            <div className="flex justify-between items-center mb-2">
+                <h2 className="text-xl font-bold">Description</h2>
+                {!isEditingDescription && (
+                    <button onClick={handleStartEditingDescription} className="text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                        <Pencil size={20} />
+                    </button>
+                )}
+            </div>
+            {isEditingDescription ? (
+                <div className="flex flex-col gap-2">
+                    <textarea
+                        value={editedDescription}
+                        onChange={(e) => setEditedDescription(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) { // Allow Shift+Enter for new line
+                                e.preventDefault();
+                                handleSaveDescription();
+                            }
+                            if (e.key === 'Escape') {
+                                handleCancelEditingDescription();
+                            }
+                        }}
+                        className="w-full p-2 rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white"
+                        rows={4}
+                        placeholder="Add a description for your bucket list..."
+                        autoFocus
+                    ></textarea>
+                    <div className="flex justify-end gap-2">
+                        <button onClick={handleSaveDescription} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md">
+                            Save
+                        </button>
+                        <button onClick={handleCancelEditingDescription} className="bg-gray-400 hover:bg-gray-500 text-white px-3 py-1 rounded-md">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                    {list.description || "No description yet. Click the pencil icon to add one!"}
+                </p>
+            )}
+        </section>
+
       <main className="grid flex-1 grid-cols-1 md:grid-cols-12 overflow-y-auto">
         <div className="md:col-span-5 border-r border-gray-200 dark:border-white/10 xl:col-span-4">
           <SearchPanel listId={listId!} />

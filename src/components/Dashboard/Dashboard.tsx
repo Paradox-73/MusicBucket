@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { createSpotifyApi } from '../../lib/Dashboard/spotify';
+import { sleep } from '../../lib/Dashboard/spotify';
 import { SpotifyAuth } from '../../lib/spotify/auth';
 import { UserProfile } from './UserProfile';
 import { MusicTasteAnalyzer, calculateMusicTasteMetrics } from './MusicTasteAnalyzer';

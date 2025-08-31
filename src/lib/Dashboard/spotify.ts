@@ -65,7 +65,7 @@ export const refreshAccessToken = async (refreshToken: string) => {
   return response.data;
 };
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const withRateLimiting = <T extends (...args: any[]) => any>(
   apiCall: T,

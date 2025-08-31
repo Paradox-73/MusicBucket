@@ -7,5 +7,7 @@ export interface BucketItem {
   artists?: string[];
   type: 'artist' | 'album' | 'track' | 'playlist' | 'podcast';
   completed: boolean;
+  notes?: string; // Added for FR-1.3
+  position: number; // Added for FR-1.1
   created_at: string;
 }

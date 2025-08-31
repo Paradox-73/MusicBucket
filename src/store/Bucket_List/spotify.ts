@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { addItemToBucketList, getBucketListItems, updateBucketListItem, deleteBucketListItem } from '../../services/Bucket_List/supabaseBucketList';
+import { addItemToBucketList, getBucketListItems, updateBucketListItem, deleteBucketListItem, updateBucketListItemCompletion, updateBucketListItemPositions } from '../../services/Bucket_List/supabaseBucketList';
 import { useAuthStore } from '../authStore';
 import { getTopArtists, getRecommendations } from '../../lib/spotify';
 import { SpotifyAuth } from '../../lib/spotify/auth';
@@ -8,6 +8,7 @@ import { SpotifyState, SpotifyItem } from '../../types/Bucket_List/spotify';
 export const useSpotifyStore = create<SpotifyState>((set, get) => ({
   items: [],
   filter: 'all',
+  itemTypeFilter: 'all', // Added for FR-1.4
   sortBy: 'date',
   searchResults: [],
   searchQuery: '',
@@ -40,6 +41,7 @@ export const useSpotifyStore = create<SpotifyState>((set, get) => ({
       type: item.type,
       completed: false,
       spotify_id: item.id,
+      position: Date.now(), // Assign a unique position for new items
     };
 
     try {
@@ -72,7 +74,7 @@ export const useSpotifyStore = create<SpotifyState>((set, get) => ({
     try {
       const item = get().items.find((i) => i.id === id);
       if (item) {
-        const updatedItem = await updateBucketListItem(id, { completed: !item.completed });
+        const updatedItem = await updateBucketListItemCompletion(id, !item.completed); // Use the new function
         set((state) => ({
           items: state.items.map((item) =>
             item.id === id ? updatedItem : item
@@ -97,20 +99,10 @@ export const useSpotifyStore = create<SpotifyState>((set, get) => ({
     }
   },
 
-  updatePriority: async (id, priority) => {
-    try {
-      const updatedItem = await updateBucketListItem(id, { priority });
-      set((state) => ({
-        items: state.items.map((item) =>
-          item.id === id ? updatedItem : item
-        ),
-      }));
-    } catch (error) {
-      console.error('Error updating priority:', error);
-    }
-  },
+  
 
   setFilter: (filter) => set({ filter }),
+  setItemTypeFilter: (filter) => set({ itemTypeFilter: filter }), // Added for FR-1.4
   setSortBy: (sortBy) => set({ sortBy }),
   setSearchResults: (searchResults) => set({ searchResults }),
   setSearchQuery: (query) => set({ searchQuery: query }),
@@ -147,6 +139,21 @@ export const useSpotifyStore = create<SpotifyState>((set, get) => ({
 
     } catch (error) {
       console.error('Error adding random item:', error);
+    }
+  },
+
+  reorderItems: async (reorderedItems) => {
+    set({ items: reorderedItems }); // Optimistic update
+    try {
+      // Prepare items for backend update (only id and position needed)
+      const itemsToUpdate = reorderedItems.map(item => ({
+        id: item.id,
+        position: item.position,
+      }));
+      await updateBucketListItemPositions(itemsToUpdate);
+    } catch (error) {
+      console.error('Error reordering items:', error);
+      // TODO: Implement rollback or error handling for UI if backend update fails
     }
   },
 }));

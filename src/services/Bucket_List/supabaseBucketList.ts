@@ -44,10 +44,12 @@ export async function getPublicBucketList(listId: string) {
 
 
 
-export async function createBucketList(name: string, userId: string) {
-    const insertData: { name: string; user_id: string; } = {
+export async function createBucketList(name: string, userId: string, cover_image_url?: string, description?: string) {
+    const insertData: { name: string; user_id: string; cover_image_url?: string | null; description?: string | null } = {
         name,
         user_id: userId,
+        cover_image_url: cover_image_url === undefined ? null : cover_image_url,
+        description: description === undefined ? null : description, // Add this line
     };
 
     const { data, error } = await supabase
@@ -63,7 +65,7 @@ export async function createBucketList(name: string, userId: string) {
     return data;
 }
 
-export async function updateBucketList(listId: string, updates: { name?: string; is_public?: boolean; }) {
+export async function updateBucketList(listId: string, updates: { name?: string; is_public?: boolean; cover_image_url?: string | null; description?: string | null }) {
     const { data, error } = await supabase
         .from(BUCKET_LISTS_TABLE)
         .update(updates)
@@ -84,6 +86,31 @@ export async function deleteBucketList(listId: string) {
         console.error('Supabase deleteBucketList error:', error);
         throw error;
     }
+}
+
+export async function uploadBucketListCover(file: File, userId: string, listId: string): Promise<string> {
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${listId}.${fileExt}`;
+  const filePath = `${userId}/${fileName}`;
+
+  const { data, error } = await supabase.storage
+    .from(BUCKET_LIST_COVERS_BUCKET)
+    .upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: true,
+    });
+
+  if (error) {
+    console.error('Supabase uploadBucketListCover error:', error);
+    throw error;
+  }
+
+  // Get public URL
+  const { data: publicUrlData } = supabase.storage
+    .from(BUCKET_LIST_COVERS_BUCKET)
+    .getPublicUrl(filePath);
+
+  return publicUrlData.publicUrl;
 }
 
 
@@ -111,10 +138,12 @@ export async function getBucketListItems(listId: string): Promise<BucketItem[]> 
     completed: item.completed,
     created_at: item.created_at,
     spotify_id: item.spotify_id,
+    notes: item.notes,
+    position: item.position,
   })) || [];
 }
 
-export async function addItemToBucketList(item: Omit<BucketItem, 'id' | 'created_at'> & { user_id: string, spotify_id: string }, listId: string): Promise<BucketItem> {
+export async function addItemToBucketList(item: Omit<BucketItem, 'id' | 'created_at'> & { user_id: string, spotify_id: string, notes?: string, position: number }, listId: string): Promise<BucketItem> {
   const { data, error } = await supabase
     .from(BUCKET_LIST_ITEMS_TABLE)
     .insert([
@@ -127,12 +156,59 @@ export async function addItemToBucketList(item: Omit<BucketItem, 'id' | 'created
         completed: item.completed,
         spotify_id: item.spotify_id,
         bucket_list_id: listId,
+        notes: item.notes,
+        position: item.position,
       },
     ])
     .select()
     .single();
   if (error) throw error;
   return data;
+}
+
+export async function updateBucketListItemCompletion(itemId: string, completed: boolean): Promise<BucketItem> {
+  const { data, error } = await supabase
+    .from(BUCKET_LIST_ITEMS_TABLE)
+    .update({ completed: completed })
+    .eq('id', itemId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Supabase updateBucketListItemCompletion error:', error);
+    throw error;
+  }
+
+  // Map the data back to BucketItem interface
+  return {
+    id: data.id,
+    user_id: data.user_id,
+    name: data.title, // Assuming 'title' in DB maps to 'name' in interface
+    imageUrl: data.imageUrl,
+    artists: data.artists,
+    type: data.type,
+    completed: data.completed,
+    created_at: data.created_at,
+    spotify_id: data.spotify_id,
+    notes: data.notes,
+    position: data.position,
+  };
+}
+
+export async function updateBucketListItemPositions(items: { id: string; position: number }[]): Promise<void> {
+  const updates = items.map(item => ({
+    id: item.id,
+    position: item.position,
+  }));
+
+  const { error } = await supabase
+    .from(BUCKET_LIST_ITEMS_TABLE)
+    .upsert(updates, { onConflict: 'id' }); // Use upsert to update multiple rows
+
+  if (error) {
+    console.error('Supabase updateBucketListItemPositions error:', error);
+    throw error;
+  }
 }
 
 // --- Existing Functions (to be deprecated) ---

@@ -13,6 +13,7 @@ interface BucketListItem {
   artists: { name: string }[];
   type: 'artist' | 'album' | 'track';
   spotify_id?: string; // Added Spotify ID
+  notes?: string; // Added for FR-1.3
 }
 
 interface PublicBucketList {
@@ -20,6 +21,7 @@ interface PublicBucketList {
   name: string;
   created_at: string;
   creator_name?: string; // Added creator's name
+  description?: string; // Added for bucket list description
   items: BucketListItem[];
 }
 
@@ -164,7 +166,14 @@ export function PublicBucketListPage() {
             <h2 className="text-lg font-semibold text-gray-600 dark:text-gray-300">Public Bucket List</h2>
             <h1 className="text-4xl md:text-5xl font-extrabold mt-1">{list.name}</h1>
             {list.creator_name && <p className="text-gray-600 dark:text-gray-300 text-lg">by {list.creator_name}</p>}
-            <p className="text-gray-700 dark:text-gray-200 mt-2 text-lg">A curated collection of musical gems shared with you.</p>
+            {list.description && ( // Display description if present
+              <p className="text-gray-700 dark:text-gray-200 mt-2 text-lg whitespace-pre-wrap">
+                {list.description}
+              </p>
+            )}
+            {!list.description && ( // Fallback if no description
+              <p className="text-gray-700 dark:text-gray-200 mt-2 text-lg">A curated collection of musical gems shared with you.</p>
+            )}
             <div className="mt-4 flex flex-wrap justify-center sm:justify-start gap-2 sm:gap-3">
               {user ? (
                 <button
@@ -232,6 +241,11 @@ export function PublicBucketListPage() {
                   <div>
                     <p className="font-bold text-lg text-gray-900 dark:text-white">{item.title}</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">{item.artists?.map(a => a.name).join(', ')}</p>
+                    {item.notes && ( // Display notes if present
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2" title={item.notes}>
+                        {item.notes}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <span className="text-xs font-semibold px-3 py-1 rounded-full bg-primary-light/20 text-primary dark:bg-primary-dark/50 dark:text-primary-light capitalize">{item.type}</span>
