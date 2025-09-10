@@ -2,44 +2,91 @@ import React, { useEffect, useState } from 'react';
 import { Check, Trash2, ExternalLink, FileText } from 'lucide-react';
 import { useSpotifyStore } from '../../store/Bucket_List/spotify';
 import { SpotifyItem } from '../../types/Bucket_List/spotify';
-import { useAuthStore } from '../../store/authStore'; // Import useAuthStore
+import { useAuthStore } from '../../store/authStore';
+import { ReminderService } from '../../services/ReminderService';
 
 const CATEGORIES = ['artist', 'album', 'track', 'playlist', 'podcast'] as const;
 
 const getSpotifyUrl = (item: SpotifyItem) => {
   const baseUrl = 'https://open.spotify.com';
-  // Use the spotify_id for the URL, not the database id
   return `${baseUrl}/${item.type}/${item.spotify_id}`;
 };
 
 interface BucketListProps {
   items: SpotifyItem[];
+  selectedItems: Set<string>;
+  setSelectedItems: React.Dispatch<React.SetStateAction<Set<string>>>;
 }
 
-export function BucketList({ items }: BucketListProps) {
+export function BucketList({ items, selectedItems, setSelectedItems }: BucketListProps) {
   const { sortBy, toggleListened, removeItem, updateNotes, reorderItems } = 
     useSpotifyStore();
 
   const [editingNotesItemId, setEditingNotesItemId] = useState<string | null>(null);
   const [currentNotes, setCurrentNotes] = useState('');
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
 
-  const [draggedItemId, setDraggedItemId] = useState<string | null>(null); // New state for dragged item
+  // NEW STATE FOR WHOLE BUCKET LIST REMINDER
+  const [bucketListReminder, setBucketListReminder] = useState<'none' | 'weekly' | 'monthly'>('none');
+
+  const { user } = useAuthStore();
+  const userId = user?.id;
+
+  // NEW EFFECT TO FETCH WHOLE BUCKET LIST REMINDER STATUS
+  useEffect(() => {
+    const fetchBucketListReminder = async () => {
+      if (!userId) return;
+      const status = await ReminderService.getReminderStatus(userId);
+      if (status) {
+        setBucketListReminder(status.frequency as 'none' | 'weekly' | 'monthly');
+      } else {
+        setBucketListReminder('none');
+      }
+    };
+    fetchBucketListReminder();
+  }, [userId]); // Depend only on userId
+
+  // NEW HANDLER FOR WHOLE BUCKET LIST REMINDER CHANGES
+  const handleBucketListReminderChange = async (frequency: 'weekly' | 'monthly' | 'none') => {
+    if (!userId) {
+      console.error("User not logged in.");
+      return;
+    }
+    try {
+      await ReminderService.updateReminderFrequency(userId, frequency);
+      setBucketListReminder(frequency);
+    } catch (error) {
+      console.error("Failed to update bucket list reminder:", error);
+    }
+  };
+
+  // NEW HANDLER FOR "REMIND ME NOW" BUTTON
+  const handleRemindMeNow = async () => {
+    if (!userId) {
+      console.error("User not logged in.");
+      return;
+    }
+    try {
+      await ReminderService.sendTestReminder(userId);
+      alert("Test reminder simulated! Check console and Supabase 'last_sent_at'.");
+    } catch (error) {
+      console.error("Failed to simulate test reminder:", error);
+      alert("Failed to simulate test reminder.");
+    }
+  };
 
   const sortedItems = [...items].sort((a, b) => {
     if (sortBy === 'name') return a.name.localeCompare(b.name);
     if (sortBy === 'completed') {
-      // Sort by completion status: uncompleted first, then completed
       if (a.completed === b.completed) return 0;
       return a.completed ? 1 : -1;
     }
-    // Default to sorting by position, then by date added (created_at) if positions are equal
     if (a.position !== b.position) {
       return a.position - b.position;
     }
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
-  // Drag and Drop Handlers
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, itemId: string) => {
     setDraggedItemId(itemId);
     e.dataTransfer.effectAllowed = 'move';
@@ -47,7 +94,7 @@ export function BucketList({ items }: BucketListProps) {
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault(); // Necessary to allow dropping
+    e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
   };
 
@@ -57,7 +104,7 @@ export function BucketList({ items }: BucketListProps) {
       return;
     }
 
-    const currentItems = [...items]; // Use the original items from store, not sortedItems
+    const currentItems = [...items];
     const draggedItemIndex = currentItems.findIndex(item => item.id === draggedItemId);
     const targetItemIndex = currentItems.findIndex(item => item.id === targetItemId);
 
@@ -65,20 +112,28 @@ export function BucketList({ items }: BucketListProps) {
       return;
     }
 
-    // Remove the dragged item from its original position
     const [draggedItem] = currentItems.splice(draggedItemIndex, 1);
-
-    // Insert the dragged item at the target position
     currentItems.splice(targetItemIndex, 0, draggedItem);
 
-    // Update positions based on the new order
     const newOrderedItems = currentItems.map((item, index) => ({
       ...item,
-      position: index, // Assign new sequential positions
+      position: index,
     }));
 
-    reorderItems(newOrderedItems); // Update store and persist to backend
-    setDraggedItemId(null); // Reset dragged item
+    reorderItems(newOrderedItems);
+    setDraggedItemId(null);
+  };
+
+  const handleCheckboxChange = (itemId: string) => {
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
+      }
+      return newSet;
+    });
   };
 
   const itemsByCategory = CATEGORIES.reduce((acc, category) => {
@@ -88,6 +143,29 @@ export function BucketList({ items }: BucketListProps) {
 
   return (
     <div className="space-y-8">
+      {/* NEW: Whole Bucket List Reminder Controls */}
+      <div className="flex items-center space-x-4 mb-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg shadow">
+        <label htmlFor="bucketListReminder" className="text-lg font-semibold text-gray-900 dark:text-white">
+          Bucket List Reminders:
+        </label>
+        <select
+          id="bucketListReminder"
+          className="p-2 rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white"
+          value={bucketListReminder}
+          onChange={(e) => handleBucketListReminderChange(e.target.value as 'weekly' | 'monthly' | 'none')}
+        >
+          <option value="none">No Reminders</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+        </select>
+        <button
+          onClick={handleRemindMeNow}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-md transition-colors"
+        >
+          Remind Me Now (Dev)
+        </button>
+      </div>
+
       {CATEGORIES.map((category) => {
         const categoryItems = itemsByCategory[category];
         if (categoryItems.length === 0) return null;
@@ -102,8 +180,10 @@ export function BucketList({ items }: BucketListProps) {
             </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {categoryItems.map((item) => {
-                const handleCardClick = () => {
-                  window.open(getSpotifyUrl(item), '_blank');
+                const handleCardClick = (e: React.MouseEvent) => {
+                  if (!(e.target as HTMLElement).closest('input[type="checkbox"]')) {
+                    window.open(getSpotifyUrl(item), '_blank');
+                  }
                 };
 
                 const handleEditNotesClick = (itemId: string, notes: string | undefined) => {
@@ -134,6 +214,13 @@ export function BucketList({ items }: BucketListProps) {
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDrop(e, item.id)}
                   >
+                    <input
+                      type="checkbox"
+                      className="absolute top-2 left-2 z-10 w-5 h-5 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                      checked={selectedItems.has(item.id)}
+                      onChange={() => handleCheckboxChange(item.id)}
+                      onClick={(e) => e.stopPropagation()} // Prevent card click when checkbox is clicked
+                    />
                     <div className="flex justify-center p-4">
                       <img
                         src={item.imageUrl}

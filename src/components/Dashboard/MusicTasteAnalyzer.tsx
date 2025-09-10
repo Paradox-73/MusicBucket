@@ -21,13 +21,48 @@ interface Personality {
   description: string;
 }
 
+const getDiversityLevel = (artistDiversity: number) => {
+  if (artistDiversity > 60) return "High";
+  if (artistDiversity > 40) return "Mid";
+  return "Low";
+};
+
+const getTotalSongsLevel = (totalTracks: number) => {
+  if (totalTracks > 2500) return "High";
+  if (totalTracks > 1000) return "Mid";
+  return "Low";
+};
+
+const getPopularityLevel = (avgPopularity: number) => {
+  if (avgPopularity > 60) return "High";
+  if (avgPopularity > 40) return "Mid";
+  return "Low";
+};
+
+const getDecade = (avgReleaseYear: number) => {
+  const decade = Math.floor(avgReleaseYear / 10) * 10;
+  if (decade < 1960) return "Historian";
+  if (decade < 1980) return "Groovy";
+  if (decade < 1990) return "Neon";
+  if (decade < 2000) return "Grunge";
+  if (decade < 2010) return "Y2K";
+  return "Modern";
+};
+
 const getPersonality = (metrics: any): Personality => {
-  if (metrics.avgPopularity < 30 && metrics.avgReleaseYear < 2000) return { title: 'The Underground Archivist', description: "You're a historian of the obscure, digging for gems that time forgot." };
-  if (metrics.avgPopularity < 40) return { title: 'The Underground Vindicator', description: "You champion the unsung heroes of music. If it's not on the radio, it's on your playlist." };
-  if (metrics.avgReleaseYear < 2005) return { title: 'The Archivist', description: "You're a musical historian with a love for the classics and timeless sounds." };
-  if (metrics.artistDiversity > 70) return { title: 'The Explorer', description: "A sonic adventurer, you're constantly seeking new sounds and pushing boundaries." };
-  if (metrics.artistDiversity < 20) return { title: 'The Specialist', description: "You're a connoisseur of your chosen sound, exploring its every nook and cranny." };
-  return { title: 'The Trendsetter', description: "You've got your finger on the pulse, enjoying the most popular sounds of today." };
+  const songsLvl = getTotalSongsLevel(metrics.totalTracks);
+  const diversityLvl = getDiversityLevel(metrics.artistDiversity);
+  const popLvl = getPopularityLevel(metrics.avgPopularity);
+  const decadeWord = getDecade(metrics.avgReleaseYear);
+
+  const songsWord = songsLvl === "Low" ? "Curator" : songsLvl === "Mid" ? "Collector" : "Hoarder";
+  const diversityWord = diversityLvl === "Low" ? "Devoted" : diversityLvl === "Mid" ? "Explorer" : "Eclectic";
+  const popWord = popLvl === "Low" ? "Underground" : popLvl === "Mid" ? "Alternative" : "Mainstream";
+
+  const title = `The ${decadeWord} ${popWord} ${diversityWord} ${songsWord}`;
+  const description = `You are a ${songsWord} with a ${diversityLvl.toLowerCase()} artist diversity, a taste for ${popLvl.toLowerCase()} music, and a love for the ${decadeWord} era.`;
+
+  return { title, description };
 };
 
 export const calculateMusicTasteMetrics = (tracks: SavedTrack[]) => {

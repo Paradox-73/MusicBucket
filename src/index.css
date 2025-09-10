@@ -3,12 +3,15 @@
 @tailwind utilities;
 
 @layer base {
-  html {
+  html, body, #root { /* Add #root as well if your app mounts there */
+    height: 100%;
     scroll-behavior: smooth;
   }
   
   body {
     @apply antialiased;
+    margin: 0;
+    padding: 0;
   }
 }
 
@@ -16,4 +19,32 @@
   .container {
     @apply max-w-7xl mx-auto;
   }
+}
+
+@font-face {
+  font-family: 'Caveat';
+  src: url('/assets/fonts/Caveat/static/Caveat-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Permanent Marker';
+  src: url('/assets/fonts/Permanent_Marker/PermanentMarker-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Playfair Display';
+  src: url('/assets/fonts/Playfair_Display/static/PlayfairDisplay-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Special Elite';
+  src: url('/assets/fonts/Special_Elite/SpecialElite-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
 }

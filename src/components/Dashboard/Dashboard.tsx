@@ -30,10 +30,11 @@ const fetchAllTracks = async (spotifyAuth: SpotifyAuth, playlistOwnershipFilter:
   const spotifyApi = createSpotifyApi(token, setIsRateLimited);
   
   const allTracks: any[] = [];
+  let offset = 0;
 
   // 1. Fetch all user's playlists
   const playlists: any[] = [];
-  let offset = 0;
+  offset = 0;
   while (true) {
     const response = await spotifyApi.getPlaylists(offset, 50);
     const { items, total } = response.data;
@@ -71,31 +72,61 @@ const fetchAllTracks = async (spotifyAuth: SpotifyAuth, playlistOwnershipFilter:
         await sleep(200); // Add delay
       } catch (error) {
         console.error(`Failed to fetch tracks for playlist ${playlist.id}`, error);
-        break; 
+        break;
       }
     }
   }
 
-  // 3. Fetch user's saved tracks only when filter is 'all'
-  if (playlistOwnershipFilter === 'all') {
-    offset = 0;
-    while (true) {
-      try {
-        const response = await spotifyApi.getSavedTracks(offset, 50);
-        const { items } = response.data;
-        if (!items.length) break;
-        items.forEach(item => {
-          if (item.track && item.track.id) {
-            allTracks.push({ ...item, track: { ...item.track, album: item.track.album || {} } });
+  // 3. Fetch user's saved tracks (liked songs)
+  offset = 0;
+  while (true) {
+    try {
+      const response = await spotifyApi.getSavedTracks(offset, 50);
+      const { items } = response.data;
+      if (!items.length) break;
+      items.forEach(item => {
+        if (item.track && item.track.id) {
+          allTracks.push({ ...item, track: { ...item.track, album: item.track.album || {} } });
+        }
+      });
+      if (items.length < 50) break;
+      offset += 50;
+      await sleep(200); // Add delay
+    } catch (error) {
+      console.error('Failed to fetch saved tracks', error);
+      break;
+    }
+  }
+
+  // 4. Fetch user's saved albums and their tracks
+  offset = 0;
+  while (true) {
+    try {
+      const response = await spotifyApi.getSavedAlbums(offset, 50);
+      const { items } = response.data;
+      if (!items.length) break;
+      for (const item of items) {
+        if (item.album && item.album.tracks) {
+          let tracksOffset = 0;
+          while (true) {
+            const tracksResponse = await spotifyApi.getAlbumTracks(item.album.id, tracksOffset, 50);
+            const { items: trackItems } = tracksResponse.data;
+            if (!trackItems.length) break;
+            trackItems.forEach(track => {
+              allTracks.push({ added_at: item.added_at, track: { ...track, album: item.album } });
+            });
+            if (trackItems.length < 50) break;
+            tracksOffset += 50;
+            await sleep(200); // Add delay
           }
-        });
-        if (items.length < 50) break;
-        offset += 50;
-        await sleep(200); // Add delay
-      } catch (error) {
-        console.error('Failed to fetch saved tracks', error);
-        break;
+        }
       }
+      if (items.length < 50) break;
+      offset += 50;
+      await sleep(200); // Add delay
+    } catch (error) {
+      console.error('Failed to fetch saved albums', error);
+      break;
     }
   }
 
@@ -129,6 +160,19 @@ export const Dashboard: React.FC = () => {
     enabled: !!currentUser, // Only run this query if currentUser is available
   });
 
+  const { data: topArtists, isLoading: isLoadingArtists, error: errorArtists } = useQuery({
+    queryKey: ['topArtists', selectedTimeRange],
+    queryFn: async () => {
+      const token = await spotifyAuth.getAccessToken();
+      if (!token) throw new Error('No access token available');
+      const spotifyApi = createSpotifyApi(token, setIsRateLimited);
+      const response = await spotifyApi.getTopArtists(selectedTimeRange, 50);
+      return response.data.items;
+    },
+  });
+
+  const musicTasteMetrics = allTracks ? calculateMusicTasteMetrics(allTracks) : null;
+
   useEffect(() => {
     if (currentUser?.id) {
       const filters: PlaylistOwnershipFilter[] = ['all', 'mine', 'others'];
@@ -145,21 +189,10 @@ export const Dashboard: React.FC = () => {
   }, [currentUser?.id, playlistOwnershipFilter, queryClient, spotifyAuth]);
 
   useEffect(() => {
-    if (currentUser && allTracks && !isLoadingAllTracks) {
-      checkAndAwardAchievements(currentUser.id, allTracks);
+    if (currentUser && allTracks && !isLoadingAllTracks && musicTasteMetrics && topArtists) {
+      checkAndAwardAchievements(currentUser.id, { allTracks, topArtists, musicTasteMetrics });
     }
-  }, [currentUser, allTracks, isLoadingAllTracks]);
-
-  const { data: topArtists, isLoading: isLoadingArtists, error: errorArtists } = useQuery({
-    queryKey: ['topArtists', selectedTimeRange],
-    queryFn: async () => {
-      const token = await spotifyAuth.getAccessToken();
-      if (!token) throw new Error('No access token available');
-      const spotifyApi = createSpotifyApi(token, setIsRateLimited);
-      const response = await spotifyApi.getTopArtists(selectedTimeRange, 50);
-      return response.data.items;
-    },
-  });
+  }, [currentUser, allTracks, isLoadingAllTracks, musicTasteMetrics, topArtists]);
 
   const topArtistImage = topArtists?.[0]?.images?.[0]?.url || '/path/to/default-artist-image.png'; // Add a default image path
   const { data: color } = useColor(topArtistImage, 'hex', { crossOrigin: 'anonymous' });
@@ -174,8 +207,6 @@ export const Dashboard: React.FC = () => {
       return response.data.items;
     },
   });
-
-  const musicTasteMetrics = allTracks ? calculateMusicTasteMetrics(allTracks) : null;
 
   const error = errorArtists || errorTracks || errorAllTracks || errorUser;
 
@@ -289,6 +320,8 @@ export const Dashboard: React.FC = () => {
         <div className="mb-8">
           {isLoadingAllTracks ? <div className="w-full h-96 bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center"><LoadingSpinner/></div> : <MusicTasteAnalyzer savedTracks={allTracks || []} />}
         </div>
+
+        
 
         <motion.div variants={cardVariant} className="mb-8">
           {musicTasteMetrics && <LibraryGrowthChart data={musicTasteMetrics.monthlyAdditionsData} />}

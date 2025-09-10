@@ -257,3 +257,55 @@ export const getSeveralTracks = async (trackIds: string[]) => {
     return [];
   }
 };
+
+export const getTopTracks = async () => {
+  try {
+    const response = await spotifyApi.getMyTopTracks({ limit: 50 });
+    return response.items;
+  } catch (error) {
+    console.error('Error getting top tracks:', error);
+    return [];
+  }
+};
+
+export const getSavedTracks = async () => {
+  try {
+    let tracks: SpotifyApi.SavedTrackObject[] = [];
+    let response;
+    let offset = 0;
+
+    do {
+      response = await spotifyApi.getMySavedTracks({ limit: 50, offset });
+      if (response && response.items) {
+        tracks = tracks.concat(response.items);
+        offset += response.items.length;
+      }
+    } while (response && response.next);
+
+    return tracks;
+  } catch (error) {
+    console.error('Error getting saved tracks:', error);
+    return [];
+  }
+};
+
+export const getPlaylistTracks = async (playlistId: string) => {
+  try {
+    let tracks: SpotifyApi.PlaylistTrackObject[] = [];
+    let response;
+    let offset = 0;
+
+    do {
+      response = await spotifyApi.getPlaylistTracks(playlistId, { limit: 50, offset });
+      if (response && response.items) {
+        tracks = tracks.concat(response.items);
+        offset += response.items.length;
+      }
+    } while (response && response.next);
+
+    return tracks;
+  } catch (error) {
+    console.error('Error getting playlist tracks:', error);
+    return [];
+  }
+};

@@ -6,6 +6,12 @@ import { useSpotifyStore } from '../../../store/Bucket_List/spotify';
 import { SearchPanel } from './SearchPanel';
 import { BucketListPanel } from './BucketListPanel';
 import { ArrowLeft, Edit, Share2, Globe, Lock, Pencil } from 'lucide-react';
+import CommentsSection from '../CommentsSection';
+import CollaboratorsPanel from './CollaboratorsPanel';
+import SmartSuggestions from '../SmartSuggestions';
+import ThemePanel from './ThemePanel';
+import ShareModal from '../ShareModal';
+import SpotifyImport from '../SpotifyImport';
 
 // Define the type for a single bucket list
 interface BucketList {
@@ -29,6 +35,9 @@ export function BucketListDetail() {
   // New state for description
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [editedDescription, setEditedDescription] = useState('');
+
+  // State for ShareModal
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   useEffect(() => {
     if (user && listId) {
@@ -134,10 +143,13 @@ export function BucketListDetail() {
 
   const handleShare = () => {
     if (!list) return;
-    const shareUrl = `${window.location.origin}/bucketlist/share/${list.id}`;
-    navigator.clipboard.writeText(shareUrl).then(() => {
-      alert('Share link copied to clipboard!');
-    });
+    setIsShareModalOpen(true);
+  };
+
+  const onRequestCollaborate = () => {
+    // Implement collaboration request logic here
+    alert('Collaboration request sent!');
+    setIsShareModalOpen(false);
   };
 
   if (loading) {
@@ -202,6 +214,7 @@ export function BucketListDetail() {
                     <button onClick={handleShare} className="flex items-center gap-1 text-sm bg-purple-600 px-3 py-1 rounded-full hover:bg-purple-700 text-white">
                         <Share2 size={16} /> Share
                     </button>
+                    <SpotifyImport />
                 </div>
             </div>
         </header>
@@ -258,6 +271,21 @@ export function BucketListDetail() {
           <BucketListPanel />
         </div>
       </main>
+      {/* <CommentsSection listId={listId!} /> */}
+      <CollaboratorsPanel listId={listId!} />
+      {/* <SmartSuggestions listId={listId!} /> */}
+      {/* <ThemePanel /> */}
+
+      {list && (
+        <ShareModal
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          shareUrl={`${window.location.origin}/bucketlist/share/${list.id}`}
+          listName={list.name}
+          ownerName={user?.email || 'Unknown'}
+          listId={list.id}
+        />
+      )}
     </div>
   );
 }

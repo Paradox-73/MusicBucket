@@ -70,6 +70,22 @@ export const useSpotifyStore = create<SpotifyState>((set, get) => ({
     }
   },
 
+  removeItems: async (ids: string[]) => {
+    try {
+      // Optimistically remove items from state
+      set((state) => ({
+        items: state.items.filter((item) => !ids.includes(item.id)),
+      }));
+      // Delete from backend
+      for (const id of ids) {
+        await deleteBucketListItem(id);
+      }
+    } catch (error) {
+      console.error('Error bulk removing items:', error);
+      // TODO: Implement rollback if backend deletion fails for any item
+    }
+  },
+
   toggleListened: async (id) => {
     try {
       const item = get().items.find((i) => i.id === id);
@@ -83,6 +99,26 @@ export const useSpotifyStore = create<SpotifyState>((set, get) => ({
       }
     } catch (error) {
       console.error('Error updating listened status:', error);
+    }
+  },
+
+  toggleListenedBulk: async (ids: string[]) => {
+    try {
+      const currentItems = get().items;
+      const itemsToUpdate = currentItems.filter(item => ids.includes(item.id));
+
+      for (const item of itemsToUpdate) {
+        await updateBucketListItemCompletion(item.id, !item.completed);
+      }
+
+      // After all updates, refetch or update state based on new completion statuses
+      // For simplicity, let's refetch all items for the current list
+      const listId = get().currentListId;
+      if (listId) {
+        get().loadListItems(listId);
+      }
+    } catch (error) {
+      console.error('Error bulk toggling listened status:', error);
     }
   },
 
@@ -136,6 +172,7 @@ export const useSpotifyStore = create<SpotifyState>((set, get) => ({
       };
 
       get().addItem(itemToAdd);
+      set({ searchQuery: itemToAdd.name });
 
     } catch (error) {
       console.error('Error adding random item:', error);

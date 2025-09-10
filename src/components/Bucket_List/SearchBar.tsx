@@ -30,6 +30,7 @@ export function SearchBar({ listId }: { listId: string }) {
   );
 
   const handleFeelingLucky = () => {
+    setQuery('');
     addRandomItem();
   };
 

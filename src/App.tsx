@@ -48,6 +48,8 @@ import CultureClashPage from './pages/CultureClashPage';
 import PublicBucketListPage from './pages/PublicBucketListPage';
 import TierMakerPage from './pages/TierMakerPage';
 import PublicTierListPage from './pages/PublicTierListPage';
+import ShareBucketListPage from './pages/ShareBucketListPage'; // New Cozy Share Page
+import BucketListJoinPage from './pages/BucketListJoinPage';
 
 const isProduction = import.meta.env.PROD;
 
@@ -77,6 +79,7 @@ function App() {
         <Route path="culture-clash" element={isProduction ? <ComingSoon /> : <CultureClashPage />} />
       </Route>
       <Route path="/bucketlist/share/:id" element={<PublicBucketListPage />} />
+      <Route path="/bucketlist/join/:token" element={<BucketListJoinPage />} />
       <Route path="/tiermaker/share/:id" element={isProduction ? <ComingSoon /> : <PublicTierListPage />} />
     </Routes>
   );

@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Filters } from '../Filters';
 import { BucketList } from '../BucketList';
 import { useSpotifyStore } from '../../../store/Bucket_List/spotify';
 import { SpotifyItem } from '../../../types/Bucket_List/spotify';
-import { Music } from 'lucide-react';
+import { Music, List, Grid } from 'lucide-react';
+import BucketListListView from '../BucketListListView';
 
 export function BucketListPanel() {
-  const { items, addItem, filter, itemTypeFilter, setSortBy, sortBy } = useSpotifyStore();
+  const { items, addItem, filter, itemTypeFilter, setSortBy, sortBy, removeItems, toggleListenedBulk } = useSpotifyStore();
+  const [isListView, setIsListView] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
   const filteredItems = items.filter((item) => {
     // Filter by completion status
@@ -32,17 +35,71 @@ export function BucketListPanel() {
     e.preventDefault();
   };
 
+  const handleBulkDelete = () => {
+    if (selectedItems.size === 0) return;
+    if (window.confirm(`Are you sure you want to delete ${selectedItems.size} selected items?`)) {
+      removeItems(Array.from(selectedItems));
+      setSelectedItems(new Set()); // Clear selection
+    }
+  };
+
+  const handleBulkToggleListened = () => {
+    if (selectedItems.size === 0) return;
+    toggleListenedBulk(Array.from(selectedItems));
+    setSelectedItems(new Set()); // Clear selection
+  };
+
   return (
     <div className="flex h-full flex-col bg-gray-100 dark:bg-black/90" onDragOver={handleDragOver} onDrop={handleDrop}>
       <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 border-b border-gray-200 dark:border-white/10 px-4 py-3 sm:px-6 sm:py-4">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Your Bucket List</h2>
         <div className="flex items-center gap-2"> {/* New div to group filters and sort */}
           <Filters />
+          {selectedItems.size > 0 && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleBulkToggleListened}
+                className="px-3 py-1 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                title="Toggle Listen Status"
+              >
+                Toggle ({selectedItems.size})
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                className="px-3 py-1 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700"
+                title="Delete Selected"
+              >
+                Delete ({selectedItems.size})
+              </button>
+            </div>
+          )}
+          <div className="flex rounded-md shadow-sm" role="group">
+            <button
+              type="button"
+              className={`px-3 py-1 text-sm font-medium rounded-l-md ${!isListView ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-white'} hover:bg-purple-700 dark:hover:bg-gray-600 focus:z-10 focus:ring-2 focus:ring-purple-500 focus:border-purple-500`}
+              onClick={() => setIsListView(false)}
+              title="Grid View"
+            >
+              <Grid size={16} />
+            </button>
+            <button
+              type="button"
+              className={`px-3 py-1 text-sm font-medium rounded-r-md ${isListView ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-white'} hover:bg-purple-700 dark:hover:bg-gray-600 focus:z-10 focus:ring-2 focus:ring-purple-500 focus:border-purple-500`}
+              onClick={() => setIsListView(true)}
+              title="List View"
+            >
+              <List size={16} />
+            </button>
+          </div>
         </div>
       </header>
       <main className="flex-1 overflow-y-auto p-4 sm:p-6">
         {filteredItems.length > 0 ? (
-          <BucketList items={filteredItems} />
+          isListView ? (
+            <BucketListListView items={filteredItems} selectedItems={selectedItems} setSelectedItems={setSelectedItems} />
+          ) : (
+            <BucketList items={filteredItems} selectedItems={selectedItems} setSelectedItems={setSelectedItems} />
+          )
         ) : (
           <div className="flex h-full items-center justify-center">
             <div className="text-center">

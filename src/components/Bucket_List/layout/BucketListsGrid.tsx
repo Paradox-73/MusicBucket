@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { PlusCircle, Music, Trash2, Pencil } from 'lucide-react';
 import { getBucketLists, createBucketList, deleteBucketList, updateBucketList, uploadBucketListCover } from '../../../services/Bucket_List/supabaseBucketList';
 import { useAuth } from '../../../hooks/useAuth';
+import DiscoveryMode from '../DiscoveryMode';
 
 interface BucketListItemForGrid {
   imageUrl?: string;
@@ -25,6 +26,7 @@ export function BucketListsGrid() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null); // Re-added
   const [editingListId, setEditingListId] = useState<string | null>(null);
   const [editedListName, setEditedListName] = useState('');
+  const [isDiscoveryModeOpen, setIsDiscoveryModeOpen] = useState(false); // New state for Discovery Mode
   const { user } = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -169,16 +171,26 @@ export function BucketListsGrid() {
     <div className="p-4 sm:p-6 bg-gray-100 dark:bg-black text-gray-900 dark:text-white min-h-screen">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6">
         <h1 className="text-3xl font-bold mb-4 sm:mb-0">My Bucket Lists</h1>
-        {!isCreating && (
+        <div className="flex gap-2">
           <button
-            onClick={handleCreateClick}
-            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white dark:bg-purple-700 dark:hover:bg-purple-800 font-bold py-2 px-4 rounded-full transition-colors"
+            onClick={() => setIsDiscoveryModeOpen(true)}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-700 dark:hover:bg-blue-800 font-bold py-2 px-4 rounded-full transition-colors"
           >
-            <PlusCircle size={20} />
-            Create List
+            <Music size={20} />
+            Discovery Mode
           </button>
-        )}
+          {!isCreating && (
+            <button
+              onClick={handleCreateClick}
+              className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white dark:bg-purple-700 dark:hover:bg-purple-800 font-bold py-2 px-4 rounded-full transition-colors"
+            >
+              <PlusCircle size={20} />
+              Create List
+            </button>
+          )}
+        </div>
       </div>
+      {isDiscoveryModeOpen && <DiscoveryMode isOpen={isDiscoveryModeOpen} onClose={() => setIsDiscoveryModeOpen(false)} />}
       {isCreating && (
         <form onSubmit={handleCreateList} className="mb-6 flex flex-col sm:flex-row gap-2">
           <input

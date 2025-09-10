@@ -41,6 +41,165 @@ export async function getPublicBucketList(listId: string) {
     return data;
 }
 
+export async function getPublicBucketLists() {
+  const { data: lists, error: listsError } = await supabase
+    .from(BUCKET_LISTS_TABLE)
+    .select('id, name, description, cover_image_url, user_id')
+    .eq('is_public', true)
+    .order('created_at', { ascending: false });
+
+  if (listsError) {
+    console.error('Supabase getPublicBucketLists error:', listsError);
+    throw listsError;
+  }
+
+  const result = await Promise.all(
+    lists.map(async (list) => {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', list.user_id)
+        .single();
+
+      if (profileError) {
+        console.error(`Error fetching profile for user ${list.user_id}:`, profileError);
+        return {
+          ...list,
+          owner_email: 'Unknown',
+        };
+      }
+
+      return {
+        ...list,
+        owner_email: profile.email,
+      };
+    })
+  );
+
+  return result;
+}
+
+export async function getUserByEmail(email: string) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('email', email)
+    .single();
+
+  if (error) {
+    console.error('Supabase getUserByEmail error:', error);
+    throw error;
+  }
+  return data;
+}
+
+export async function getCollaborators(listId: string) {
+  const { data, error } = await supabase
+    .from('bucket_list_collaborators')
+    .select('user_id, profiles(email)')
+    .eq('bucket_list_id', listId);
+
+  if (error) {
+    console.error('Supabase getCollaborators error:', error);
+    throw error;
+  }
+  return data;
+}
+
+export async function addCollaborator(listId: string, userId: string) {
+  const { data, error } = await supabase
+    .from('bucket_list_collaborators')
+    .insert([{ bucket_list_id: listId, user_id: userId }])
+    .select();
+
+  if (error) {
+    console.error('Supabase addCollaborator error:', error);
+    throw error;
+  }
+  return data;
+}
+
+export async function removeCollaborator(listId: string, userId: string) {
+  const { error } = await supabase
+    .from('bucket_list_collaborators')
+    .delete()
+    .eq('bucket_list_id', listId)
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error('Supabase removeCollaborator error:', error);
+    throw error;
+  }
+}
+
+export async function createInviteToken(listId: string) {
+  const { data, error } = await supabase
+    .from('bucket_list_invites')
+    .insert([{ bucket_list_id: listId }])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Supabase createInviteToken error:', error);
+    throw error;
+  }
+  return data.id;
+}
+
+export async function getBucketListByInviteToken(token: string) {
+  const { data, error } = await supabase
+    .from('bucket_list_invites')
+    .select('bucket_list_id')
+    .eq('id', token)
+    .single();
+
+  if (error) {
+    console.error('Supabase getBucketListByInviteToken error:', error);
+    throw error;
+  }
+  return data.bucket_list_id;
+}
+
+export async function acceptInvite(token: string, userId: string) {
+  const listId = await getBucketListByInviteToken(token);
+  if (listId) {
+    await addCollaborator(listId, userId);
+    // Optionally, delete the invite token after it has been used
+    await supabase.from('bucket_list_invites').delete().eq('id', token);
+    return listId;
+  }
+  return null;
+}
+
+
+
+export async function cloneBucketList(listId: string, userId: string) {
+  // 1. Fetch the public bucket list to be cloned
+  const listToClone = await getPublicBucketList(listId);
+  if (!listToClone) {
+    throw new Error("Public bucket list not found.");
+  }
+
+  // 2. Create a new bucket list for the current user
+  const newListName = `${listToClone.name} (clone)`;
+  const newList = await createBucketList(newListName, userId, listToClone.cover_image_url, listToClone.description);
+
+  // 3. Fetch all the items from the public bucket list
+  const itemsToClone = await getBucketListItems(listId);
+
+  // 4. Insert the items into the new bucket list
+  const newItems = itemsToClone.map(item => ({
+    ...item,
+    user_id: userId,
+  }));
+
+  for (const item of newItems) {
+    await addItemToBucketList(item, newList.id);
+  }
+
+  return newList;
+}
+
 
 
 

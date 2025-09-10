@@ -10,24 +10,7 @@ export interface Achievement {
 
 // Define your achievements here
 export const ALL_ACHIEVEMENTS: Achievement[] = [
-  {
-    id: 'first_explorer',
-    name: 'First Explorer',
-    description: 'Explored your first artist.',
-    icon: 'Sparkles',
-  },
-  {
-    id: 'five_artists_explored',
-    name: 'Five Artists Explored',
-    description: 'Explored 5 unique artists.',
-    icon: 'Star',
-  },
-  {
-    id: 'score_80_achiever',
-    name: 'Score 80 Achiever',
-    description: 'Achieved an exploration score of 80 or higher for an artist.',
-    icon: 'Award',
-  },
+  // Artist Exploration achievements removed as per user request.
   // Add more achievements as needed
 ];
 
