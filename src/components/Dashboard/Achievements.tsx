@@ -2,13 +2,19 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { Award, CheckCircle2 } from 'lucide-react';
-import { achievements } from '../../services/AchievementService';
+import { ALL_ACHIEVEMENTS, UserData, FullAchievement } from '../../lib/supabaseAchievements';
 
 interface UserAchievement {
   achievement_id: string;
 }
 
-export const Achievements: React.FC = () => {
+interface AchievementsProps {
+  allTracks: any[];
+  topArtists: any[];
+  musicTasteMetrics: any;
+}
+
+export const Achievements: React.FC<AchievementsProps> = ({ allTracks, topArtists, musicTasteMetrics }) => {
 
   const { data: userAchievements, isLoading: isLoadingUserAchievements } = useQuery<UserAchievement[]>({ 
     queryKey: ['userAchievements'], 
@@ -27,12 +33,17 @@ export const Achievements: React.FC = () => {
     return <p>Loading achievements...</p>;
   }
 
+  const userData: UserData = { allTracks, topArtists, musicTasteMetrics };
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mt-8">
       <h2 className="text-2xl font-bold mb-4">Achievements</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {achievements.map(achievement => {
+        {ALL_ACHIEVEMENTS.map((achievement: FullAchievement) => {
           const isUnlocked = unlockedAchievementIds.has(achievement.id);
+          const progress = achievement.getProgress(userData);
+          const progressText = !isUnlocked && progress ? `${progress.current}/${progress.target} ${progress.unit}` : '';
+
           return (
             <div key={achievement.id} className={`p-4 rounded-lg ${isUnlocked ? 'bg-green-100 dark:bg-green-900' : 'bg-gray-100 dark:bg-gray-700'}`}>
               <div className="flex items-center">
@@ -42,6 +53,9 @@ export const Achievements: React.FC = () => {
                 <div>
                   <h3 className="font-bold">{achievement.name}</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">{achievement.description}</p>
+                  {!isUnlocked && progressText && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Progress: {progressText}</p>
+                  )}
                 </div>
                 {isUnlocked && <CheckCircle2 size={24} className="text-green-500 ml-auto" />}
               </div>

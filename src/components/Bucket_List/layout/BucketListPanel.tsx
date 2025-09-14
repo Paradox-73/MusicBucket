@@ -3,11 +3,11 @@ import { Filters } from '../Filters';
 import { BucketList } from '../BucketList';
 import { useSpotifyStore } from '../../../store/Bucket_List/spotify';
 import { SpotifyItem } from '../../../types/Bucket_List/spotify';
-import { Music, List, Grid } from 'lucide-react';
+import { Music, List, Grid, ArrowDown, ArrowUp } from 'lucide-react';
 import BucketListListView from '../BucketListListView';
 
 export function BucketListPanel() {
-  const { items, addItem, filter, itemTypeFilter, setSortBy, sortBy, removeItems, toggleListenedBulk } = useSpotifyStore();
+  const { items, addItem, filter, itemTypeFilter, setSortBy, sortBy, sortOrder, setSortOrder, removeItems, toggleListenedBulk } = useSpotifyStore();
   const [isListView, setIsListView] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
@@ -20,6 +20,24 @@ export function BucketListPanel() {
     if (itemTypeFilter !== 'all' && item.type !== itemTypeFilter) return false;
 
     return true;
+  });
+
+  const sortedItems = [...filteredItems].sort((a, b) => {
+    const order = sortOrder === 'asc' ? 1 : -1;
+    if (sortBy === 'name') {
+      return a.name.localeCompare(b.name) * order;
+    }
+    if (sortBy === 'completed') {
+      if (a.completed === b.completed) return 0;
+      return (a.completed ? 1 : -1) * order;
+    }
+    if (sortBy === 'date') {
+        return (new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) * order;
+    }
+    if (a.position !== b.position) {
+      return (a.position - b.position) * order;
+    }
+    return (new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) * order;
   });
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -73,6 +91,15 @@ export function BucketListPanel() {
               </button>
             </div>
           )}
+          <div className="flex items-center gap-2">
+            
+            <button
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="p-2 rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white"
+            >
+                {sortOrder === 'asc' ? <ArrowUp size={16} /> : <ArrowDown size={16} />}
+            </button>
+          </div>
           <div className="flex rounded-md shadow-sm" role="group">
             <button
               type="button"
@@ -96,9 +123,9 @@ export function BucketListPanel() {
       <main className="flex-1 overflow-y-auto p-4 sm:p-6">
         {filteredItems.length > 0 ? (
           isListView ? (
-            <BucketListListView items={filteredItems} selectedItems={selectedItems} setSelectedItems={setSelectedItems} />
+            <BucketListListView items={sortedItems} selectedItems={selectedItems} setSelectedItems={setSelectedItems} />
           ) : (
-            <BucketList items={filteredItems} selectedItems={selectedItems} setSelectedItems={setSelectedItems} />
+            <BucketList items={sortedItems} selectedItems={selectedItems} setSelectedItems={setSelectedItems} />
           )
         ) : (
           <div className="flex h-full items-center justify-center">

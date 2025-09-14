@@ -49,6 +49,38 @@ const getDecade = (avgReleaseYear: number) => {
   return "Modern";
 };
 
+const personalityDescriptions: { [key: string]: string } = {
+  // Decade-based Adjectives
+  "Historian": "You're digging up musical fossils, and loving every minute of it.",
+  "Classicist": "You're so old school, you make the Historian look modern.",
+  "Golden-Ager": "You've got that flapper flair and a playlist to match.",
+  "Timeless": "Your music taste is like a fine wine, it only gets better with age.",
+  "Revolutionary": "You're a musical rebel, shaking things up with sounds from a bygone era.",
+  "Groovy": "You're rockin' and rollin' with the best of them, a true pioneer of cool.",
+  "Psychedelic": "Your playlist is a trip, man, full of peace, love, and mind-bending tunes.",
+  "Flower-Child": "You're all about good vibes and classic rock, a true child of the 70s.",
+  "Neon": "You're living in a material world, with a soundtrack of synths and big hair.",
+  "Grunge": "You're channeling your inner angst with flannel and a killer alt-rock playlist.",
+  "Y2K": "You're bringing back the bling and the beats from the turn of the millennium.",
+  "Modern": "You're plugged into the present, with a finger on the pulse of today's hits.",
+  "Zeitgeist": "You're ahead of the curve, defining the sound of tomorrow, today.",
+
+  // Popularity
+  "Mainstream": "You love the anthems that get everyone moving, and you're not afraid to sing along.",
+  "Alternative": "Your average song popularity is perfectly balanced, like all things should be. You're a musical Goldilocks, finding that 'just right' sweet spot.",
+  "Underground": "You're a true discoverer, unearthing hidden gems before they hit the airwaves.",
+
+  // Diversity
+  "Devoted": "You know what you like, and you stick to it. Why wander when you've found perfection?",
+  "Explorer": "You explore new sounds, but always return to your favorites, a balanced musical journey.",
+  "Eclectic": "Your taste knows no bounds, embracing artists from every corner of the musical universe.",
+
+  // Total Songs
+  "Curator": "You carefully select each track, building a refined collection, quality over quantity.",
+  "Collector": "Your collection is growing into a serious musical archive, a treasure trove of tunes.",
+  "Hoarder": "Your vast library is a testament to your dedication to music, you collect 'em all!",
+};
+
 const getPersonality = (metrics: any): Personality => {
   const songsLvl = getTotalSongsLevel(metrics.totalTracks);
   const diversityLvl = getDiversityLevel(metrics.artistDiversity);
@@ -60,7 +92,7 @@ const getPersonality = (metrics: any): Personality => {
   const popWord = popLvl === "Low" ? "Underground" : popLvl === "Mid" ? "Alternative" : "Mainstream";
 
   const title = `The ${decadeWord} ${popWord} ${diversityWord} ${songsWord}`;
-  const description = `You are a ${songsWord} with a ${diversityLvl.toLowerCase()} artist diversity, a taste for ${popLvl.toLowerCase()} music, and a love for the ${decadeWord} era.`;
+  const description = `${personalityDescriptions[songsWord]} ${personalityDescriptions[diversityWord]} ${personalityDescriptions[popWord]} ${personalityDescriptions[decadeWord]}`;
 
   return { title, description };
 };

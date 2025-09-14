@@ -19,12 +19,13 @@ interface BucketListProps {
 }
 
 export function BucketList({ items, selectedItems, setSelectedItems }: BucketListProps) {
-  const { sortBy, toggleListened, removeItem, updateNotes, reorderItems } = 
+  const { sortBy, sortOrder, toggleListened, removeItem, updateNotes, reorderItems } = 
     useSpotifyStore();
 
   const [editingNotesItemId, setEditingNotesItemId] = useState<string | null>(null);
   const [currentNotes, setCurrentNotes] = useState('');
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
+  const [massSelectMode, setMassSelectMode] = useState(false);
 
   // NEW STATE FOR WHOLE BUCKET LIST REMINDER
   const [bucketListReminder, setBucketListReminder] = useState<'none' | 'weekly' | 'monthly'>('none');
@@ -75,17 +76,7 @@ export function BucketList({ items, selectedItems, setSelectedItems }: BucketLis
     }
   };
 
-  const sortedItems = [...items].sort((a, b) => {
-    if (sortBy === 'name') return a.name.localeCompare(b.name);
-    if (sortBy === 'completed') {
-      if (a.completed === b.completed) return 0;
-      return a.completed ? 1 : -1;
-    }
-    if (a.position !== b.position) {
-      return a.position - b.position;
-    }
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-  });
+  
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, itemId: string) => {
     setDraggedItemId(itemId);
@@ -137,7 +128,7 @@ export function BucketList({ items, selectedItems, setSelectedItems }: BucketLis
   };
 
   const itemsByCategory = CATEGORIES.reduce((acc, category) => {
-    acc[category] = sortedItems.filter((item) => item.type === category);
+    acc[category] = items.filter((item) => item.type === category);
     return acc;
   }, {} as Record<typeof CATEGORIES[number], SpotifyItem[]>);
 
@@ -164,6 +155,38 @@ export function BucketList({ items, selectedItems, setSelectedItems }: BucketLis
         >
           Remind Me Now (Dev)
         </button>
+      </div>
+
+      <div className="flex items-center space-x-4 mb-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg shadow">
+        {!massSelectMode ? (
+          <button
+            onClick={() => setMassSelectMode(true)}
+            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md shadow-md transition-colors"
+          >
+            Select
+          </button>
+        ) : (
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setMassSelectMode(false)}
+              className="px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded-md shadow-md transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => setSelectedItems(new Set(items.map(i => i.id)))}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-md transition-colors"
+            >
+              Select All
+            </button>
+            <button
+              onClick={() => setSelectedItems(new Set())}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-md transition-colors"
+            >
+              Deselect All
+            </button>
+          </div>
+        )}
       </div>
 
       {CATEGORIES.map((category) => {
@@ -214,13 +237,15 @@ export function BucketList({ items, selectedItems, setSelectedItems }: BucketLis
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDrop(e, item.id)}
                   >
-                    <input
-                      type="checkbox"
-                      className="absolute top-2 left-2 z-10 w-5 h-5 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                      checked={selectedItems.has(item.id)}
-                      onChange={() => handleCheckboxChange(item.id)}
-                      onClick={(e) => e.stopPropagation()} // Prevent card click when checkbox is clicked
-                    />
+                    {massSelectMode && (
+                      <input
+                        type="checkbox"
+                        className="absolute top-2 left-2 z-10 w-5 h-5 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        checked={selectedItems.has(item.id)}
+                        onChange={() => handleCheckboxChange(item.id)}
+                        onClick={(e) => e.stopPropagation()} // Prevent card click when checkbox is clicked
+                      />
+                    )}
                     <div className="flex justify-center p-4">
                       <img
                         src={item.imageUrl}
@@ -311,7 +336,7 @@ export function BucketList({ items, selectedItems, setSelectedItems }: BucketLis
                     </div>
 
                     {/* Status Tag */}
-                    {item.completed && (
+                    {item.completed && !massSelectMode && (
                        <div className="absolute left-2 top-2 rounded-full bg-green-500/20 px-2 py-1 text-xs font-bold text-green-300">
                          LISTENED
                        </div>

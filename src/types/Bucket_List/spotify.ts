@@ -13,6 +13,7 @@ export interface SpotifyState {
   filter: 'all' | 'not-listened' | 'listened';
   itemTypeFilter: 'all' | 'artist' | 'album' | 'track' | 'playlist' | 'podcast'; // Added for FR-1.4
   sortBy: 'name' | 'date';
+  sortOrder: 'asc' | 'desc';
   searchResults: SpotifyItem[];
   addItem: (item: SpotifyItem) => void;
   removeItem: (id: string) => void;
@@ -21,6 +22,7 @@ export interface SpotifyState {
   
   setFilter: (filter: SpotifyState['filter']) => void;
   setSortBy: (sortBy: SpotifyState['sortBy']) => void;
+  setSortOrder: (sortOrder: SpotifyState['sortOrder']) => void;
   setItemTypeFilter: (filter: SpotifyState['itemTypeFilter']) => void; // Added for FR-1.4
   setSearchResults: (results: SpotifyItem[]) => void;
   addRandomItem: () => void;

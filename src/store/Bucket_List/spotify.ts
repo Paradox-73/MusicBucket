@@ -10,6 +10,7 @@ export const useSpotifyStore = create<SpotifyState>((set, get) => ({
   filter: 'all',
   itemTypeFilter: 'all', // Added for FR-1.4
   sortBy: 'date',
+  sortOrder: 'desc',
   searchResults: [],
   searchQuery: '',
   currentListId: null,
@@ -140,6 +141,7 @@ export const useSpotifyStore = create<SpotifyState>((set, get) => ({
   setFilter: (filter) => set({ filter }),
   setItemTypeFilter: (filter) => set({ itemTypeFilter: filter }), // Added for FR-1.4
   setSortBy: (sortBy) => set({ sortBy }),
+  setSortOrder: (sortOrder) => set({ sortOrder }),
   setSearchResults: (searchResults) => set({ searchResults }),
   setSearchQuery: (query) => set({ searchQuery: query }),
 

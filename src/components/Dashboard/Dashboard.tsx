@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { createSpotifyApi } from '../../lib/Dashboard/spotify';
 import { sleep } from '../../lib/Dashboard/spotify';
@@ -23,11 +23,11 @@ import { checkAndAwardAchievements } from '../../services/AchievementService';
 type TimeRange = 'short_term' | 'medium_term' | 'long_term';
 type PlaylistOwnershipFilter = 'all' | 'mine' | 'others';
 
-const fetchAllTracks = async (spotifyAuth: SpotifyAuth, playlistOwnershipFilter: PlaylistOwnershipFilter, userId: string | undefined, setIsRateLimited: (isRateLimited: boolean) => void) => {
+const fetchAllTracks = async (spotifyAuth: SpotifyAuth, playlistOwnershipFilter: PlaylistOwnershipFilter, userId: string | undefined) => {
   
   const token = await spotifyAuth.getAccessToken();
   if (!token) throw new Error('No access token available');
-  const spotifyApi = createSpotifyApi(token, setIsRateLimited);
+  const spotifyApi = createSpotifyApi(token, () => {}); // Pass a dummy setIsRateLimited
   
   const allTracks: any[] = [];
   let offset = 0;
@@ -137,7 +137,6 @@ export const Dashboard: React.FC = () => {
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>('medium_term');
   const [playlistOwnershipFilter, setPlaylistOwnershipFilter] = useState<PlaylistOwnershipFilter>('all');
   const spotifyAuth = SpotifyAuth.getInstance();
-  const queryClient = useQueryClient();
 
   const [isRateLimited, setIsRateLimited] = useState(false);
 
@@ -155,7 +154,7 @@ export const Dashboard: React.FC = () => {
 
   const { data: allTracks, isLoading: isLoadingAllTracks, error: errorAllTracks } = useQuery({
     queryKey: ['all-tracks-analysis', playlistOwnershipFilter, currentUser?.id],
-    queryFn: () => fetchAllTracks(spotifyAuth, playlistOwnershipFilter, currentUser?.id, setIsRateLimited),
+    queryFn: () => fetchAllTracks(spotifyAuth, playlistOwnershipFilter, currentUser?.id),
     staleTime: 1000 * 60 * 5, // 5 minutes
     enabled: !!currentUser, // Only run this query if currentUser is available
   });
@@ -172,21 +171,6 @@ export const Dashboard: React.FC = () => {
   });
 
   const musicTasteMetrics = allTracks ? calculateMusicTasteMetrics(allTracks) : null;
-
-  useEffect(() => {
-    if (currentUser?.id) {
-      const filters: PlaylistOwnershipFilter[] = ['all', 'mine', 'others'];
-      filters.forEach(filter => {
-        if (filter !== playlistOwnershipFilter) {
-          queryClient.prefetchQuery({
-            queryKey: ['all-tracks-analysis', filter, currentUser.id],
-            queryFn: () => fetchAllTracks(spotifyAuth, filter, currentUser.id, setIsRateLimited),
-            staleTime: 1000 * 60 * 5, // 5 minutes
-          });
-        }
-      });
-    }
-  }, [currentUser?.id, playlistOwnershipFilter, queryClient, spotifyAuth]);
 
   useEffect(() => {
     if (currentUser && allTracks && !isLoadingAllTracks && musicTasteMetrics && topArtists) {
@@ -247,7 +231,13 @@ export const Dashboard: React.FC = () => {
         </div>
       )}
       <UserProfile />
-      <Achievements userId={currentUser?.id} />
+      {currentUser && allTracks && topArtists && musicTasteMetrics && (
+        <Achievements 
+          allTracks={allTracks}
+          topArtists={topArtists}
+          musicTasteMetrics={musicTasteMetrics}
+        />
+      )}
       
       <motion.div variants={containerVariants} initial="hidden" animate="visible">
 
