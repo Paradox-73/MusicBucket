@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import ReactCrop, { type Crop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 
 interface BucketListItem {
   id: string;
@@ -16,6 +18,17 @@ interface BucketListItemCardProps {
 
 const BucketListItemCard: React.FC<BucketListItemCardProps> = ({ item }) => {
   const [isFlipped, setIsFlipped] = useState(false);
+  const [crop, setCrop] = useState<Crop>();
+  const [zoom, setZoom] = useState(1);
+  const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    if (!croppedImageUrl) {
+      setIsModalOpen(true);
+    }
+  }, []); // Changed dependency array
 
   const handleSpotifyNavigation = () => {
     let spotifyUrl = '';
@@ -31,15 +44,43 @@ const BucketListItemCard: React.FC<BucketListItemCardProps> = ({ item }) => {
     }
   };
 
+  const onCropComplete = (crop: Crop) => {
+    if (imgRef.current && crop.width && crop.height) {
+      const image = imgRef.current;
+      const canvas = document.createElement('canvas');
+      const scaleX = image.naturalWidth / image.width;
+      const scaleY = image.naturalHeight / image.height;
+      canvas.width = crop.width;
+      canvas.height = crop.height;
+      const ctx = canvas.getContext('2d');
+
+      if (ctx) {
+        ctx.drawImage(
+          image,
+          crop.x * scaleX,
+          crop.y * scaleY,
+          crop.width * scaleX,
+          crop.height * scaleY,
+          0,
+          0,
+          crop.width,
+          crop.height
+        );
+        const base64Image = canvas.toDataURL('image/jpeg');
+        setCroppedImageUrl(base64Image);
+      }
+    }
+  };
+
   const polaroidStyle = {
-    backgroundColor: 'white', // Pure CSS polaroid background
-    padding: '10px 10px 40px 10px', // Adjusted padding for polaroid frame effect
-    width: '200px', // Fixed width for polaroid
-    height: '250px', // Fixed height for polaroid
-    position: 'relative',
-    boxSizing: 'border-box', // Ensure padding is included in width/height
-    boxShadow: '0px 0px 10px rgba(0,0,0,0.3)', // Stronger, uniform polaroid shadow
-    transform: `rotate(${Math.random() * 6 - 3}deg)`, // Random slight rotation
+    backgroundColor: 'white',
+    padding: '10px 10px 40px 10px',
+    width: '200px',
+    height: '250px',
+    position: 'relative' as const,
+    boxSizing: 'border-box' as const,
+    boxShadow: '0px 0px 10px rgba(0,0,0,0.3)',
+    transform: `rotate(${Math.random() * 6 - 3}deg)`,
   };
 
   const tapeStyle = {
@@ -49,60 +90,89 @@ const BucketListItemCard: React.FC<BucketListItemCardProps> = ({ item }) => {
     backgroundPosition: 'center',
     width: '50px',
     height: '20px',
-    position: 'absolute',
+    position: 'absolute' as const,
     top: '0',
     left: '0',
-    transform: 'translate(-50%, -50%) rotate(-15deg)', // More pronounced tilt
+    transform: 'translate(-50%, -50%) rotate(-15deg)',
     zIndex: 2,
   };
 
   return (
-    <div // This will be the 3D container, with perspective
-      className="relative"
-      style={{
-        ...polaroidStyle,
-        transformStyle: 'preserve-3d',
-        transition: 'transform 0.6s',
-        transformOrigin: 'top left', // Set transform origin to top left
-        transform: isFlipped ? 'rotateY(-45deg) rotateX(10deg)' : 'none', // Rotate for lifting effect
-      }}
-      onClick={() => setIsFlipped(!isFlipped)} // Toggle flip on click
-    >
-      {/* Front of the polaroid */}
+    <>
       <div
-        className="absolute inset-0"
-        style={{ backfaceVisibility: 'hidden' }} // No transform here, parent handles rotation
-      >
-        <div style={tapeStyle} className="top-0 left-0 rotate-3"></div> {/* Tape on each polaroid */}
-        <div // This div will hold the image and respect the padding
+        className="relative"
         style={{
-          position: 'absolute', // Position relative to its parent (absolute inset-0 div)
-          top: '10px',
-          left: '10px',
-          width: 'calc(100% - 20px)', // 100% of parent - 10px left - 10px right
-          height: 'calc(100% - 50px)', // 100% of parent - 10px top - 40px bottom
-          display: 'flex', // To center the image if needed
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden', // Hide overflow if image is larger
+          ...polaroidStyle,
+          transformStyle: 'preserve-3d',
+          transition: 'transform 0.6s',
+          transformOrigin: 'top left',
+          transform: isFlipped ? 'rotateY(-45deg) rotateX(10deg)' : 'none',
         }}
+        onClick={() => setIsFlipped(!isFlipped)}
       >
-        <img
-          src={item.imageUrl}
-          alt={item.title}
-          className="object-contain" // Ensure image fits within its container
-          style={{ maxWidth: '100%', maxHeight: '100%' }} // Constrain image to its parent div
-          onClick={handleSpotifyNavigation} // Navigate to Spotify on image click
-        />
-      </div>
-        <p
-          className={`text-sm text-center px-2`}
-          style={{ fontFamily: 'Playfair Display', position: 'absolute', bottom: '10px', width: 'calc(100% - 2rem)' }}
+        <div
+          className="absolute inset-0"
+          style={{ backfaceVisibility: 'hidden' }}
         >
-          {item.title} - {item.artists?.map(a => a.name).join(', ')}
-        </p>
+          <div style={tapeStyle} className="top-0 left-0 rotate-3"></div>
+          <div
+            style={{
+              position: 'absolute',
+              top: '10px',
+              left: '10px',
+              width: 'calc(100% - 20px)',
+              height: 'calc(100% - 50px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+            }}
+          >
+            <img
+              src={croppedImageUrl || item.imageUrl}
+              alt={item.title}
+              className="object-contain"
+              style={{ maxWidth: '100%', maxHeight: '100%' }}
+              onClick={handleSpotifyNavigation}
+            />
+          </div>
+          <p
+            className={`text-sm text-center px-2`}
+            style={{ fontFamily: 'Playfair Display', position: 'absolute', bottom: '10px', width: 'calc(100% - 2rem)' }}
+          >
+            {item.title} - {item.artists?.map(a => a.name).join(', ')}
+          </p>
+          <button onClick={() => setIsModalOpen(true)} style={{ position: 'absolute', bottom: '5px', right: '5px', zIndex: 3 }}>Crop</button>
+        </div>
       </div>
-    </div>
+
+      {isModalOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 100 }}>
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'white', padding: '20px' }}>
+            <ReactCrop
+              crop={crop}
+              onChange={c => setCrop(c)}
+              onComplete={onCropComplete}
+              aspect={200 / 250}
+            >
+              <img ref={imgRef} src={item.imageUrl} style={{ transform: `scale(${zoom})` }} alt="Source" />
+            </ReactCrop>
+            <div>
+              <label>Zoom</label>
+              <input
+                type="range"
+                min="1"
+                max="3"
+                step="0.1"
+                value={zoom}
+                onChange={(e) => setZoom(Number(e.target.value))}
+              />
+            </div>
+            <button onClick={() => setIsModalOpen(false)}>Done</button>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

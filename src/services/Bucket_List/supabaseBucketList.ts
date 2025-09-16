@@ -249,14 +249,14 @@ export async function deleteBucketList(listId: string) {
 
 export async function uploadBucketListCover(file: File, userId: string, listId: string): Promise<string> {
   const fileExt = file.name.split('.').pop();
-  const fileName = `${listId}.${fileExt}`;
+  const fileName = `${listId}-${Date.now()}.${fileExt}`;
   const filePath = `${userId}/${fileName}`;
 
   const { data, error } = await supabase.storage
     .from(BUCKET_LIST_COVERS_BUCKET)
     .upload(filePath, file, {
-      cacheControl: '3600',
-      upsert: true,
+      cacheControl: '0',
+      upsert: false,
     });
 
   if (error) {

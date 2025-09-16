@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { Music, Pencil, Trash2, Upload, X } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { updateBucketList, uploadBucketListCover } from '../../../services/Bucket_List/supabaseBucketList';
-import { ImageCropModal } from './ImageCropModal';
+import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 
 interface BucketListItemForGrid {
   imageUrl?: string;
@@ -25,46 +26,123 @@ interface BucketListCardProps {
   onCoverUpdate: (listId: string, newCoverUrl: string | null) => void;
 }
 
+function centerAspectCrop(
+  mediaWidth: number,
+  mediaHeight: number,
+  aspect: number,
+) {
+  return centerCrop(
+    makeAspectCrop(
+      {
+        unit: '%',
+        width: 90,
+      },
+      aspect,
+      mediaWidth,
+      mediaHeight,
+    ),
+    mediaWidth,
+    mediaHeight,
+  )
+}
+
 export function BucketListCard({ list, onDelete, onRename, onCoverUpdate }: BucketListCardProps) {
   const [editing, setEditing] = useState(false);
   const [editedName, setEditedName] = useState(list.name);
   const [uploading, setUploading] = useState(false);
-  const [isCropModalOpen, setIsCropModalOpen] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [crop, setCrop] = useState<Crop>();
+  const [zoom, setZoom] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const [completedCrop, setCompletedCrop] = useState<Crop>();
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     const reader = new FileReader();
-    reader.onload = () => {
-      setSelectedImage(reader.result as string);
-      setIsCropModalOpen(true);
-    };
+    reader.addEventListener('load', () => {
+      setImageToCrop(reader.result as string);
+      setIsModalOpen(true);
+    });
     reader.readAsDataURL(file);
+    e.target.value = ""; // Reset file input
   };
 
-  const handleSaveCrop = async (croppedImage: Blob) => {
-    setUploading(true);
-    try {
-      const user = (await supabase.auth.getUser()).data.user;
-      if (!user) throw new Error('User not logged in');
+  function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
+    const { width, height } = e.currentTarget;
+    setCrop(centerAspectCrop(width, height, 1));
+  }
 
-      const newCoverUrl = await uploadBucketListCover(new File([croppedImage], 'cover.jpg', { type: 'image/jpeg' }), user.id, list.id);
-      await updateBucketList(list.id, { cover_image_url: newCoverUrl });
-      onCoverUpdate(list.id, newCoverUrl);
-    } catch (error) {
-      console.error('Error uploading cover image:', error);
-      alert('Failed to upload cover image. Please try again.');
-    } finally {
-      setUploading(false);
-      setIsCropModalOpen(false);
+  const handleUploadCroppedImage = async () => {
+    if (!completedCrop || !imgRef.current) {
+      return;
+    }
+
+    setUploading(true);
+    setIsModalOpen(false);
+
+    const canvas = document.createElement('canvas');
+    const image = imgRef.current;
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+    canvas.width = completedCrop.width;
+    canvas.height = completedCrop.height;
+    const ctx = canvas.getContext('2d');
+
+    if (ctx) {
+      ctx.drawImage(
+        image,
+        completedCrop.x * scaleX,
+        completedCrop.y * scaleY,
+        completedCrop.width * scaleX,
+        completedCrop.height * scaleY,
+        0,
+        0,
+        completedCrop.width,
+        completedCrop.height
+      );
+
+      canvas.toBlob(async (blob) => {
+        if (blob) {
+          try {
+            const user = (await supabase.auth.getUser()).data.user;
+            if (!user) throw new Error('User not logged in');
+            const file = new File([blob], 'cropped-image.jpeg', { type: 'image/jpeg' });
+            const newCoverUrl = await uploadBucketListCover(file, user.id, list.id);
+            await updateBucketList(list.id, { cover_image_url: newCoverUrl });
+            onCoverUpdate(list.id, newCoverUrl);
+          } catch (error) {
+            console.error('Error uploading cover image:', error);
+            alert('Failed to upload cover image. Please try again.');
+          } finally {
+            setUploading(false);
+            setImageToCrop(null);
+          }
+        }
+      }, 'image/jpeg');
     }
   };
 
   const handleDeleteCover = async () => {
     try {
+      if (!list.cover_image_url) {
+        console.log('No cover image to delete.');
+        return;
+      }
+
+      const url = new URL(list.cover_image_url);
+      const path = url.pathname.substring(url.pathname.indexOf('bucket_list_covers/') + 'bucket_list_covers/'.length);
+
+      const { error: storageError } = await supabase.storage
+        .from('bucket_list_covers')
+        .remove([path]);
+
+      if (storageError) {
+        console.error('Error deleting from Supabase storage:', storageError);
+      }
+
       await updateBucketList(list.id, { cover_image_url: null });
       onCoverUpdate(list.id, null);
     } catch (error) {
@@ -167,13 +245,40 @@ export function BucketListCard({ list, onDelete, onRename, onCoverUpdate }: Buck
           </button>
         </div>
       </div>
-      {isCropModalOpen && selectedImage && (
-        <ImageCropModal
-          isOpen={isCropModalOpen}
-          onClose={() => setIsCropModalOpen(false)}
-          image={selectedImage}
-          onSave={handleSaveCrop}
-        />
+
+      {isModalOpen && imageToCrop && (
+        <div className="fixed top-0 left-0 right-0 bottom-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
+          <div className="bg-white dark:bg-neutral-800 p-4 rounded-lg shadow-lg">
+            <ReactCrop
+              crop={crop}
+              onChange={c => setCrop(c)}
+              onComplete={c => setCompletedCrop(c)}
+              aspect={1}
+            >
+              <img ref={imgRef} src={imageToCrop} style={{ transform: `scale(${zoom})`, maxHeight: '70vh' }} alt="Source" onLoad={onImageLoad} />
+            </ReactCrop>
+            <div className="mt-4">
+              <label className="mr-2">Zoom</label>
+              <input
+                type="range"
+                min="0.5"
+                max="1.5"
+                step="0.05"
+                value={zoom}
+                onChange={(e) => setZoom(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <button onClick={() => { setIsModalOpen(false); setImageToCrop(null); }} className="px-4 py-2 rounded-md bg-gray-300 hover:bg-gray-400 dark:bg-neutral-700 dark:hover:bg-neutral-600">
+                Cancel
+              </button>
+              <button onClick={handleUploadCroppedImage} className="px-4 py-2 rounded-md text-white" style={{ backgroundColor: '#800080' }}>
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
