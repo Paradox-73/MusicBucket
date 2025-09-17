@@ -8,15 +8,11 @@ interface TierItemProps {
 }
 
 const TierItem: React.FC<TierItemProps> = ({ item, itemType, containerId }) => {
-  const draggableData = React.useMemo(() => ({
-    itemType: itemType,
-    itemData: item,
-    containerId: containerId,
-  }), [itemType, item, containerId]);
-
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: item.id,
-    data: draggableData,
+    data: {
+      containerId: containerId,
+    },
   });
 
   const style = transform ? {

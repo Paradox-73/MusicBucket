@@ -113,6 +113,8 @@ export const createSpotifyApi = (accessToken: string, onRateLimit?: (isRateLimit
     getPlaylists: withRateLimiting((offset: number = 0, limit: number = 50) => api.get(`/me/playlists?offset=${offset}&limit=${limit}`), 5, 500, onRateLimit),
     getPlaylistTracks: withRateLimiting((playlistId: string, offset: number = 0, limit: number = 100) => api.get(`/playlists/${playlistId}/tracks?offset=${offset}&limit=${limit}`), 5, 500, onRateLimit),
     getSavedTracks: withRateLimiting((offset: number = 0, limit: number = 50) => api.get(`/me/tracks?limit=${limit}&offset=${offset}`), 5, 500, onRateLimit),
+    getSavedAlbums: withRateLimiting((offset: number = 0, limit: number = 50) => api.get(`/me/albums?limit=${limit}&offset=${offset}`), 5, 500, onRateLimit),
+    getAlbumTracks: withRateLimiting((albumId: string, offset: number = 0, limit: number = 50) => api.get(`/albums/${albumId}/tracks?offset=${offset}&limit=${limit}`), 5, 500, onRateLimit),
     getAudioFeaturesForTracks: withRateLimiting((trackIds: string[]) => api.get(`/audio-features?ids=${trackIds.join(',')}`), 5, 500, onRateLimit),
     getRecentlyPlayed: withRateLimiting(() => 
       api.get('/me/player/recently-played'), 5, 500, onRateLimit),

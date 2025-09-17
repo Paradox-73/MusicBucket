@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import ScopeSelector from './ScopeSelector';
-import { useDraggable, useDroppable } from '@dnd-kit/core';
+import { useDroppable } from '@dnd-kit/core';
+import TierItem from './TierItem';
 
 interface ItemBankProps {
   items: any[];
@@ -11,7 +12,6 @@ interface ItemBankProps {
   selectedAlbumId: string | null;
   onAlbumSelect: (albumId: string) => void;
   userAlbums: any[];
-  
   containerId: string;
 }
 
@@ -24,48 +24,11 @@ const ItemBank: React.FC<ItemBankProps> = ({
   selectedAlbumId,
   onAlbumSelect,
   userAlbums,
-  
   containerId,
 }) => {
   const { setNodeRef } = useDroppable({
     id: containerId,
   });
-
-  const DraggableItem: React.FC<{ item: any }> = ({ item }) => {
-    const draggableData = React.useMemo(() => ({
-      itemType: selectedScope,
-      itemData: item,
-      containerId: containerId,
-    }), [selectedScope, item, containerId]);
-
-    const { attributes, listeners, setNodeRef, transform } = useDraggable({
-      id: item.id,
-      data: draggableData,
-    });
-
-    const style = transform ? {
-      transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-    } : undefined;
-
-    const imageUrl = item.images?.[0]?.url || item.album?.images?.[0]?.url || 'https://via.placeholder.com/64';
-    const itemName = item.name;
-
-    return (
-      <div
-        ref={setNodeRef}
-        style={style}
-        {...listeners}
-        {...attributes}
-        className="w-20 h-20 flex-none flex flex-col items-center justify-center cursor-grab group relative overflow-hidden"
-        
-      >
-        <img src={imageUrl} alt={itemName} className="w-full h-full object-cover aspect-square" />
-        <div className="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded">
-          <span className="text-white text-center text-sm p-1">{itemName}</span>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="p-4 bg-gray-100 dark:bg-gray-900 rounded-lg shadow-md">
@@ -96,7 +59,12 @@ const ItemBank: React.FC<ItemBankProps> = ({
 
       <div ref={setNodeRef} className="grid grid-cols-[repeat(auto-fill,minmax(80px,1fr))] gap-0 max-h-96 overflow-y-auto">
         {items.map((item) => (
-          <DraggableItem key={item.id} item={item} />
+          <TierItem
+            key={item.id}
+            item={item}
+            itemType={selectedScope}
+            containerId={containerId}
+          />
         ))}
       </div>
     </div>

@@ -4,5 +4,4 @@ export * from './TierRow';
 export * from './TierItem';
 export * from './ItemBank';
 export * from './ScopeSelector';
-export * from './TierEditorModal';
 export * from './TierListToolbar';

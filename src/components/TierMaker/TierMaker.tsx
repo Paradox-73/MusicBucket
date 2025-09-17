@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import ItemBank from './ItemBank';
-import TierRow from '././TierRow';
+import TierRow from './TierRow';
 import TierItem from './TierItem';
-import TierEditorModal from './TierEditorModal';
 import { useAuth } from '../../hooks/useAuth';
 import { saveTierList, updateTierList, getTierList, publishTierList } from '../../lib/supabaseTierMaker';
 import { getSeveralArtists, getSeveralAlbums, getSeveralTracks, getMyFollowedArtists, getMySavedAlbums, getAlbumTracks } from '../../lib/spotify';
@@ -24,7 +23,6 @@ const TierMaker: React.FC = () => {
   const [tierDescription, setTierDescription] = useState<string>('');
   const [tierScope, setTierScope] = useState<string>('artist'); // Default scope
   const [tierScopeContext, setTierScopeContext] = useState<string | null>(null);
-  const [isEditorModalOpen, setIsEditorModalOpen] = useState(false);
   const [bankItems, setBankItems] = useState<any[]>([]); // Items in the bank
   const [loadingBankItems, setLoadingBankItems] = useState(false);
   const [bankError, setBankError] = useState<string | null>(null);
@@ -32,11 +30,11 @@ const TierMaker: React.FC = () => {
   const [userAlbums, setUserAlbums] = useState<any[]>([]);
 
   const [tiers, setTiers] = useState<Tier[]>([
-    { id: 's-tier', label: 'S Tier', color: '#FF7F7F', rank: 0, items: [] },
-    { id: 'a-tier', label: 'A Tier', color: '#FFBF7F', rank: 1, items: [] },
-    { id: 'b-tier', label: 'B Tier', color: '#FFFF7F', rank: 2, items: [] },
-    { id: 'c-tier', label: 'C Tier', color: '#BFFF7F', rank: 3, items: [] },
-    { id: 'd-tier', label: 'D Tier', color: '#7FFFFF', rank: 4, items: [] },
+    { id: 's-tier', label: 'S', color: '#ff7f7f', rank: 0, items: [] },
+    { id: 'a-tier', label: 'A', color: '#ffbf7f', rank: 1, items: [] },
+    { id: 'b-tier', label: 'B', color: '#ffff7f', rank: 2, items: [] },
+    { id: 'c-tier', label: 'C', color: '#bfff7f', rank: 3, items: [] },
+    { id: 'd-tier', label: 'D', color: '#7fffff', rank: 4, items: [] },
   ]);
 
   const sensors = useSensors(
@@ -96,54 +94,83 @@ const TierMaker: React.FC = () => {
   }, [tierScope, accessToken, selectedAlbumId]);
 
   const handleDragStart = (event: any) => {
-    setActiveItem(event.active.data.current.itemData);
+    const { active } = event;
+    const { containerId } = active.data.current;
+    const itemId = active.id;
+
+    let item;
+    if (containerId === 'bank') {
+      item = bankItems.find(i => i.id === itemId);
+    } else {
+      const tier = tiers.find(t => t.id === containerId);
+      if (tier) {
+        item = tier.items.find(i => i.id === itemId);
+      }
+    }
+    setActiveItem(item);
   };
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
 
-    if (!active || !active.data.current || !active.data.current.itemData) {
+    if (!over) {
       setActiveItem(null);
       return;
     }
 
-    const draggedItem = active.data.current.itemData;
-    const sourceContainerId = active.data.current.containerId; // 'bank' or a tier ID
-    const targetContainerId = over?.id; // 'bank' or a tier ID
+    const sourceContainerId = active.data.current.containerId;
+    const targetContainerId = over.id;
+    const draggedItemId = active.id;
 
-    // If dropped outside any valid droppable, reset active item
-    if (!targetContainerId) {
+    if (!targetContainerId || sourceContainerId === targetContainerId) {
       setActiveItem(null);
       return;
-    }
-
-    // Create copies of current states to modify
-    let updatedTiers = tiers.map(tier => ({ ...tier, items: [...tier.items] }));
-    let updatedBankItems = [...bankItems];
-
-    // Remove dragged item from its source container
-    if (sourceContainerId === 'bank') {
-      updatedBankItems = updatedBankItems.filter(item => item.id !== draggedItem.id);
-    } else {
-      const sourceTier = updatedTiers.find(tier => tier.id === sourceContainerId);
-      if (sourceTier) {
-        sourceTier.items = sourceTier.items.filter(item => item.id !== draggedItem.id);
-      }
-    }
-
-    // Add dragged item to its target container
-    const targetTier = updatedTiers.find(tier => tier.id === targetContainerId);
-    if (targetTier) {
-      targetTier.items.push(draggedItem);
-    } else if (targetContainerId === 'bank') {
-      updatedBankItems.push(draggedItem);
     }
 
     setActiveItem(null);
-    requestAnimationFrame(() => {
-      setTiers(updatedTiers);
-      setBankItems(updatedBankItems);
-    });
+
+    // Find the dragged item from the state at the time of the drag end
+    let draggedItem;
+    if (sourceContainerId === 'bank') {
+      draggedItem = bankItems.find(i => i.id === draggedItemId);
+    } else {
+      const sourceTier = tiers.find(t => t.id === sourceContainerId);
+      draggedItem = sourceTier?.items.find(i => i.id === draggedItemId);
+    }
+
+    if (!draggedItem) {
+      return; // Item not found, maybe state updated since drag started
+    }
+
+    // From Bank to Tier
+    if (sourceContainerId === 'bank' && targetContainerId !== 'bank') {
+      setBankItems(prev => prev.filter(item => item.id !== draggedItemId));
+      setTiers(prev => prev.map(tier => tier.id === targetContainerId ? { ...tier, items: [...tier.items, draggedItem] } : tier));
+    }
+    // From Tier to Bank
+    else if (sourceContainerId !== 'bank' && targetContainerId === 'bank') {
+      setTiers(prev => prev.map(tier => tier.id === sourceContainerId ? { ...tier, items: tier.items.filter(item => item.id !== draggedItemId) } : tier));
+      setBankItems(prev => [...prev, draggedItem]);
+    }
+    // From Tier to Tier
+    else if (sourceContainerId !== 'bank' && targetContainerId !== 'bank') {
+      setTiers(prev => {
+        const sourceTier = prev.find(t => t.id === sourceContainerId);
+        const itemToMove = sourceTier?.items.find(i => i.id === draggedItemId);
+
+        if (!itemToMove) return prev;
+
+        return prev.map(t => {
+          if (t.id === sourceContainerId) {
+            return { ...t, items: t.items.filter(i => i.id !== draggedItemId) };
+          }
+          if (t.id === targetContainerId) {
+            return { ...t, items: [...t.items, itemToMove] };
+          }
+          return t;
+        });
+      });
+    }
   };
 
   const handleSaveTierList = async () => {
@@ -158,7 +185,7 @@ const TierMaker: React.FC = () => {
         label: tier.label,
         color: tier.color,
         rank: tier.rank,
-        items: tier.items.map(item => ({ id: item.id })) // Only send Spotify IDs
+        items: tier.items.map(item => ({ id: item.id }))
       }));
 
       let result;
@@ -216,7 +243,6 @@ const TierMaker: React.FC = () => {
             items: spotifyItems,
           });
         }
-        // Sort tiers by rank
         newTiers.sort((a, b) => a.rank - b.rank);
         setTiers(newTiers);
         alert('Tier list loaded successfully!');
@@ -227,21 +253,6 @@ const TierMaker: React.FC = () => {
       console.error('Error loading tier list:', error);
       alert('An error occurred while loading the tier list.');
     }
-  };
-
-  const handleEditorSave = (updatedTiers: Tier[]) => {
-    // Preserve items in tiers when updating tier structure
-    setTiers(prevTiers => {
-      const newTiers = updatedTiers.map(updatedTier => {
-        const existingTier = prevTiers.find(pt => pt.id === updatedTier.id);
-        return {
-          ...updatedTier,
-          items: existingTier ? existingTier.items : []
-        };
-      });
-      return newTiers;
-    });
-    setIsEditorModalOpen(false);
   };
 
   const handleShareTierList = async () => {
@@ -262,6 +273,49 @@ const TierMaker: React.FC = () => {
     } catch (error) {
       console.error('Error sharing tier list:', error);
       alert('An error occurred while sharing the tier list.');
+    }
+  };
+
+  const handleAddTier = () => {
+    const newTier: Tier = {
+      id: `tier-${Date.now()}`,
+      label: 'New Tier',
+      color: '#cccccc',
+      rank: tiers.length,
+      items: [],
+    };
+    setTiers([...tiers, newTier]);
+  };
+
+  const handleRemoveTier = (id: string) => {
+    setTiers(tiers.filter(tier => tier.id !== id));
+  };
+
+  const handleLabelChange = (id: string, newLabel: string) => {
+    setTiers(tiers.map(tier => tier.id === id ? { ...tier, label: newLabel } : tier));
+  };
+
+  const handleColorChange = (id: string, newColor: string) => {
+    setTiers(tiers.map(tier => tier.id === id ? { ...tier, color: newColor } : tier));
+  };
+
+  const handleMoveUp = (id: string) => {
+    const index = tiers.findIndex(tier => tier.id === id);
+    if (index > 0) {
+      const newTiers = [...tiers];
+      const [movedTier] = newTiers.splice(index, 1);
+      newTiers.splice(index - 1, 0, movedTier);
+      setTiers(newTiers.map((tier, i) => ({ ...tier, rank: i })));
+    }
+  };
+
+  const handleMoveDown = (id: string) => {
+    const index = tiers.findIndex(tier => tier.id === id);
+    if (index < tiers.length - 1) {
+      const newTiers = [...tiers];
+      const [movedTier] = newTiers.splice(index, 1);
+      newTiers.splice(index + 1, 0, movedTier);
+      setTiers(newTiers.map((tier, i) => ({ ...tier, rank: i })));
     }
   };
 
@@ -291,10 +345,10 @@ const TierMaker: React.FC = () => {
               Save Tier List
             </button>
             <button
-              onClick={() => setIsEditorModalOpen(true)}
-              className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2"
+              onClick={handleAddTier}
+              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-2"
             >
-              Edit Tiers
+              Add Tier
             </button>
             <button
               onClick={() => {
@@ -316,13 +370,24 @@ const TierMaker: React.FC = () => {
           </div>
 
           {tiers.map((tier) => (
-            <TierRow key={tier.id} id={tier.id} label={tier.label} color={tier.color}>
+            <TierRow
+              key={tier.id}
+              id={tier.id}
+              label={tier.label}
+              color={tier.color}
+              isDragging={activeItem !== null}
+              onMoveUp={handleMoveUp}
+              onMoveDown={handleMoveDown}
+              onLabelChange={handleLabelChange}
+              onColorChange={handleColorChange}
+              onRemove={handleRemoveTier}
+            >
               {tier.items.map((item) => (
                 <TierItem
                   key={item.id}
                   item={item}
                   itemType={tierScope}
-                  containerId={tier.id} // Pass containerId for draggable
+                  containerId={tier.id}
                 />
               ))}
             </TierRow>
@@ -338,7 +403,7 @@ const TierMaker: React.FC = () => {
             selectedAlbumId={selectedAlbumId}
             onAlbumSelect={setSelectedAlbumId}
             userAlbums={userAlbums}
-            containerId="bank" // Indicate this is the bank
+            containerId="bank"
           />
         </div>
       </div>
@@ -350,13 +415,6 @@ const TierMaker: React.FC = () => {
           </div>
         ) : null}
       </DragOverlay>
-
-      <TierEditorModal
-        isOpen={isEditorModalOpen}
-        onClose={() => setIsEditorModalOpen(false)}
-        tiers={tiers}
-        onSave={handleEditorSave}
-      />
     </DndContext>
   );
 };

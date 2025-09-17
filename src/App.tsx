@@ -85,7 +85,7 @@ function App() {
           <Route path="rabbit-hole" element={<ComingSoon />} />
           <Route path="recommendation-roulette" element={isProduction ? <ComingSoon /> : <RecommendationRoulette />} />
           <Route path="roadtrip-mixtape" element={<RoadTripMixtape />} />
-          <Route path="tiermaker" element={isProduction ? <ComingSoon /> : <TierMakerPage />} />
+          <Route path="tiermaker" element={ <TierMakerPage />} />
           <Route path="about" element={<AboutUs />} />
           <Route path="support" element={<Support />} />
           <Route path="privacy" element={<Legal />} />
