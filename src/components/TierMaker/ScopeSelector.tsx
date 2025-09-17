@@ -18,6 +18,7 @@ const ScopeSelector: React.FC<ScopeSelectorProps> = ({ selectedScope, onScopeCha
         <option value="artist">Artists</option>
         <option value="album">Albums</option>
         <option value="track">Tracks from Album</option>
+        <option value="search">Search</option>
       </select>
     </div>
   );

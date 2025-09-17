@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import html2canvas from 'html2canvas';
+import TierListImage from './TierListImage';
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import ItemBank from './ItemBank';
 import TierRow from './TierRow';
 import TierItem from './TierItem';
 import { useAuth } from '../../hooks/useAuth';
-import { saveTierList, updateTierList, getTierList, publishTierList } from '../../lib/supabaseTierMaker';
-import { getSeveralArtists, getSeveralAlbums, getSeveralTracks, getMyFollowedArtists, getMySavedAlbums, getAlbumTracks } from '../../lib/spotify';
+import { saveTierList, updateTierList, getTierList, publishTierList, getMyTierLists } from '../../lib/supabaseTierMaker';
+import { getSeveralArtists, getSeveralAlbums, getSeveralTracks, getMyFollowedArtists, getMySavedAlbums, getAlbumTracks, searchSpotify } from '../../lib/spotify';
 
 interface Tier {
   id: string;
@@ -28,6 +30,27 @@ const TierMaker: React.FC = () => {
   const [bankError, setBankError] = useState<string | null>(null);
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
   const [userAlbums, setUserAlbums] = useState<any[]>([]);
+  const [myTierLists, setMyTierLists] = useState<any[]>([]);
+  const [showMyTierLists, setShowMyTierLists] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [isLoadingImages, setIsLoadingImages] = useState(false); // New state for image loading
+  const [showOverlayText, setShowOverlayText] = useState(true); // New state for overlay text
+  const imageContainerRef = useRef<HTMLDivElement>(null);
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchQuery]);
+
+  
 
   const [tiers, setTiers] = useState<Tier[]>([
     { id: 's-tier', label: 'S', color: '#ff7f7f', rank: 0, items: [] },
@@ -36,6 +59,55 @@ const TierMaker: React.FC = () => {
     { id: 'c-tier', label: 'C', color: '#bfff7f', rank: 3, items: [] },
     { id: 'd-tier', label: 'D', color: '#7fffff', rank: 4, items: [] },
   ]);
+
+  // Function to collect all image URLs from tiers
+  const getAllImageUrls = () => {
+    const urls: string[] = [];
+    tiers.forEach(tier => {
+      tier.items.forEach(item => {
+        if (item.images && item.images.length > 0) {
+          urls.push(item.images[0].url);
+        } else if (item.album && item.album.images && item.album.images.length > 0) {
+          urls.push(item.album.images[0].url);
+        }
+      });
+    });
+    return urls;
+  };
+
+  // Function to preload images
+  const preloadImages = (urls: string[]) => {
+    const promises = urls.map(url => {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.src = url;
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+    });
+    return Promise.all(promises);
+  };
+
+  useEffect(() => {
+    if (isGeneratingImage && imageContainerRef.current) {
+      html2canvas(imageContainerRef.current, {
+        allowTaint: true,
+        useCORS: true,
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `${tierTitle.replace(/\s+/g, '_').toLowerCase()}_tier_list.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        setIsGeneratingImage(false);
+        setIsLoadingImages(false); // Reset loading state
+      }).catch(error => {
+        console.error('Error generating image:', error);
+        setIsGeneratingImage(false);
+        setIsLoadingImages(false); // Reset loading state
+        alert('Failed to generate image. Please try again.');
+      });
+    }
+  }, [isGeneratingImage, tierTitle, tiers]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -74,11 +146,31 @@ const TierMaker: React.FC = () => {
           fetchedItems = savedAlbums.map(savedAlbum => savedAlbum.album);
         } else if (tierScope === 'track') {
           if (selectedAlbumId) {
-            fetchedItems = await getAlbumTracks(selectedAlbumId);
+            const tracks = await getAlbumTracks(selectedAlbumId);
+            const albumResult = await getSeveralAlbums([selectedAlbumId]);
+            if (albumResult && albumResult.length > 0) {
+              const album = albumResult[0];
+              fetchedItems = tracks.map((track: any) => ({ ...track, album }));
+            } else {
+              fetchedItems = tracks; // Should not happen
+            }
           } else {
             setBankItems([]);
-            setLoadingBankItems(false);
-            return;
+          }
+        } else if (tierScope === 'search') {
+          if (debouncedSearchQuery) {
+            const searchResults = await searchSpotify(debouncedSearchQuery, ['artist', 'album', 'track']);
+            const artists = searchResults.artists?.items || [];
+            const albums = searchResults.albums?.items || [];
+            const tracks = searchResults.tracks?.items || [];
+            
+            const typedArtists = artists.map(item => ({ ...item, itemType: 'artist' }));
+            const typedAlbums = albums.map(item => ({ ...item, itemType: 'album' }));
+            const typedTracks = tracks.map(item => ({ ...item, itemType: 'track' }));
+
+            fetchedItems = [...typedArtists, ...typedAlbums, ...typedTracks];
+          } else {
+            fetchedItems = [];
           }
         }
         setBankItems(fetchedItems);
@@ -91,7 +183,7 @@ const TierMaker: React.FC = () => {
     };
 
     fetchBankItems();
-  }, [tierScope, accessToken, selectedAlbumId]);
+  }, [tierScope, accessToken, selectedAlbumId, debouncedSearchQuery]);
 
   const handleDragStart = (event: any) => {
     const { active } = event;
@@ -173,6 +265,23 @@ const TierMaker: React.FC = () => {
     }
   };
 
+  const handleFetchMyTierLists = async () => {
+    if (!user) return;
+    if (showMyTierLists) {
+      setShowMyTierLists(false);
+      return;
+    }
+    try {
+      const lists = await getMyTierLists(user.id);
+      if (lists) {
+        setMyTierLists(lists);
+        setShowMyTierLists(true);
+      }
+    } catch (error) {
+      console.error('Error fetching user tier lists:', error);
+    }
+  };
+
   const handleSaveTierList = async () => {
     if (!user) {
       alert('Please log in to save your tier list.');
@@ -232,6 +341,13 @@ const TierMaker: React.FC = () => {
               spotifyItems = await getSeveralAlbums(spotifyIds);
             } else if (loadedList.scope === 'track') {
               spotifyItems = await getSeveralTracks(spotifyIds);
+              if (loadedList.scope_context) {
+                const albums = await getSeveralAlbums([loadedList.scope_context]);
+                if (albums && albums.length > 0) {
+                  const album = albums[0];
+                  spotifyItems = spotifyItems.map((track: any) => ({ ...track, album }));
+                }
+              }
             }
           }
 
@@ -323,7 +439,7 @@ const TierMaker: React.FC = () => {
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="flex flex-col">
         <div className="flex-grow p-4">
-          <h2 className="text-2xl font-bold mb-4">Tier Canvas</h2>
+          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Tier Canvas</h2>
           <div className="mb-4">
             <input
               type="text"
@@ -350,22 +466,72 @@ const TierMaker: React.FC = () => {
             >
               Add Tier
             </button>
-            <button
-              onClick={() => {
-                const id = prompt('Enter Tier List ID to load:');
-                if (id) handleLoadTierList(id);
-              }}
-              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-2"
-            >
-              Load Tier List
-            </button>
-            {tierListId && (
+            <div className="relative inline-block text-left">
               <button
-                onClick={handleShareTierList}
-                className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
+                onClick={handleFetchMyTierLists}
+                className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-2"
               >
-                Share Tier List
+                Load Tier List
               </button>
+              {showMyTierLists && myTierLists.length > 0 && (
+                <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 dark:bg-gray-800 z-10">
+                  <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                    {myTierLists.map(list => (
+                      <a
+                        href="#"
+                        key={list.id}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleLoadTierList(list.id);
+                          setShowMyTierLists(false);
+                        }}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-gray-700"
+                        role="menuitem"
+                      >
+                        {list.title}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            {tierListId && (
+              <>
+                <button
+                  onClick={handleShareTierList}
+                  className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
+                >
+                  Share Tier List
+                </button>
+                <div className="flex items-center mt-2">
+                  <input
+                    type="checkbox"
+                    id="showOverlayText"
+                    checked={showOverlayText}
+                    onChange={(e) => setShowOverlayText(e.target.checked)}
+                    className="mr-2"
+                  />
+                  <label htmlFor="showOverlayText" className="text-white text-sm">Show Overlay Text</label>
+                </div>
+                <button
+                  onClick={async () => {
+                    setIsLoadingImages(true);
+                    const imageUrls = getAllImageUrls();
+                    try {
+                      await preloadImages(imageUrls);
+                      setIsGeneratingImage(true);
+                    } catch (error) {
+                      console.error('Error preloading images:', error);
+                      alert('Failed to load all images. Please check your internet connection or try again.');
+                      setIsLoadingImages(false);
+                    }
+                  }}
+                  className={`bg-teal-500 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded ml-2 ${isLoadingImages ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={isLoadingImages}
+                >
+                  {isLoadingImages ? 'Preparing Image...' : 'Share as Image'}
+                </button>
+              </>
             )}
           </div>
 
@@ -404,6 +570,8 @@ const TierMaker: React.FC = () => {
             onAlbumSelect={setSelectedAlbumId}
             userAlbums={userAlbums}
             containerId="bank"
+            searchQuery={searchQuery}
+            onSearchQueryChange={setSearchQuery}
           />
         </div>
       </div>
@@ -415,6 +583,18 @@ const TierMaker: React.FC = () => {
           </div>
         ) : null}
       </DragOverlay>
+
+      {isGeneratingImage && (
+        <div ref={imageContainerRef} style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+          <TierListImage
+            title={tierTitle}
+            tiers={tiers}
+            scope={tierScope}
+            user={user}
+            showOverlayText={showOverlayText} // Pass the new prop
+          />
+        </div>
+      )}
     </DndContext>
   );
 };

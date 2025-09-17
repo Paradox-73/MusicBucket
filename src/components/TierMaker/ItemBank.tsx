@@ -7,12 +7,14 @@ interface ItemBankProps {
   items: any[];
   loading: boolean;
   error: string | null;
-  selectedScope: 'artist' | 'album' | 'track';
-  onScopeChange: (scope: 'artist' | 'album' | 'track') => void;
+  selectedScope: string;
+  onScopeChange: (scope: string) => void;
   selectedAlbumId: string | null;
   onAlbumSelect: (albumId: string) => void;
   userAlbums: any[];
   containerId: string;
+  searchQuery: string;
+  onSearchQueryChange: (query: string) => void;
 }
 
 const ItemBank: React.FC<ItemBankProps> = ({
@@ -25,6 +27,8 @@ const ItemBank: React.FC<ItemBankProps> = ({
   onAlbumSelect,
   userAlbums,
   containerId,
+  searchQuery,
+  onSearchQueryChange,
 }) => {
   const { setNodeRef } = useDroppable({
     id: containerId,
@@ -34,6 +38,18 @@ const ItemBank: React.FC<ItemBankProps> = ({
     <div className="p-4 bg-gray-100 dark:bg-gray-900 rounded-lg shadow-md">
       <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Item Bank</h2>
       <ScopeSelector selectedScope={selectedScope} onScopeChange={onScopeChange} />
+
+      {selectedScope === 'search' && (
+        <div className="mb-4">
+          <input
+            type="text"
+            placeholder="Search for artist, album, or track..."
+            value={searchQuery}
+            onChange={(e) => onSearchQueryChange(e.target.value)}
+            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          />
+        </div>
+      )}
 
       {selectedScope === 'track' && (
         <div className="mb-4">
@@ -62,7 +78,7 @@ const ItemBank: React.FC<ItemBankProps> = ({
           <TierItem
             key={item.id}
             item={item}
-            itemType={selectedScope}
+            itemType={item.itemType || selectedScope}
             containerId={containerId}
           />
         ))}

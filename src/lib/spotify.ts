@@ -309,3 +309,13 @@ export const getPlaylistTracks = async (playlistId: string) => {
     return [];
   }
 };
+
+export const searchSpotify = async (query: string, types: ('artist' | 'album' | 'track')[]) => {
+  try {
+    const response = await spotifyApi.search(query, types);
+    return response;
+  } catch (error) {
+    console.error('Error searching Spotify:', error);
+    return { artists: { items: [] }, albums: { items: [] }, tracks: { items: [] } };
+  }
+};

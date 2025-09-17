@@ -174,3 +174,20 @@ export const publishTierList = async (listId: string) => {
     return { success: false, error };
   }
 };
+
+export const getMyTierLists = async (userId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('tier_lists')
+      .select('id, title, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error('Error getting user tier lists:', error);
+    return null;
+  }
+};

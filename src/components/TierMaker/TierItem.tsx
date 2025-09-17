@@ -19,7 +19,7 @@ const TierItem: React.FC<TierItemProps> = ({ item, itemType, containerId }) => {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
   } : undefined;
 
-  let imageUrl = 'https://via.placeholder.com/64';
+  let imageUrl = '';
   let itemName = item.name;
 
   if (itemType === 'artist') {
@@ -30,17 +30,22 @@ const TierItem: React.FC<TierItemProps> = ({ item, itemType, containerId }) => {
     imageUrl = item.album?.images?.[0]?.url || imageUrl;
   }
 
+  const isPermanentOverlay = itemType === 'track';
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...listeners}
       {...attributes}
-      className="w-20 h-20 flex-none flex flex-col items-center justify-center cursor-grab group relative overflow-hidden"
-    >
-      <img src={imageUrl} alt={itemName} className="w-full h-full object-cover aspect-square" />
-      <div className="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded">
-        <span className="text-white text-center text-sm p-1">{itemName}</span>
+      className={`w-20 h-20 flex-none flex flex-col items-center justify-center cursor-grab relative overflow-hidden rounded ${!isPermanentOverlay ? 'group' : ''}`}>
+      {imageUrl && <img src={imageUrl} alt={itemName} className="w-full h-full object-cover aspect-square" />}
+      <div
+        className={`absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center p-1 transition-opacity ${isPermanentOverlay
+            ? 'opacity-100'
+            : 'opacity-0 group-hover:opacity-100'
+          }`}>
+        <span className="text-white text-center text-sm">{itemName}</span>
       </div>
     </div>
   );
