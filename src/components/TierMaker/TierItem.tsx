@@ -17,7 +17,8 @@ const TierItem: React.FC<TierItemProps> = ({ item, itemType, containerId }) => {
 
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-  } : undefined;
+    touchAction: 'none',
+  } : { touchAction: 'none' };
 
   let imageUrl = '';
   let itemName = item.name;

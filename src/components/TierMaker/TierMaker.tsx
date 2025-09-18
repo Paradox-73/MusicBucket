@@ -112,7 +112,13 @@ const TierMaker: React.FC = () => {
   }, [isGeneratingImage, tierTitle, tiers]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      // Require the user to move the pointer by 5px before a drag starts
+      // This helps prevent accidental drags when scrolling on mobile
+      activationConstraint: {
+        distance: 5,
+      },
+    })
   );
 
   // Fetch user albums for track scope
