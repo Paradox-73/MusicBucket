@@ -39,7 +39,7 @@ const TierRow: React.FC<TierRowProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (settingsMenu-ref.current && !settingsMenuRef.current.contains(event.target as Node)) {
+      if (settingsMenuRef.current && !settingsMenuRef.current.contains(event.target as Node)) {
         setIsSettingsOpen(false);
       }
     };
@@ -63,25 +63,22 @@ const TierRow: React.FC<TierRowProps> = ({
   return (
     <div
       ref={setNodeRef}
-      style={{ backgroundColor: color }}
-      className={`relative flex min-h-[100px] p-2 mb-2 rounded shadow-md ${isOver ? 'ring-4 ring-blue-500' : ''}`}
-    >
-      <div className="flex-shrink-0 w-32 text-lg font-bold text-gray-800 dark:text-gray-100 p-4 text-center flex items-center justify-center">
+      className={`relative flex min-h-[100px] mb-2 rounded-lg shadow-md overflow-hidden ${isOver ? 'ring-4 ring-blue-500' : ''}`}>
+      <div className="flex-shrink-0 w-24 bg-black text-white text-2xl font-bold p-4 text-center flex justify-center items-center">
         {isEditing ? (
-          <input
-            type="text"
+          <textarea
             value={editedLabel}
             onChange={(e) => setEditedLabel(e.target.value)}
             onBlur={handleLabelSave}
-            onKeyDown={(e) => e.key === 'Enter' && handleLabelSave()}
-            className="w-full bg-transparent border-b-2 border-gray-800 dark:border-gray-100 text-lg font-bold text-center"
+            className="w-full bg-transparent border-none text-2xl font-bold text-center resize-none focus:ring-0"
             autoFocus
+            rows={Math.max(2, editedLabel.split('\n').length)}
           />
         ) : (
-          <span onDoubleClick={() => setIsEditing(true)}>{label}</span>
+          <span onDoubleClick={() => setIsEditing(true)} className="w-full break-words">{label}</span>
         )}
       </div>
-      <div className="flex flex-wrap gap-2 flex-grow border-l border-gray-400 dark:border-gray-600 p-2">
+      <div style={{ backgroundColor: color }} className="flex flex-wrap gap-2 flex-grow p-2">
         {children}
       </div>
       {!isDragging && (

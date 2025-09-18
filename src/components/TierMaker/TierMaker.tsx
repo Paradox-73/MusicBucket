@@ -8,6 +8,8 @@ import TierItem from './TierItem';
 import { useAuth } from '../../hooks/useAuth';
 import { saveTierList, updateTierList, getTierList, publishTierList, getMyTierLists } from '../../lib/supabaseTierMaker';
 import { getSeveralArtists, getSeveralAlbums, getSeveralTracks, getMyFollowedArtists, getMySavedAlbums, getAlbumTracks, searchSpotify } from '../../lib/spotify';
+import { Save, Plus, FolderOpen, Share2, ImageDown } from 'lucide-react';
+import * as Collapsible from '@radix-ui/react-collapsible';
 
 interface Tier {
   id: string;
@@ -437,102 +439,120 @@ const TierMaker: React.FC = () => {
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex flex-col">
-        <div className="flex-grow p-4">
-          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Tier Canvas</h2>
+      <div className="flex flex-col lg:flex-row">
+        <div className="flex-grow p-4 lg:w-2/3">
+          <div className="relative mb-4">
+            <h1 className="text-center text-2xl font-bold text-gray-900 dark:text-white">
+              Tier Maker
+            </h1>
+            <h2 className="absolute right-0 top-1/2 -translate-y-1/2 text-base font-semibold text-gray-500 dark:text-gray-400">
+              Tier Canvas
+            </h2>
+          </div>
           <div className="mb-4">
-            <input
-              type="text"
-              placeholder="Tier List Title"
-              className="w-full p-2 border rounded mb-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              value={tierTitle}
-              onChange={(e) => setTierTitle(e.target.value)}
-            />
-            <textarea
-              placeholder="Description (optional)"
-              className="w-full p-2 border rounded mb-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              value={tierDescription}
-              onChange={(e) => setTierDescription(e.target.value)}
-            ></textarea>
-            <button
-              onClick={handleSaveTierList}
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2"
-            >
-              Save Tier List
-            </button>
-            <button
-              onClick={handleAddTier}
-              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-2"
-            >
-              Add Tier
-            </button>
-            <div className="relative inline-block text-left">
-              <button
-                onClick={handleFetchMyTierLists}
-                className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-2"
-              >
-                Load Tier List
-              </button>
-              {showMyTierLists && myTierLists.length > 0 && (
-                <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 dark:bg-gray-800 z-10">
-                  <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-                    {myTierLists.map(list => (
-                      <a
-                        href="#"
-                        key={list.id}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleLoadTierList(list.id);
-                          setShowMyTierLists(false);
-                        }}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-gray-700"
-                        role="menuitem"
-                      >
-                        {list.title}
-                      </a>
-                    ))}
-                  </div>
+            <div className="flex flex-col md:flex-row gap-2 items-start">
+              <div className="flex-grow w-full">
+                <input
+                  type="text"
+                  placeholder="Tier List Title"
+                  className="w-full p-2 border rounded mb-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  value={tierTitle}
+                  onChange={(e) => setTierTitle(e.target.value)}
+                />
+                <Collapsible.Root>
+                  <Collapsible.Trigger asChild>
+                    <button className="text-sm text-gray-500 dark:text-gray-400 hover:underline mb-2">
+                      {tierDescription ? 'Edit Description' : 'Add Description'}
+                    </button>
+                  </Collapsible.Trigger>
+                  <Collapsible.Content>
+                    <textarea
+                      placeholder="Description (optional)"
+                      className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      rows={2}
+                      value={tierDescription}
+                      onChange={(e) => setTierDescription(e.target.value)}
+                    ></textarea>
+                  </Collapsible.Content>
+                </Collapsible.Root>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={handleSaveTierList}
+                  title="Save Tier List"
+                  className="p-2 bg-blue-500 hover:bg-blue-700 text-white font-bold rounded"
+                >
+                  <Save size={20} />
+                </button>
+                <button
+                  onClick={handleAddTier}
+                  title="Add New Tier"
+                  className="p-2 bg-green-500 hover:bg-green-700 text-white font-bold rounded"
+                >
+                  <Plus size={20} />
+                </button>
+                <div className="relative inline-block text-left">
+                  <button
+                    onClick={handleFetchMyTierLists}
+                    title="Load Tier List"
+                    className="p-2 bg-green-500 hover:bg-green-700 text-white font-bold rounded"
+                  >
+                    <FolderOpen size={20} />
+                  </button>
+                  {showMyTierLists && myTierLists.length > 0 && (
+                    <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 dark:bg-gray-800 z-10">
+                      <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                        {myTierLists.map(list => (
+                          <a
+                            href="#"
+                            key={list.id}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleLoadTierList(list.id);
+                              setShowMyTierLists(false);
+                            }}
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-gray-700"
+                            role="menuitem"
+                          >
+                            {list.title}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
+                {tierListId && (
+                  <>
+                    <button
+                      onClick={handleShareTierList}
+                      title="Share Tier List"
+                      className="p-2 bg-purple-500 hover:bg-purple-700 text-white font-bold rounded"
+                    >
+                      <Share2 size={20} />
+                    </button>
+                    <button
+                      onClick={async () => {
+                        setIsLoadingImages(true);
+                        const imageUrls = getAllImageUrls();
+                        try {
+                          await preloadImages(imageUrls);
+                          setIsGeneratingImage(true);
+                        } catch (error) {
+                          console.error('Error preloading images:', error);
+                          alert('Failed to load all images. Please check your internet connection or try again.');
+                          setIsLoadingImages(false);
+                        }
+                      }}
+                      title="Download as Image"
+                      className={`p-2 bg-teal-500 hover:bg-teal-700 text-white font-bold rounded ${isLoadingImages ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      disabled={isLoadingImages}
+                    >
+                      {isLoadingImages ? '...' : <ImageDown size={20} />}
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
-            {tierListId && (
-              <>
-                <button
-                  onClick={handleShareTierList}
-                  className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
-                >
-                  Share Tier List
-                </button>
-                <div className="flex items-center mt-2">
-                  <input
-                    type="checkbox"
-                    id="showOverlayText"
-                    checked={showOverlayText}
-                    onChange={(e) => setShowOverlayText(e.target.checked)}
-                    className="mr-2"
-                  />
-                  <label htmlFor="showOverlayText" className="text-white text-sm">Show Overlay Text</label>
-                </div>
-                <button
-                  onClick={async () => {
-                    setIsLoadingImages(true);
-                    const imageUrls = getAllImageUrls();
-                    try {
-                      await preloadImages(imageUrls);
-                      setIsGeneratingImage(true);
-                    } catch (error) {
-                      console.error('Error preloading images:', error);
-                      alert('Failed to load all images. Please check your internet connection or try again.');
-                      setIsLoadingImages(false);
-                    }
-                  }}
-                  className={`bg-teal-500 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded ml-2 ${isLoadingImages ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  disabled={isLoadingImages}
-                >
-                  {isLoadingImages ? 'Preparing Image...' : 'Share as Image'}
-                </button>
-              </>
-            )}
           </div>
 
           {tiers.map((tier) => (
@@ -559,7 +579,7 @@ const TierMaker: React.FC = () => {
             </TierRow>
           ))}
         </div>
-        <div className="p-4">
+        <div className="lg:w-1/3 lg:h-screen lg:overflow-y-auto p-4 sticky bottom-0 bg-gray-100/95 dark:bg-gray-900/95 backdrop-blur-sm lg:relative lg:bg-transparent dark:lg:bg-transparent">
           <ItemBank
             items={bankItems}
             loading={loadingBankItems}

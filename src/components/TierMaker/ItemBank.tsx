@@ -73,7 +73,7 @@ const ItemBank: React.FC<ItemBankProps> = ({
       {loading && <p className="text-gray-600 dark:text-gray-400">Loading items...</p>}
       {error && <p className="text-red-500 dark:text-red-400">Error: {error}</p>}
 
-      <div ref={setNodeRef} className="grid grid-cols-[repeat(auto-fill,minmax(80px,1fr))] gap-0 max-h-96 overflow-y-auto">
+      <div ref={setNodeRef} className="flex flex-row gap-2 overflow-x-auto lg:grid lg:grid-cols-[repeat(auto-fill,minmax(80px,1fr))] lg:gap-0 lg:overflow-y-auto lg:max-h-96">
         {items.map((item) => (
           <TierItem
             key={item.id}
