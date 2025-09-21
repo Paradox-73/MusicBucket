@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { createSpotifyApi } from '../../lib/Dashboard/spotify';
 import { sleep } from '../../lib/Dashboard/spotify';
@@ -23,120 +23,11 @@ import { checkAndAwardAchievements } from '../../services/AchievementService';
 type TimeRange = 'short_term' | 'medium_term' | 'long_term';
 type PlaylistOwnershipFilter = 'all' | 'mine' | 'others';
 
-const fetchAllTracks = async (spotifyAuth: SpotifyAuth, playlistOwnershipFilter: PlaylistOwnershipFilter, userId: string | undefined) => {
-  
-  const token = await spotifyAuth.getAccessToken();
-  if (!token) throw new Error('No access token available');
-  const spotifyApi = createSpotifyApi(token, () => {}); // Pass a dummy setIsRateLimited
-  
-  const allTracks: any[] = [];
-  let offset = 0;
-
-  // 1. Fetch all user's playlists
-  const playlists: any[] = [];
-  offset = 0;
-  while (true) {
-    const response = await spotifyApi.getPlaylists(offset, 50);
-    const { items, total } = response.data;
-    if (!items.length) break;
-    playlists.push(...items);
-    if (playlists.length >= total) break;
-    offset += 50;
-    await sleep(200); // Add delay
-  }
-
-  // Filter playlists based on ownership
-  let filteredPlaylists = playlists;
-  if (playlistOwnershipFilter === 'mine' && userId) {
-    filteredPlaylists = playlists.filter(playlist => playlist.owner.id === userId);
-  } else if (playlistOwnershipFilter === 'others' && userId) {
-    filteredPlaylists = playlists.filter(playlist => playlist.owner.id !== userId);
-  }
-
-  // 2. Fetch tracks for each (filtered) playlist
-  for (const playlist of filteredPlaylists) {
-    if (!playlist.id) continue;
-    let tracksOffset = 0;
-    while (true) {
-      try {
-        const response = await spotifyApi.getPlaylistTracks(playlist.id, tracksOffset, 100);
-        const { items } = response.data;
-        if (!items.length) break;
-        items.forEach(item => {
-          if (item.track && item.track.id) {
-            allTracks.push({ ...item, track: { ...item.track, album: item.track.album || {} } });
-          }
-        });
-        if (items.length < 100) break;
-        tracksOffset += 100;
-        await sleep(200); // Add delay
-      } catch (error) {
-        console.error(`Failed to fetch tracks for playlist ${playlist.id}`, error);
-        break;
-      }
-    }
-  }
-
-  // 3. Fetch user's saved tracks (liked songs)
-  offset = 0;
-  while (true) {
-    try {
-      const response = await spotifyApi.getSavedTracks(offset, 50);
-      const { items } = response.data;
-      if (!items.length) break;
-      items.forEach(item => {
-        if (item.track && item.track.id) {
-          allTracks.push({ ...item, track: { ...item.track, album: item.track.album || {} } });
-        }
-      });
-      if (items.length < 50) break;
-      offset += 50;
-      await sleep(200); // Add delay
-    } catch (error) {
-      console.error('Failed to fetch saved tracks', error);
-      break;
-    }
-  }
-
-  // 4. Fetch user's saved albums and their tracks
-  offset = 0;
-  while (true) {
-    try {
-      const response = await spotifyApi.getSavedAlbums(offset, 50);
-      const { items } = response.data;
-      if (!items.length) break;
-      for (const item of items) {
-        if (item.album && item.album.tracks) {
-          let tracksOffset = 0;
-          while (true) {
-            const tracksResponse = await spotifyApi.getAlbumTracks(item.album.id, tracksOffset, 50);
-            const { items: trackItems } = tracksResponse.data;
-            if (!trackItems.length) break;
-            trackItems.forEach(track => {
-              allTracks.push({ added_at: item.added_at, track: { ...track, album: item.album } });
-            });
-            if (trackItems.length < 50) break;
-            tracksOffset += 50;
-            await sleep(200); // Add delay
-          }
-        }
-      }
-      if (items.length < 50) break;
-      offset += 50;
-      await sleep(200); // Add delay
-    } catch (error) {
-      console.error('Failed to fetch saved albums', error);
-      break;
-    }
-  }
-
-  return allTracks;
-};
-
 export const Dashboard: React.FC = () => {
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>('medium_term');
   const [playlistOwnershipFilter, setPlaylistOwnershipFilter] = useState<PlaylistOwnershipFilter>('all');
   const spotifyAuth = SpotifyAuth.getInstance();
+  const queryClient = useQueryClient();
 
   const [isRateLimited, setIsRateLimited] = useState(false);
 
@@ -152,12 +43,44 @@ export const Dashboard: React.FC = () => {
     staleTime: Infinity, // User data doesn't change often
   });
 
-  const { data: allTracks, isLoading: isLoadingAllTracks, error: errorAllTracks } = useQuery({
-    queryKey: ['all-tracks-analysis', playlistOwnershipFilter, currentUser?.id],
-    queryFn: () => fetchAllTracks(spotifyAuth, playlistOwnershipFilter, currentUser?.id),
+  const { data: allTracksData, isLoading: isLoadingAllTracks, error: errorAllTracks } = useQuery({
+    queryKey: ['all-tracks-analysis'],
+    queryFn: () => queryClient.getQueryData(['all-tracks-analysis']),
     staleTime: 1000 * 60 * 5, // 5 minutes
     enabled: !!currentUser, // Only run this query if currentUser is available
   });
+
+  const allTracks = allTracksData?.allTracks || [];
+  const uniqueSongCount = allTracksData?.uniqueSongCount || 0;
+  const playlists = allTracksData?.playlists || [];
+
+  const filteredAllTracks = React.useMemo(() => {
+    if (!currentUser) return [];
+    if (playlistOwnershipFilter === 'all') return allTracks;
+
+    const myPlaylistIds = playlists
+      .filter(playlist => playlist.owner.id === currentUser.id)
+      .map(playlist => playlist.id);
+
+    const otherPlaylistIds = playlists
+      .filter(playlist => playlist.owner.id !== currentUser.id)
+      .map(playlist => playlist.id);
+
+    return allTracks.filter((track: any) => {
+      // Tracks from saved albums or liked songs are considered 'mine'
+      if (!track.playlistId) {
+        return playlistOwnershipFilter === 'mine';
+      }
+
+      // Tracks from playlists
+      if (playlistOwnershipFilter === 'mine') {
+        return myPlaylistIds.includes(track.playlistId);
+      } else if (playlistOwnershipFilter === 'others') {
+        return otherPlaylistIds.includes(track.playlistId);
+      }
+      return false; // Should not reach here for 'all' filter
+    });
+  }, [allTracks, playlists, playlistOwnershipFilter, currentUser]);
 
   const { data: topArtists, isLoading: isLoadingArtists, error: errorArtists } = useQuery({
     queryKey: ['topArtists', selectedTimeRange],
@@ -299,7 +222,7 @@ export const Dashboard: React.FC = () => {
           <select
             className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             value={playlistOwnershipFilter}
-            onChange={(e) => setPlaylistOwnershipFilter(e.target.value as PlaylistOwnershipFilter)}
+            onChange={(e) => setPlaylistOwnershipFilter(e.target.value as TimeRange)}
           >
             <option value="all">All Playlists</option>
             <option value="mine">My Playlists</option>
@@ -308,7 +231,7 @@ export const Dashboard: React.FC = () => {
         </div>
 
         <div className="mb-8">
-          {isLoadingAllTracks ? <div className="w-full h-96 bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center"><LoadingSpinner/></div> : <MusicTasteAnalyzer savedTracks={allTracks || []} />}
+          {isLoadingAllTracks ? <div className="w-full h-96 bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center"><LoadingSpinner/></div> : <MusicTasteAnalyzer savedTracks={filteredAllTracks || []} uniqueSongCount={uniqueSongCount} />}
         </div>
 
         
@@ -318,17 +241,17 @@ export const Dashboard: React.FC = () => {
         </motion.div>
 
         <motion.div variants={cardVariant} className="mb-8">
-          {isLoadingAllTracks ? <div className="w-full h-96 bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center"><LoadingSpinner/></div> : <DecadeChart tracks={allTracks || []} />}
+          {isLoadingAllTracks ? <div className="w-full h-96 bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center"><LoadingSpinner/></div> : <DecadeChart tracks={filteredAllTracks || []} />}
         </motion.div>
 
         <motion.div variants={cardVariant}>
-          <PlaylistMetrics playlistOwnershipFilter={playlistOwnershipFilter} />
+          <PlaylistMetrics playlistOwnershipFilter={playlistOwnershipFilter} uniqueSongCount={uniqueSongCount} />
         </motion.div>
 
         <div className="mb-8">
           { (isLoadingAllTracks || isLoadingArtists) 
             ? <div className="w-full h-96 bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center"><LoadingSpinner/></div> 
-            : <PopularityHighlights savedTracks={allTracks || []} topArtists={topArtists || []} />
+            : <PopularityHighlights savedTracks={filteredAllTracks || []} topArtists={topArtists || []} />
           }
         </div>
 

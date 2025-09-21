@@ -18,9 +18,10 @@ interface Playlist {
 
 interface PlaylistMetricsProps {
   playlistOwnershipFilter: 'all' | 'mine' | 'others';
+  uniqueSongCount: number;
 }
 
-export const PlaylistMetrics: React.FC<PlaylistMetricsProps> = ({ playlistOwnershipFilter }) => {
+export const PlaylistMetrics: React.FC<PlaylistMetricsProps> = ({ playlistOwnershipFilter, uniqueSongCount }) => {
   const spotifyAuth = SpotifyAuth.getInstance();
   const [playlistMetricsData, setPlaylistMetricsData] = useState<any[]>([]);
 
@@ -142,6 +143,7 @@ export const PlaylistMetrics: React.FC<PlaylistMetricsProps> = ({ playlistOwners
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mt-8">
       <h2 className="text-2xl font-bold mb-4 text-center">Playlist Metrics</h2>
+      <p className="text-lg text-center mb-4">Total Songs: {uniqueSongCount}</p>
       {playlistMetricsData.length > 0 && (
         <PlaylistPieChart data={playlistMetricsData.map(metric => ({
           id: metric.id,

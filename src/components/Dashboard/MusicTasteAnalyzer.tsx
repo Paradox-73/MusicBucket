@@ -81,8 +81,8 @@ const personalityDescriptions: { [key: string]: string } = {
   "Hoarder": "Your vast library is a testament to your dedication to music, you collect 'em all!",
 };
 
-const getPersonality = (metrics: any): Personality => {
-  const songsLvl = getTotalSongsLevel(metrics.totalTracks);
+const getPersonality = (metrics: any, uniqueSongCount: number): Personality => {
+  const songsLvl = getTotalSongsLevel(uniqueSongCount);
   const diversityLvl = getDiversityLevel(metrics.artistDiversity);
   const popLvl = getPopularityLevel(metrics.avgPopularity);
   const decadeWord = getDecade(metrics.avgReleaseYear);
@@ -102,12 +102,17 @@ export const calculateMusicTasteMetrics = (tracks: SavedTrack[]) => {
 
   const totalTracks = tracks.length;
   const uniqueArtists = new Set(tracks.flatMap(item => item.track.artists.map(artist => artist.id)));
-  const avgPopularity = tracks.reduce((sum, item) => sum + item.track.popularity, 0) / totalTracks;
-  const avgReleaseYear = tracks.reduce((sum, item) => sum + new Date(item.track.album.release_date).getFullYear(), 0) / totalTracks;
+  
+  const validPopularities = tracks.map(item => item.track.popularity).filter(p => typeof p === 'number' && !isNaN(p));
+  const avgPopularity = validPopularities.length > 0 ? validPopularities.reduce((sum, p) => sum + p, 0) / validPopularities.length : 0;
+
+  const validReleaseYears = tracks.map(item => new Date(item.track.album.release_date).getFullYear()).filter(y => typeof y === 'number' && !isNaN(y));
+  const avgReleaseYear = validReleaseYears.length > 0 ? validReleaseYears.reduce((sum, y) => sum + y, 0) / validReleaseYears.length : 0;
+
   const artistDiversity = (uniqueArtists.size / totalTracks) * 100; // Keep for personality calculation
 
   const totalDurationMs = tracks.reduce((sum, item) => sum + (item.track.duration_ms || 0), 0);
-  const avgDurationMs = totalDurationMs / totalTracks;
+  const avgDurationMs = totalTracks > 0 ? totalDurationMs / totalTracks : 0;
 
   const additionsByMonth: { [key: string]: { count: number } } = {};
   tracks.forEach(item => {
@@ -187,15 +192,16 @@ const formatTotalDuration = (ms: number) => {
 
 interface MusicTasteAnalyzerProps {
   savedTracks: SavedTrack[];
+  uniqueSongCount: number;
 }
 
-export const MusicTasteAnalyzer: React.FC<MusicTasteAnalyzerProps> = ({ savedTracks }) => {
+export const MusicTasteAnalyzer: React.FC<MusicTasteAnalyzerProps> = ({ savedTracks, uniqueSongCount }) => {
   if (!savedTracks || savedTracks.length === 0) return <div className="text-center py-10">Not enough data to analyze your taste.</div>;
 
   const metrics = calculateMusicTasteMetrics(savedTracks);
   if (!metrics) return null;
 
-  const personality = getPersonality(metrics);
+  const personality = getPersonality(metrics, uniqueSongCount);
 
   return (
     <motion.div 
@@ -210,7 +216,7 @@ export const MusicTasteAnalyzer: React.FC<MusicTasteAnalyzerProps> = ({ savedTra
       <h3 className="text-2xl font-bold mb-4">Your Stats</h3>
       <div className="grid grid-cols-2 gap-4 mb-8">
         <div>
-          <div className="text-2xl font-bold">{metrics.totalTracks}</div>
+          <div className="text-2xl font-bold">{uniqueSongCount}</div>
           <div className="text-sm text-gray-500 dark:text-gray-400">Total Songs</div>
         </div>
         <div>

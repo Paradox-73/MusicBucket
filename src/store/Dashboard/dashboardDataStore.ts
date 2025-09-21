@@ -24,11 +24,12 @@ const fetchCurrentUser = async (spotifyAuth: SpotifyAuth) => {
   return response.data;
 };
 
-const fetchAllTracks = async (spotifyAuth: SpotifyAuth, playlistOwnershipFilter: PlaylistOwnershipFilter, userId: string | undefined) => {
+const fetchAllTracks = async (spotifyAuth: SpotifyAuth) => {
   const token = await spotifyAuth.getAccessToken();
   if (!token) throw new Error('No access token available');
   const spotifyApi = createSpotifyApi(token, () => {}); // Pass a dummy setIsRateLimited
   
+  const uniqueTrackIds = new Set<string>();
   const allTracks: any[] = [];
   let offset = 0;
 
@@ -45,16 +46,8 @@ const fetchAllTracks = async (spotifyAuth: SpotifyAuth, playlistOwnershipFilter:
     await sleep(200); // Add delay
   }
 
-  // Filter playlists based on ownership
-  let filteredPlaylists = playlists;
-  if (playlistOwnershipFilter === 'mine' && userId) {
-    filteredPlaylists = playlists.filter(playlist => playlist.owner.id === userId);
-  } else if (playlistOwnershipFilter === 'others' && userId) {
-    filteredPlaylists = playlists.filter(playlist => playlist.owner.id !== userId);
-  }
-
-  // 2. Fetch tracks for each (filtered) playlist
-  for (const playlist of filteredPlaylists) {
+  // 2. Fetch tracks for each playlist (no filtering here)
+  for (const playlist of playlists) {
     if (!playlist.id) continue;
     let tracksOffset = 0;
     while (true) {
@@ -64,7 +57,8 @@ const fetchAllTracks = async (spotifyAuth: SpotifyAuth, playlistOwnershipFilter:
         if (!items.length) break;
         items.forEach(item => {
           if (item.track && item.track.id) {
-            allTracks.push({ ...item, track: { ...item.track, album: item.track.album || {} } });
+            allTracks.push({ ...item, track: { ...item.track, album: item.track.album || {} }, playlistId: playlist.id });
+            uniqueTrackIds.add(item.track.id);
           }
         });
         if (items.length < 100) break;
@@ -87,6 +81,7 @@ const fetchAllTracks = async (spotifyAuth: SpotifyAuth, playlistOwnershipFilter:
       items.forEach(item => {
         if (item.track && item.track.id) {
           allTracks.push({ ...item, track: { ...item.track, album: item.track.album || {} } });
+          uniqueTrackIds.add(item.track.id);
         }
       });
       if (items.length < 50) break;
@@ -114,6 +109,7 @@ const fetchAllTracks = async (spotifyAuth: SpotifyAuth, playlistOwnershipFilter:
             if (!trackItems.length) break;
             trackItems.forEach(track => {
               allTracks.push({ added_at: item.added_at, track: { ...track, album: item.album } });
+              uniqueTrackIds.add(track.id);
             });
             if (trackItems.length < 50) break;
             tracksOffset += 50;
@@ -130,7 +126,7 @@ const fetchAllTracks = async (spotifyAuth: SpotifyAuth, playlistOwnershipFilter:
     }
   }
 
-  return allTracks;
+  return { allTracks, uniqueSongCount: uniqueTrackIds.size, playlists };
 };
 
 const fetchTopArtists = async (spotifyAuth: SpotifyAuth, timeRange: TimeRange) => {
@@ -176,10 +172,13 @@ export const useDashboardDataStore = create<DashboardDataState>((set, get) => ({
       const currentUserId = (currentUser as any)?.id || userId;
 
       if (currentUserId) {
-        // Pre-fetch all tracks (default 'all' ownership filter)
+        // Pre-fetch all tracks
         await queryClient.prefetchQuery({
-          queryKey: ['all-tracks-analysis', 'all', currentUserId],
-          queryFn: () => fetchAllTracks(spotifyAuth, 'all', currentUserId),
+          queryKey: ['all-tracks-analysis'],
+          queryFn: async () => {
+            const { allTracks, uniqueSongCount, playlists } = await fetchAllTracks(spotifyAuth);
+            return { allTracks, uniqueSongCount, playlists };
+          },
           staleTime: 1000 * 60 * 5,
         });
 

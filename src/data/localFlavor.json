@@ -1,0 +1,30 @@
+{
+  "seattle": {
+    "genres": ["grunge", "alternative rock"],
+    "artists": ["Nirvana", "Pearl Jam", "Soundgarden", "Alice in Chains"]
+  },
+  "memphis": {
+    "genres": ["blues", "soul", "rock and roll"],
+    "artists": ["Elvis Presley", "B.B. King", "Johnny Cash"]
+  },
+  "new orleans": {
+    "genres": ["jazz", "funk", "zydeco"],
+    "artists": ["Louis Armstrong", "Dr. John", "The Meters"]
+  },
+  "nashville": {
+    "genres": ["country"],
+    "artists": ["Dolly Parton", "Garth Brooks", "Taylor Swift"]
+  },
+  "detroit": {
+    "genres": ["motown", "techno", "garage rock"],
+    "artists": ["The Supremes", "Stevie Wonder", "The White Stripes"]
+  },
+  "new york": {
+    "genres": ["hip hop", "punk rock", "disco"],
+    "artists": ["The Ramones", "Notorious B.I.G.", "Jay-Z"]
+  },
+  "los angeles": {
+    "genres": ["gangsta rap", "glam metal", "surf rock"],
+    "artists": ["N.W.A.", "Guns N' Roses", "The Beach Boys"]
+  }
+}
