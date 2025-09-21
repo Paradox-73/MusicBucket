@@ -5,7 +5,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import { useSpotifyStore } from '../../../store/Bucket_List/spotify';
 import { SearchPanel } from './SearchPanel';
 import { BucketListPanel } from './BucketListPanel';
-import { ArrowLeft, Edit, Share2, Globe, Lock, Pencil } from 'lucide-react';
+import { ArrowLeft, Edit, Share2, Globe, Lock, Pencil, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
 import CommentsSection from '../CommentsSection';
 import CollaboratorsPanel from './CollaboratorsPanel';
 import SmartSuggestions from '../SmartSuggestions';
@@ -38,6 +38,8 @@ export function BucketListDetail() {
 
   // State for ShareModal
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isSearchPanelCollapsed, setIsSearchPanelCollapsed] = useState(false);
+  const [isDescriptionCollapsed, setIsDescriptionCollapsed] = useState(false);
 
   useEffect(() => {
     if (user && listId) {
@@ -203,9 +205,14 @@ export function BucketListDetail() {
                     <h1 className="text-2xl font-bold">{list.name}</h1>
                 )}
                 {!isEditingName && (
-                    <button onClick={handleStartEditingName} className="text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
-                        <Pencil size={20} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button onClick={handleStartEditingName} className="text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                            <Pencil size={20} />
+                        </button>
+                        <button onClick={() => setIsDescriptionCollapsed(!isDescriptionCollapsed)} className="text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                            {isDescriptionCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
+                        </button>
+                    </div>
                 )}
                 <div className="flex items-center gap-2">
                     <button onClick={handleTogglePublic} className="flex items-center gap-1 text-sm">
@@ -219,56 +226,65 @@ export function BucketListDetail() {
             </div>
         </header>
 
-        <section className="p-4 sm:p-6 bg-gray-200 dark:bg-gray-800 rounded-lg shadow-lg mb-8">
-            <div className="flex justify-between items-center mb-2">
-                <h2 className="text-xl font-bold">Description</h2>
-                {!isEditingDescription && (
-                    <button onClick={handleStartEditingDescription} className="text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
-                        <Pencil size={20} />
-                    </button>
-                )}
-            </div>
-            {isEditingDescription ? (
-                <div className="flex flex-col gap-2">
-                    <textarea
-                        value={editedDescription}
-                        onChange={(e) => setEditedDescription(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) { // Allow Shift+Enter for new line
-                                e.preventDefault();
-                                handleSaveDescription();
-                            }
-                            if (e.key === 'Escape') {
-                                handleCancelEditingDescription();
-                            }
-                        }}
-                        className="w-full p-2 rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white"
-                        rows={4}
-                        placeholder="Add a description for your bucket list..."
-                        autoFocus
-                    ></textarea>
-                    <div className="flex justify-end gap-2">
-                        <button onClick={handleSaveDescription} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md">
-                            Save
+        {!isDescriptionCollapsed && (
+            <section className="p-4 sm:p-6 bg-gray-200 dark:bg-gray-800 rounded-lg shadow-lg mb-8">
+                <div className="flex justify-between items-center mb-2">
+                    <h2 className="text-xl font-bold">Description</h2>
+                    {!isEditingDescription && (
+                        <button onClick={handleStartEditingDescription} className="text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                            <Pencil size={20} />
                         </button>
-                        <button onClick={handleCancelEditingDescription} className="bg-gray-400 hover:bg-gray-500 text-white px-3 py-1 rounded-md">
-                            Cancel
-                        </button>
-                    </div>
+                    )}
                 </div>
-            ) : (
-                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                    {list.description || "No description yet. Click the pencil icon to add one!"}
-                </p>
-            )}
-        </section>
+                {isEditingDescription ? (
+                    <div className="flex flex-col gap-2">
+                        <textarea
+                            value={editedDescription}
+                            onChange={(e) => setEditedDescription(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) { // Allow Shift+Enter for new line
+                                    e.preventDefault();
+                                    handleSaveDescription();
+                                }
+                                if (e.key === 'Escape') {
+                                    handleCancelEditingDescription();
+                                }
+                            }}
+                            className="w-full p-2 rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white"
+                            rows={4}
+                            placeholder="Add a description for your bucket list..."
+                            autoFocus
+                        ></textarea>
+                        <div className="flex justify-end gap-2">
+                            <button onClick={handleSaveDescription} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md">
+                                Save
+                            </button>
+                            <button onClick={handleCancelEditingDescription} className="bg-gray-400 hover:bg-gray-500 text-white px-3 py-1 rounded-md">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                        {list.description || "No description yet. Click the pencil icon to add one!"}
+                    </p>
+                )}
+            </section>
+        )}
 
-      <main className="grid flex-1 grid-cols-1 md:grid-cols-12 overflow-y-auto">
-        <div className="md:col-span-5 border-r border-gray-200 dark:border-white/10 xl:col-span-4">
-          <SearchPanel listId={listId!} />
+      <main className="flex flex-1 overflow-y-auto">
+        <div className={`${isSearchPanelCollapsed ? 'w-12' : 'md:w-1/3 lg:w-1/4'} transition-all duration-300 ease-in-out border-r border-gray-200 dark:border-white/10 flex flex-col relative`}>
+          <button
+            onClick={() => setIsSearchPanelCollapsed(!isSearchPanelCollapsed)}
+            className="absolute top-1/2 -right-3 -translate-y-1/2 bg-gray-300 dark:bg-gray-700 p-1 rounded-full shadow-md z-10"
+            title={isSearchPanelCollapsed ? 'Expand Search' : 'Collapse Search'}
+          >
+            {isSearchPanelCollapsed ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
+          </button>
+          <SearchPanel listId={listId!} isCollapsed={isSearchPanelCollapsed} />
         </div>
-        <div className="md:col-span-7 xl:col-span-8">
-          <BucketListPanel />
+        <div className={`${isSearchPanelCollapsed ? 'w-full' : 'md:w-2/3 lg:w-3/4'} transition-all duration-300 ease-in-out`}>
+          <BucketListPanel isSearchPanelCollapsed={isSearchPanelCollapsed} />
         </div>
       </main>
       {/* <CommentsSection listId={listId!} /> */}

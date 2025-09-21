@@ -2,7 +2,11 @@ import React from 'react';
 import { SearchBar } from '../SearchBar';
 import { SearchResults } from '../SearchResults';
 
-export function SearchPanel({ listId }: { listId: string }) {
+export function SearchPanel({ listId, isCollapsed }: { listId: string; isCollapsed: boolean }) {
+  if (isCollapsed) {
+    return <div className="flex h-full flex-col bg-gray-100 dark:bg-black/90"></div>; // Render an empty div when collapsed
+  }
+
   return (
     <div className="flex h-full flex-col bg-gray-100 dark:bg-black/90">
       <header className="border-b border-gray-200 dark:border-white/10 p-4">

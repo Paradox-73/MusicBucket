@@ -1,15 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Filters } from '../Filters';
 import { BucketList } from '../BucketList';
 import { useSpotifyStore } from '../../../store/Bucket_List/spotify';
 import { SpotifyItem } from '../../../types/Bucket_List/spotify';
-import { Music, List, Grid, ArrowDown, ArrowUp } from 'lucide-react';
+import { Music, List, Grid, ArrowDown, ArrowUp, ChevronDown, ChevronUp } from 'lucide-react';
 import BucketListListView from '../BucketListListView';
+import { useAuthStore } from '../../../store/authStore';
+import { ReminderService } from '../../../services/ReminderService';
 
-export function BucketListPanel() {
+export function BucketListPanel({ isSearchPanelCollapsed }: { isSearchPanelCollapsed: boolean }) {
   const { items, addItem, filter, itemTypeFilter, setSortBy, sortBy, sortOrder, setSortOrder, removeItems, toggleListenedBulk } = useSpotifyStore();
   const [isListView, setIsListView] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [massSelectMode, setMassSelectMode] = useState(false);
+  const [reminderFrequency, setReminderFrequency] = useState<'none' | 'daily' | 'weekly' | 'monthly'>('none'); // Default to no reminders
+  const [isReminderDropdownOpen, setIsReminderDropdownOpen] = useState(false);
+
+  const { user } = useAuthStore();
+  const userId = user?.id;
+
+  useEffect(() => {
+    const fetchReminderStatus = async () => {
+      if (userId) {
+        const status = await ReminderService.getReminderStatus(userId);
+        if (status) {
+          setReminderFrequency(status.frequency);
+        }
+      }
+    };
+    fetchReminderStatus();
+  }, [userId]);
+
 
   const filteredItems = items.filter((item) => {
     // Filter by completion status
@@ -73,6 +94,35 @@ export function BucketListPanel() {
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Your Bucket List</h2>
         <div className="flex items-center gap-2"> {/* New div to group filters and sort */}
           <Filters />
+          {!massSelectMode ? (
+            <button
+              onClick={() => setMassSelectMode(true)}
+              className="px-3 py-1 text-sm font-medium rounded-md bg-purple-600 text-white hover:bg-purple-700"
+            >
+              Select
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setMassSelectMode(false)}
+                className="px-3 py-1 text-sm font-medium rounded-md bg-gray-400 hover:bg-gray-500 text-white"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => setSelectedItems(new Set(items.map(i => i.id)))}
+                className="px-3 py-1 text-sm font-medium rounded-md bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Select All
+              </button>
+              <button
+                onClick={() => setSelectedItems(new Set())}
+                className="px-3 py-1 text-sm font-medium rounded-md bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Deselect All
+              </button>
+            </div>
+          )}
           {selectedItems.size > 0 && (
             <div className="flex items-center gap-2">
               <button
@@ -91,6 +141,58 @@ export function BucketListPanel() {
               </button>
             </div>
           )}
+
+          {/* Reminder Frequency Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setIsReminderDropdownOpen(!isReminderDropdownOpen)}
+              className="flex items-center justify-between px-3 py-1 text-sm font-medium rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white min-w-[120px]"
+            >
+              {reminderFrequency === 'none' ? 'Reminders' : reminderFrequency.charAt(0).toUpperCase() + reminderFrequency.slice(1)}
+              {isReminderDropdownOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </button>
+            {isReminderDropdownOpen && (
+              <div className="absolute z-10 mt-1 w-full rounded-md bg-white dark:bg-gray-700 shadow-lg border border-gray-200 dark:border-gray-600">
+                <button
+                  onClick={async () => {
+                    setReminderFrequency('none');
+                    setIsReminderDropdownOpen(false);
+                    if (userId) {
+                      await ReminderService.updateReminderFrequency(userId, 'none');
+                    }
+                  }}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600"
+                >
+                  No Reminders
+                </button>
+                <button
+                  onClick={async () => {
+                    setReminderFrequency('weekly');
+                    setIsReminderDropdownOpen(false);
+                    if (userId) {
+                      await ReminderService.updateReminderFrequency(userId, 'weekly');
+                    }
+                  }}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600"
+                >
+                  Weekly
+                </button>
+                <button
+                  onClick={async () => {
+                    setReminderFrequency('monthly');
+                    setIsReminderDropdownOpen(false);
+                    if (userId) {
+                      await ReminderService.updateReminderFrequency(userId, 'monthly');
+                    }
+                  }}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600"
+                >
+                  Monthly
+                </button>
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center gap-2">
             
             <button
@@ -125,7 +227,7 @@ export function BucketListPanel() {
           isListView ? (
             <BucketListListView items={sortedItems} selectedItems={selectedItems} setSelectedItems={setSelectedItems} />
           ) : (
-            <BucketList items={sortedItems} selectedItems={selectedItems} setSelectedItems={setSelectedItems} />
+            <BucketList items={sortedItems} selectedItems={selectedItems} setSelectedItems={setSelectedItems} isSearchPanelCollapsed={isSearchPanelCollapsed} massSelectMode={massSelectMode} setMassSelectMode={setMassSelectMode} />
           )
         ) : (
           <div className="flex h-full items-center justify-center">

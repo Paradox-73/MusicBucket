@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Check, Trash2, ExternalLink, FileText } from 'lucide-react';
+import { Check, Trash2, ExternalLink, FileText, ChevronUp, ChevronDown } from 'lucide-react';
 import { useSpotifyStore } from '../../store/Bucket_List/spotify';
 import { SpotifyItem } from '../../types/Bucket_List/spotify';
 import { useAuthStore } from '../../store/authStore';
-import { ReminderService } from '../../services/ReminderService';
 
 const CATEGORIES = ['artist', 'album', 'track', 'playlist', 'podcast'] as const;
 
@@ -16,65 +15,23 @@ interface BucketListProps {
   items: SpotifyItem[];
   selectedItems: Set<string>;
   setSelectedItems: React.Dispatch<React.SetStateAction<Set<string>>>;
+  isSearchPanelCollapsed: boolean;
+  massSelectMode: boolean;
+  setMassSelectMode: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export function BucketList({ items, selectedItems, setSelectedItems }: BucketListProps) {
+export function BucketList({ items, selectedItems, setSelectedItems, isSearchPanelCollapsed, massSelectMode, setMassSelectMode }: BucketListProps) {
+  console.log('isSearchPanelCollapsed:', isSearchPanelCollapsed);
   const { sortBy, sortOrder, toggleListened, removeItem, updateNotes, reorderItems } = 
     useSpotifyStore();
 
   const [editingNotesItemId, setEditingNotesItemId] = useState<string | null>(null);
   const [currentNotes, setCurrentNotes] = useState('');
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
-  const [massSelectMode, setMassSelectMode] = useState(false);
 
-  // NEW STATE FOR WHOLE BUCKET LIST REMINDER
-  const [bucketListReminder, setBucketListReminder] = useState<'none' | 'weekly' | 'monthly'>('none');
 
   const { user } = useAuthStore();
   const userId = user?.id;
-
-  // NEW EFFECT TO FETCH WHOLE BUCKET LIST REMINDER STATUS
-  useEffect(() => {
-    const fetchBucketListReminder = async () => {
-      if (!userId) return;
-      const status = await ReminderService.getReminderStatus(userId);
-      if (status) {
-        setBucketListReminder(status.frequency as 'none' | 'weekly' | 'monthly');
-      } else {
-        setBucketListReminder('none');
-      }
-    };
-    fetchBucketListReminder();
-  }, [userId]); // Depend only on userId
-
-  // NEW HANDLER FOR WHOLE BUCKET LIST REMINDER CHANGES
-  const handleBucketListReminderChange = async (frequency: 'weekly' | 'monthly' | 'none') => {
-    if (!userId) {
-      console.error("User not logged in.");
-      return;
-    }
-    try {
-      await ReminderService.updateReminderFrequency(userId, frequency);
-      setBucketListReminder(frequency);
-    } catch (error) {
-      console.error("Failed to update bucket list reminder:", error);
-    }
-  };
-
-  // NEW HANDLER FOR "REMIND ME NOW" BUTTON
-  const handleRemindMeNow = async () => {
-    if (!userId) {
-      console.error("User not logged in.");
-      return;
-    }
-    try {
-      await ReminderService.sendTestReminder(userId);
-      alert("Test reminder simulated! Check console and Supabase 'last_sent_at'.");
-    } catch (error) {
-      console.error("Failed to simulate test reminder:", error);
-      alert("Failed to simulate test reminder.");
-    }
-  };
 
   
 
@@ -134,60 +91,7 @@ export function BucketList({ items, selectedItems, setSelectedItems }: BucketLis
 
   return (
     <div className="space-y-8">
-      {/* NEW: Whole Bucket List Reminder Controls */}
-      <div className="flex items-center space-x-4 mb-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg shadow">
-        <label htmlFor="bucketListReminder" className="text-lg font-semibold text-gray-900 dark:text-white">
-          Bucket List Reminders:
-        </label>
-        <select
-          id="bucketListReminder"
-          className="p-2 rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white"
-          value={bucketListReminder}
-          onChange={(e) => handleBucketListReminderChange(e.target.value as 'weekly' | 'monthly' | 'none')}
-        >
-          <option value="none">No Reminders</option>
-          <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
-        </select>
-        <button
-          onClick={handleRemindMeNow}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-md transition-colors"
-        >
-          Remind Me Now (Dev)
-        </button>
-      </div>
 
-      <div className="flex items-center space-x-4 mb-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg shadow">
-        {!massSelectMode ? (
-          <button
-            onClick={() => setMassSelectMode(true)}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md shadow-md transition-colors"
-          >
-            Select
-          </button>
-        ) : (
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => setMassSelectMode(false)}
-              className="px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded-md shadow-md transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => setSelectedItems(new Set(items.map(i => i.id)))}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-md transition-colors"
-            >
-              Select All
-            </button>
-            <button
-              onClick={() => setSelectedItems(new Set())}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-md transition-colors"
-            >
-              Deselect All
-            </button>
-          </div>
-        )}
-      </div>
 
       {CATEGORIES.map((category) => {
         const categoryItems = itemsByCategory[category];
@@ -201,10 +105,12 @@ export function BucketList({ items, selectedItems, setSelectedItems }: BucketLis
                 {categoryItems.length}
               </span>
             </div>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className={`grid grid-cols-1 gap-1 md:grid-cols-4 lg:grid-cols-6 ${isSearchPanelCollapsed ? 'xl:grid-cols-15' : 'xl:grid-cols-10'}`}>
               {categoryItems.map((item) => {
                 const handleCardClick = (e: React.MouseEvent) => {
-                  if (!(e.target as HTMLElement).closest('input[type="checkbox"]')) {
+                  const targetElement = e.target as HTMLElement;
+                  const isCheckboxClicked = targetElement.closest('input[type="checkbox"]');
+                  if (!isCheckboxClicked) {
                     window.open(getSpotifyUrl(item), '_blank');
                   }
                 };
@@ -230,7 +136,7 @@ export function BucketList({ items, selectedItems, setSelectedItems }: BucketLis
                 return (
                   <div
                     key={item.id}
-                    className={`group relative cursor-grab overflow-hidden transition-all duration-300 ease-in-out ${isArtist ? '' : 'rounded-lg border border-gray-200 dark:border-white/10 bg-gray-100 dark:bg-white/5 hover:border-purple-500/50 hover:bg-gray-200 dark:hover:bg-white/10'}`}
+                    className={`group relative cursor-grab overflow-hidden transition-all duration-300 ease-in-out ${isArtist ? '' : ''}`}
                     onClick={handleCardClick}
                     draggable
                     onDragStart={(e) => handleDragStart(e, item.id)}
@@ -240,59 +146,55 @@ export function BucketList({ items, selectedItems, setSelectedItems }: BucketLis
                     {massSelectMode && (
                       <input
                         type="checkbox"
-                        className="absolute top-2 left-2 z-10 w-5 h-5 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        className="absolute top-1 left-1 z-10 w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                         checked={selectedItems.has(item.id)}
                         onChange={() => handleCheckboxChange(item.id)}
                         onClick={(e) => e.stopPropagation()} // Prevent card click when checkbox is clicked
                       />
                     )}
-                    <div className="flex justify-center p-4">
+                    <div className="flex justify-center p-2">
                       <img
                         src={item.imageUrl}
                         alt={item.name}
-                        className={`object-cover transition-transform duration-300 group-hover:scale-105 ${
-                          item.type === 'artist'
-                            ? 'h-32 w-32 rounded-full'
-                            : 'h-32 sm:h-40 w-full rounded-md'
-                        }`}
+                        className={`object-cover transition-transform duration-300 group-hover:scale-105 aspect-square ${isArtist ? 'h-20 w-20 rounded-full' : 'h-20 w-20 rounded-md'}`}
                       />
                     </div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-                    <div className={`absolute bottom-0 left-0 right-0 p-4 ${item.type === 'artist' ? 'text-center' : ''}`}>
-                      <h3 className="truncate font-bold text-gray-900 dark:text-white" title={item.name}>{item.name}</h3>
+                    <div className={`absolute bottom-0 left-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${item.type === 'artist' ? 'text-center' : ''}`}>
+                      <h3 className="truncate text-xs font-bold text-gray-900 dark:text-white" title={item.name}>{item.name}</h3>
                       {item.artists && (
-                        <p className="truncate text-sm text-gray-500 dark:text-gray-400">
+                        <p className="truncate text-xs text-gray-500 dark:text-gray-400">
                           {item.artists.join(', ')}
                         </p>
                       )}
                       {item.notes && editingNotesItemId !== item.id && ( // Display notes if present and not editing
-                        <p className="mt-1 text-xs text-gray-400 dark:text-gray-500 line-clamp-2" title={item.notes}>
+                        <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500 line-clamp-1" title={item.notes}>
                           {item.notes}
                         </p>
                       )}
                     </div>
 
                     {editingNotesItemId === item.id && (
-                      <div className="absolute inset-x-0 bottom-0 p-4 bg-gray-100 dark:bg-gray-800 z-10">
+                      <div className="absolute inset-x-0 bottom-0 p-2 bg-gray-100 dark:bg-gray-800 z-10">
                         <textarea
-                          className="w-full p-2 rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-sm"
+                          className="w-full p-1 rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white text-xs"
                           placeholder="Add your notes here..."
                           value={currentNotes}
                           onChange={(e) => setCurrentNotes(e.target.value)}
-                          rows={3}
+                          rows={2}
                           autoFocus
                         ></textarea>
-                        <div className="flex justify-end gap-2 mt-2">
+                        <div className="flex justify-end gap-1 mt-1">
                           <button
                             onClick={(e) => { e.stopPropagation(); handleSaveNotes(item.id); }}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm"
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded-md text-xs"
                           >
                             Save
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); handleCancelNotes(); }}
-                            className="bg-gray-400 hover:bg-gray-500 text-white px-3 py-1 rounded-md text-sm"
+                            className="bg-gray-400 hover:bg-gray-500 text-white px-2 py-1 rounded-md text-xs"
                           >
                             Cancel
                           </button>
@@ -302,42 +204,42 @@ export function BucketList({ items, selectedItems, setSelectedItems }: BucketLis
 
                     {/* Quick Actions */}
                     <div 
-                      className="absolute top-2 right-2 flex items-center space-x-1 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300"
+                      className="absolute top-1 right-1 flex items-center space-x-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300"
                       onClick={(e) => e.stopPropagation()} // Prevent card click when interacting with buttons
                     >
                       
                       <button
                         onClick={() => toggleListened(item.id)}
-                        className={`rounded-full p-2 transition-colors ${item.completed
+                        className={`rounded-full p-1 transition-colors ${item.completed
                             ? 'bg-green-500/20 text-green-400'
                             : 'bg-gray-200/50 dark:bg-black/50 text-gray-600 dark:text-gray-300 hover:bg-green-500/20 hover:text-green-400'
                           }`}
                         title={item.completed ? "Mark as unlistened" : "Mark as listened"}
                       >
-                        <Check className="h-4 w-4" />
+                        <Check className="h-3 w-3" />
                       </button>
                       <button
                         onClick={() => handleEditNotesClick(item.id, item.notes)}
-                        className={`rounded-full p-2 transition-colors ${item.notes
+                        className={`rounded-full p-1 transition-colors ${item.notes
                             ? 'bg-blue-500/20 text-blue-400'
                             : 'bg-gray-200/50 dark:bg-black/50 text-gray-600 dark:text-gray-300 hover:bg-blue-500/20 hover:text-blue-400'
                           }`}
                         title={item.notes ? "Edit notes" : "Add notes"}
                       >
-                        <FileText className="h-4 w-4" />
+                        <FileText className="h-3 w-3" />
                       </button>
                       <button
                         onClick={() => removeItem(item.id)}
-                        className="rounded-full bg-gray-200/50 dark:bg-black/50 p-2 text-gray-600 dark:text-gray-300 transition-colors hover:bg-red-500/20 hover:text-red-400"
+                        className="rounded-full bg-gray-200/50 dark:bg-black/50 p-1 text-gray-600 dark:text-gray-300 transition-colors hover:bg-red-500/20 hover:text-red-400"
                         title="Remove"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3 w-3" />
                       </button>
                     </div>
 
                     {/* Status Tag */}
                     {item.completed && !massSelectMode && (
-                       <div className="absolute left-2 top-2 rounded-full bg-green-500/20 px-2 py-1 text-xs font-bold text-green-300">
+                       <div className="absolute left-1 top-1 rounded-full bg-green-500/20 px-1 py-0.5 text-xs font-bold text-green-300">
                          LISTENED
                        </div>
                     )}
