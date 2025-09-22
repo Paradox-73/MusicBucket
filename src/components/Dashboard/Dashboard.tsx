@@ -82,6 +82,12 @@ export const Dashboard: React.FC = () => {
     });
   }, [allTracks, playlists, playlistOwnershipFilter, currentUser]);
 
+  const filteredUniqueSongCount = React.useMemo(() => {
+    if (!filteredAllTracks) return 0;
+    const uniqueTrackIds = new Set(filteredAllTracks.map((track: any) => track.track?.id).filter(id => id));
+    return uniqueTrackIds.size;
+  }, [filteredAllTracks]);
+
   const { data: topArtists, isLoading: isLoadingArtists, error: errorArtists } = useQuery({
     queryKey: ['topArtists', selectedTimeRange],
     queryFn: async () => {
@@ -231,7 +237,7 @@ export const Dashboard: React.FC = () => {
         </div>
 
         <div className="mb-8">
-          {isLoadingAllTracks ? <div className="w-full h-96 bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center"><LoadingSpinner/></div> : <MusicTasteAnalyzer savedTracks={filteredAllTracks || []} uniqueSongCount={uniqueSongCount} />}
+          {isLoadingAllTracks ? <div className="w-full h-96 bg-gray-200 dark:bg-gray-800 rounded-lg flex items-center justify-center"><LoadingSpinner/></div> : <MusicTasteAnalyzer savedTracks={filteredAllTracks || []} uniqueSongCount={filteredUniqueSongCount} />}
         </div>
 
         
@@ -245,7 +251,7 @@ export const Dashboard: React.FC = () => {
         </motion.div>
 
         <motion.div variants={cardVariant}>
-          <PlaylistMetrics playlistOwnershipFilter={playlistOwnershipFilter} uniqueSongCount={uniqueSongCount} />
+          <PlaylistMetrics playlistOwnershipFilter={playlistOwnershipFilter} />
         </motion.div>
 
         <div className="mb-8">
