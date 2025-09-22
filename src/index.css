@@ -9,7 +9,7 @@
   }
   
   body {
-    @apply antialiased;
+    @apply antialiased bg-black; /* Apply global black background */
     margin: 0;
     padding: 0;
   }

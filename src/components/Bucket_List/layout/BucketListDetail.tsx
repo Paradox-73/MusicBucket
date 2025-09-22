@@ -5,7 +5,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import { useSpotifyStore } from '../../../store/Bucket_List/spotify';
 import { SearchPanel } from './SearchPanel';
 import { BucketListPanel } from './BucketListPanel';
-import { ArrowLeft, Edit, Share2, Globe, Lock, Pencil, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Edit, Share2, Globe, Lock, Pencil, ArrowRight, ChevronDown, ChevronUp, Search, X } from 'lucide-react';
 import CommentsSection from '../CommentsSection';
 import CollaboratorsPanel from './CollaboratorsPanel';
 import SmartSuggestions from '../SmartSuggestions';
@@ -40,6 +40,7 @@ export function BucketListDetail() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSearchPanelCollapsed, setIsSearchPanelCollapsed] = useState(false);
   const [isDescriptionCollapsed, setIsDescriptionCollapsed] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false); // State for mobile search overlay
 
   useEffect(() => {
     if (user && listId) {
@@ -171,12 +172,12 @@ export function BucketListDetail() {
 
   return (
     <div className="flex h-full flex-col bg-gray-100 dark:bg-black text-gray-900 dark:text-white">
-        <header className="p-4 border-b border-gray-200 dark:border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
-            <Link to=".." className="flex items-center gap-2 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+        <header className="p-4 border-b border-gray-200 dark:border-white/10 flex flex-wrap justify-between items-center gap-2">
+            <Link to=".." className="flex items-center gap-1 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
                 <ArrowLeft size={20} />
-                Back to My Lists
+                <span className="hidden sm:inline">Back to My Lists</span>
             </Link>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+            <div className="flex flex-wrap items-center gap-2">
                 {isEditingName ? (
                     <div className="flex items-center gap-2">
                         <input
@@ -223,6 +224,14 @@ export function BucketListDetail() {
                     </button>
                     <SpotifyImport />
                 </div>
+                {/* Search Toggle Button */}
+                <button
+                  onClick={() => setIsSearchPanelCollapsed(!isSearchPanelCollapsed)}
+                  className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
+                  title={isSearchPanelCollapsed ? "Expand Search" : "Collapse Search"}
+                >
+                  <Search size={20} />
+                </button>
             </div>
         </header>
 
@@ -273,17 +282,13 @@ export function BucketListDetail() {
         )}
 
       <main className="flex flex-1 overflow-y-auto">
-        <div className={`${isSearchPanelCollapsed ? 'w-12' : 'md:w-1/3 lg:w-1/4'} transition-all duration-300 ease-in-out border-r border-gray-200 dark:border-white/10 flex flex-col relative`}>
-          <button
-            onClick={() => setIsSearchPanelCollapsed(!isSearchPanelCollapsed)}
-            className="absolute top-1/2 -right-3 -translate-y-1/2 bg-gray-300 dark:bg-gray-700 p-1 rounded-full shadow-md z-10"
-            title={isSearchPanelCollapsed ? 'Expand Search' : 'Collapse Search'}
-          >
-            {isSearchPanelCollapsed ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
-          </button>
+        {/* Search Panel */}
+        <div className={`${isSearchPanelCollapsed ? 'w-0 overflow-hidden' : 'w-full md:w-1/3 lg:w-1/4'} transition-all duration-300 ease-in-out border-r border-gray-200 dark:border-white/10 flex flex-col`}>
           <SearchPanel listId={listId!} isCollapsed={isSearchPanelCollapsed} />
         </div>
-        <div className={`${isSearchPanelCollapsed ? 'w-full' : 'md:w-2/3 lg:w-3/4'} transition-all duration-300 ease-in-out`}>
+
+        {/* Main Bucket List Content */}
+        <div className="flex-1">
           <BucketListPanel isSearchPanelCollapsed={isSearchPanelCollapsed} />
         </div>
       </main>

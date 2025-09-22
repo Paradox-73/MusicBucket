@@ -105,7 +105,7 @@ export function BucketList({ items, selectedItems, setSelectedItems, isSearchPan
                 {categoryItems.length}
               </span>
             </div>
-            <div className={`grid grid-cols-1 gap-1 md:grid-cols-4 lg:grid-cols-6 ${isSearchPanelCollapsed ? 'xl:grid-cols-15' : 'xl:grid-cols-10'}`}>
+            <div className={`grid grid-cols-3 gap-px sm:gap-2 lg:gap-1 md:grid-cols-4 lg:grid-cols-6 ${isSearchPanelCollapsed ? 'xl:grid-cols-15' : 'xl:grid-cols-10'}`}>
               {categoryItems.map((item) => {
                 const handleCardClick = (e: React.MouseEvent) => {
                   const targetElement = e.target as HTMLElement;
@@ -152,16 +152,15 @@ export function BucketList({ items, selectedItems, setSelectedItems, isSearchPan
                         onClick={(e) => e.stopPropagation()} // Prevent card click when checkbox is clicked
                       />
                     )}
-                    <div className="flex justify-center p-2">
+                    <div className="flex justify-center p-0.5 sm:p-2">
                       <img
                         src={item.imageUrl}
                         alt={item.name}
-                        className={`object-cover transition-transform duration-300 group-hover:scale-105 aspect-square ${isArtist ? 'h-20 w-20 rounded-full' : 'h-20 w-20 rounded-md'}`}
-                      />
+                        className={`object-cover transition-transform duration-300 group-hover:scale-105 aspect-square ${isArtist ? 'h-20 w-20 sm:h-20 sm:w-20 lg:h-24 lg:w-24 rounded-full' : 'h-20 w-20 sm:h-20 sm:w-20 lg:h-24 lg:w-24 rounded-md'}`}                      />
                     </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-                    <div className={`absolute bottom-0 left-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${item.type === 'artist' ? 'text-center' : ''}`}>
+                    <div className={`absolute bottom-0 left-0 right-0 p-0.5 sm:p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${item.type === 'artist' ? 'text-center' : ''}`}>
                       <h3 className="truncate text-xs font-bold text-gray-900 dark:text-white" title={item.name}>{item.name}</h3>
                       {item.artists && (
                         <p className="truncate text-xs text-gray-500 dark:text-gray-400">
