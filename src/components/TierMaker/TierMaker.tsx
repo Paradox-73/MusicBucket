@@ -6,9 +6,9 @@ import ItemBank from './ItemBank';
 import TierRow from './TierRow';
 import TierItem from './TierItem';
 import { useAuth } from '../../hooks/useAuth';
-import { saveTierList, updateTierList, getTierList, publishTierList, getMyTierLists } from '../../lib/supabaseTierMaker';
+import { saveTierList, updateTierList, getTierList, publishTierList, getMyTierLists, deleteTierList } from '../../lib/supabaseTierMaker';
 import { getSeveralArtists, getSeveralAlbums, getSeveralTracks, getMyFollowedArtists, getMySavedAlbums, getAlbumTracks, searchSpotify } from '../../lib/spotify';
-import { Save, Plus, FolderOpen, Share2, ImageDown } from 'lucide-react';
+import { Save, Plus, FolderOpen, Share2, ImageDown, Trash2 } from 'lucide-react';
 import * as Collapsible from '@radix-ui/react-collapsible';
 
 interface Tier {
@@ -51,6 +51,56 @@ const TierMaker: React.FC = () => {
       clearTimeout(timer);
     };
   }, [searchQuery]);
+
+  const fetchBankItems = async (scope, token, albumId, searchQuery) => {
+    if (!token) {
+        setBankError('Spotify access token not available. Please log in.');
+        return [];
+    }
+
+    setLoadingBankItems(true);
+    setBankError(null);
+    try {
+        let fetchedItems: any[] = [];
+        if (scope === 'artist') {
+            fetchedItems = await getMyFollowedArtists();
+        } else if (scope === 'album') {
+            const savedAlbums = await getMySavedAlbums();
+            fetchedItems = savedAlbums.map(savedAlbum => savedAlbum.album);
+        } else if (scope === 'track') {
+            if (albumId) {
+                const tracks = await getAlbumTracks(albumId);
+                const albumResult = await getSeveralAlbums([albumId]);
+                if (albumResult && albumResult.length > 0) {
+                    const album = albumResult[0];
+                    fetchedItems = tracks.map((track: any) => ({ ...track, album }));
+                } else {
+                    fetchedItems = tracks;
+                }
+            }
+        } else if (scope === 'search') {
+            if (searchQuery) {
+                const searchResults = await searchSpotify(searchQuery, ['artist', 'album', 'track']);
+                const artists = searchResults.artists?.items || [];
+                const albums = searchResults.albums?.items || [];
+                const tracks = searchResults.tracks?.items || [];
+                
+                const typedArtists = artists.map(item => ({ ...item, itemType: 'artist' }));
+                const typedAlbums = albums.map(item => ({ ...item, itemType: 'album' }));
+                const typedTracks = tracks.map(item => ({ ...item, itemType: 'track' }));
+
+                fetchedItems = [...typedArtists, ...typedAlbums, ...typedTracks];
+            }
+        }
+        return fetchedItems;
+    } catch (err) {
+        console.error('Error fetching bank items:', err);
+        setBankError('Failed to fetch items. Please try again.');
+        return [];
+    } finally {
+        setLoadingBankItems(false);
+    }
+  };
 
   
 
@@ -137,60 +187,11 @@ const TierMaker: React.FC = () => {
 
   // Fetch items for the bank based on scope
   useEffect(() => {
-    const fetchBankItems = async () => {
-      if (!accessToken) {
-        setBankError('Spotify access token not available. Please log in.');
-        return;
-      }
-
-      setLoadingBankItems(true);
-      setBankError(null);
-      try {
-        let fetchedItems: any[] = [];
-        if (tierScope === 'artist') {
-          fetchedItems = await getMyFollowedArtists();
-        } else if (tierScope === 'album') {
-          const savedAlbums = await getMySavedAlbums();
-          fetchedItems = savedAlbums.map(savedAlbum => savedAlbum.album);
-        } else if (tierScope === 'track') {
-          if (selectedAlbumId) {
-            const tracks = await getAlbumTracks(selectedAlbumId);
-            const albumResult = await getSeveralAlbums([selectedAlbumId]);
-            if (albumResult && albumResult.length > 0) {
-              const album = albumResult[0];
-              fetchedItems = tracks.map((track: any) => ({ ...track, album }));
-            } else {
-              fetchedItems = tracks; // Should not happen
-            }
-          } else {
-            setBankItems([]);
-          }
-        } else if (tierScope === 'search') {
-          if (debouncedSearchQuery) {
-            const searchResults = await searchSpotify(debouncedSearchQuery, ['artist', 'album', 'track']);
-            const artists = searchResults.artists?.items || [];
-            const albums = searchResults.albums?.items || [];
-            const tracks = searchResults.tracks?.items || [];
-            
-            const typedArtists = artists.map(item => ({ ...item, itemType: 'artist' }));
-            const typedAlbums = albums.map(item => ({ ...item, itemType: 'album' }));
-            const typedTracks = tracks.map(item => ({ ...item, itemType: 'track' }));
-
-            fetchedItems = [...typedArtists, ...typedAlbums, ...typedTracks];
-          } else {
-            fetchedItems = [];
-          }
-        }
-        setBankItems(fetchedItems);
-      } catch (err) {
-        console.error('Error fetching bank items:', err);
-        setBankError('Failed to fetch items. Please try again.');
-      } finally {
-        setLoadingBankItems(false);
-      }
-    };
-
-    fetchBankItems();
+    const updateBank = async () => {
+        const items = await fetchBankItems(tierScope, accessToken, selectedAlbumId, debouncedSearchQuery);
+        setBankItems(items);
+    }
+    updateBank();
   }, [tierScope, accessToken, selectedAlbumId, debouncedSearchQuery]);
 
   const handleDragStart = (event: any) => {
@@ -369,6 +370,12 @@ const TierMaker: React.FC = () => {
         }
         newTiers.sort((a, b) => a.rank - b.rank);
         setTiers(newTiers);
+
+        const itemsInTiers = new Set(newTiers.flatMap(t => t.items.map(i => i.id)));
+        const newBankItems = await fetchBankItems(loadedList.scope, accessToken, loadedList.scope_context, '');
+        const filteredBankItems = newBankItems.filter(item => !itemsInTiers.has(item.id));
+        setBankItems(filteredBankItems);
+
         alert('Tier list loaded successfully!');
       } else {
         alert('Failed to load tier list.');
@@ -397,6 +404,38 @@ const TierMaker: React.FC = () => {
     } catch (error) {
       console.error('Error sharing tier list:', error);
       alert('An error occurred while sharing the tier list.');
+    }
+  };
+
+  const handleDeleteTierList = async () => {
+    if (!tierListId) {
+      alert('Please save your tier list first.');
+      return;
+    }
+
+    if (window.confirm('Are you sure you want to delete this tier list? This action cannot be undone.')) {
+      try {
+        const result = await deleteTierList(tierListId);
+        if (result.success) {
+          alert('Tier list deleted successfully!');
+          setTierListId(null);
+          setTierTitle('My Awesome Tier List');
+          setTierDescription('');
+          setTiers([
+            { id: 's-tier', label: 'S', color: '#ff7f7f', rank: 0, items: [] },
+            { id: 'a-tier', label: 'A', color: '#ffbf7f', rank: 1, items: [] },
+            { id: 'b-tier', label: 'B', color: '#ffff7f', rank: 2, items: [] },
+            { id: 'c-tier', label: 'C', color: '#bfff7f', rank: 3, items: [] },
+            { id: 'd-tier', label: 'D', color: '#7fffff', rank: 4, items: [] },
+          ]);
+          setBankItems([]);
+        } else {
+          alert('Failed to delete tier list.');
+        }
+      } catch (error) {
+        console.error('Error deleting tier list:', error);
+        alert('An error occurred while deleting the tier list.');
+      }
     }
   };
 
@@ -446,9 +485,9 @@ const TierMaker: React.FC = () => {
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="flex flex-col lg:flex-row">
-        <div className="flex-grow p-4 lg:w-2/3">
+        <div className="flex-grow p-2 sm:p-4 lg:w-2/3">
           <div className="relative mb-4">
-            <h1 className="text-center text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-center text-xl sm:text-2xl font-bold text-gray-900 dark:text-white break-words">
               Tier Maker
             </h1>
             <h2 className="absolute right-0 top-1/2 -translate-y-1/2 text-base font-semibold text-gray-500 dark:text-gray-400">
@@ -461,7 +500,7 @@ const TierMaker: React.FC = () => {
                 <input
                   type="text"
                   placeholder="Tier List Title"
-                  className="w-full p-2 border rounded mb-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full p-2 border rounded mb-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white break-words"
                   value={tierTitle}
                   onChange={(e) => setTierTitle(e.target.value)}
                 />
@@ -537,6 +576,13 @@ const TierMaker: React.FC = () => {
                       <Share2 size={20} />
                     </button>
                     <button
+                      onClick={handleDeleteTierList}
+                      title="Delete Tier List"
+                      className="p-2 bg-red-500 hover:bg-red-700 text-white font-bold rounded"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                    <button
                       onClick={async () => {
                         setIsLoadingImages(true);
                         const imageUrls = getAllImageUrls();
@@ -585,7 +631,7 @@ const TierMaker: React.FC = () => {
             </TierRow>
           ))}
         </div>
-        <div className="lg:w-1/3 lg:h-screen lg:overflow-y-auto p-4 sticky bottom-0 bg-gray-100/95 dark:bg-gray-900/95 backdrop-blur-sm lg:relative lg:bg-transparent dark:lg:bg-transparent">
+        <div className="lg:w-1/3 lg:h-screen lg:overflow-y-auto p-2 sm:p-4 sticky bottom-0 bg-gray-100/95 dark:bg-gray-900/95 backdrop-blur-sm lg:relative lg:bg-transparent dark:lg:bg-transparent">
           <ItemBank
             items={bankItems}
             loading={loadingBankItems}

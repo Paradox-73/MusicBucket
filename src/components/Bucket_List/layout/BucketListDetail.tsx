@@ -5,13 +5,16 @@ import { useAuth } from '../../../hooks/useAuth';
 import { useSpotifyStore } from '../../../store/Bucket_List/spotify';
 import { SearchPanel } from './SearchPanel';
 import { BucketListPanel } from './BucketListPanel';
-import { ArrowLeft, Edit, Share2, Globe, Lock, Pencil, ArrowRight, ChevronDown, ChevronUp, Search, X } from 'lucide-react';
+import { ArrowLeft, Edit, Share2, Globe, Lock, Pencil, ArrowRight, ChevronDown, ChevronUp, Search, X, SlidersHorizontal, Grid, List } from 'lucide-react';
 import CommentsSection from '../CommentsSection';
 import CollaboratorsPanel from './CollaboratorsPanel';
 import SmartSuggestions from '../SmartSuggestions';
 import ThemePanel from './ThemePanel';
 import ShareModal from '../ShareModal';
-import SpotifyImport from '../SpotifyImport';
+import { Filters } from '../Filters';
+import { useAuthStore } from '../../../store/authStore';
+import { ReminderService } from '../../../services/ReminderService';
+
 
 // Define the type for a single bucket list
 interface BucketList {
@@ -26,7 +29,7 @@ export function BucketListDetail() {
   const [list, setList] = useState<BucketList | null>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const { setCurrentListId, loadListItems } = useSpotifyStore();
+  const { items, setCurrentListId, loadListItems, removeItems, toggleListenedBulk, setSortOrder, sortOrder } = useSpotifyStore();
 
   // New state for renaming
   const [isEditingName, setIsEditingName] = useState(false);
@@ -41,6 +44,42 @@ export function BucketListDetail() {
   const [isSearchPanelCollapsed, setIsSearchPanelCollapsed] = useState(false);
   const [isDescriptionCollapsed, setIsDescriptionCollapsed] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false); // State for mobile search overlay
+
+  const [isListView, setIsListView] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [massSelectMode, setMassSelectMode] = useState(false);
+  const [reminderFrequency, setReminderFrequency] = useState<'none' | 'daily' | 'weekly' | 'monthly'>('none'); // Default to no reminders
+  const [isReminderDropdownOpen, setIsReminderDropdownOpen] = useState(false);
+  const [isActionsPopoverOpen, setIsActionsPopoverOpen] = useState(false); // New state for actions popover
+
+  const { user: authUser } = useAuthStore();
+  const userId = authUser?.id;
+
+  useEffect(() => {
+    const fetchReminderStatus = async () => {
+      if (userId) {
+        const status = await ReminderService.getReminderStatus(userId);
+        if (status) {
+          setReminderFrequency(status.frequency);
+        }
+      }
+    };
+    fetchReminderStatus();
+  }, [userId]);
+
+  const handleBulkDelete = () => {
+    if (selectedItems.size === 0) return;
+    if (window.confirm(`Are you sure you want to delete ${selectedItems.size} selected items?`)) {
+      removeItems(Array.from(selectedItems));
+      setSelectedItems(new Set()); // Clear selection
+    }
+  };
+
+  const handleBulkToggleListened = () => {
+    if (selectedItems.size === 0) return;
+    toggleListenedBulk(Array.from(selectedItems));
+    setSelectedItems(new Set()); // Clear selection
+  };
 
   useEffect(() => {
     if (user && listId) {
@@ -222,16 +261,188 @@ export function BucketListDetail() {
                     <button onClick={handleShare} className="flex items-center gap-1 text-sm bg-purple-600 px-3 py-1 rounded-full hover:bg-purple-700 text-white">
                         <Share2 size={16} /> Share
                     </button>
-                    <SpotifyImport />
+                    {/* Search Toggle Button */}
+                    <button
+                      onClick={() => setIsSearchPanelCollapsed(!isSearchPanelCollapsed)}
+                      className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
+                      title={isSearchPanelCollapsed ? "Expand Search" : "Collapse Search"}
+                    >
+                      <Search size={20} />
+                    </button>
+                    <div className="relative flex items-center gap-1">
+                      <button
+                        onClick={() => setIsActionsPopoverOpen(!isActionsPopoverOpen)}
+                        className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
+                        title="More Actions"
+                      >
+                        <SlidersHorizontal size={20} />
+                      </button>
+
+                      {/* Actions Popover */}
+                      {isActionsPopoverOpen && (
+                        <div className="absolute right-0 top-full z-20 mt-2 w-64 rounded-md bg-white dark:bg-gray-700 shadow-lg border border-gray-200 dark:border-gray-600">
+                          <div className="flex flex-col p-2 gap-2">
+                            <Filters />
+                            {!massSelectMode ? (
+                              <button
+                                onClick={() => {
+                                  setMassSelectMode(true);
+                                  setIsActionsPopoverOpen(false);
+                                }}
+                                className="px-2 py-0.5 text-sm font-medium rounded-md bg-purple-600 text-white hover:bg-purple-700 w-full text-left"
+                              >
+                                Select
+                              </button>
+                            ) : (
+                              <div className="flex flex-col gap-1">
+                                <button
+                                  onClick={() => {
+                                    setMassSelectMode(false);
+                                    setIsActionsPopoverOpen(false);
+                                  }}
+                                  className="px-2 py-0.5 text-sm font-medium rounded-md bg-gray-400 hover:bg-gray-500 text-white w-full text-left"
+                                >
+                                  Cancel Selection
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setSelectedItems(new Set(items.map(i => i.id)));
+                                    setIsActionsPopoverOpen(false);
+                                  }}
+                                  className="px-2 py-0.5 text-sm font-medium rounded-md bg-blue-600 hover:bg-blue-700 text-white w-full text-left"
+                                >
+                                  Select All
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setSelectedItems(new Set());
+                                    setIsActionsPopoverOpen(false);
+                                  }}
+                                  className="px-2 py-0.5 text-sm font-medium rounded-md bg-blue-600 hover:bg-blue-700 text-white w-full text-left"
+                                >
+                                  Deselect All
+                                </button>
+                              </div>
+                            )}
+                            {selectedItems.size > 0 && (
+                              <div className="flex flex-col gap-1">
+                                <button
+                                  onClick={() => {
+                                    handleBulkToggleListened();
+                                    setIsActionsPopoverOpen(false);
+                                  }}
+                                  className="px-2 py-0.5 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 w-full text-left"
+                                  title="Toggle Listen Status"
+                                >
+                                  Toggle Listen Status ({selectedItems.size})
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleBulkDelete();
+                                    setIsActionsPopoverOpen(false);
+                                  }}
+                                  className="px-2 py-0.5 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700 w-full text-left"
+                                  title="Delete Selected"
+                                >
+                                  Delete Selected ({selectedItems.size})
+                                </button>
+                              </div>
+                            )}
+
+                            {/* Reminder Frequency Dropdown in Popover */}
+                            <div className="relative">
+                              <button
+                                onClick={() => setIsReminderDropdownOpen(!isReminderDropdownOpen)}
+                                className="flex items-center justify-between px-3 py-1 text-sm font-medium rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white w-full text-left"
+                              >
+                                {reminderFrequency === 'none' ? 'Reminders' : reminderFrequency.charAt(0).toUpperCase() + reminderFrequency.slice(1)}
+                                {isReminderDropdownOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                              </button>
+                              {isReminderDropdownOpen && (
+                                <div className="absolute z-10 mt-1 w-full rounded-md bg-white dark:bg-gray-700 shadow-lg border border-gray-200 dark:border-gray-600">
+                                  <button
+                                    onClick={async () => {
+                                      setReminderFrequency('none');
+                                      setIsReminderDropdownOpen(false);
+                                      setIsActionsPopoverOpen(false);
+                                      if (userId) {
+                                        await ReminderService.updateReminderFrequency(userId, 'none');
+                                      }
+                                    }}
+                                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600"
+                                  >
+                                    No Reminders
+                                  </button>
+                                  <button
+                                    onClick={async () => {
+                                      setReminderFrequency('weekly');
+                                      setIsReminderDropdownOpen(false);
+                                      setIsActionsPopoverOpen(false);
+                                      if (userId) {
+                                        await ReminderService.updateReminderFrequency(userId, 'weekly');
+                                      }
+                                    }}
+                                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600"
+                                  >
+                                    Weekly
+                                  </button>
+                                  <button
+                                    onClick={async () => {
+                                      setReminderFrequency('monthly');
+                                      setIsReminderDropdownOpen(false);
+                                      setIsActionsPopoverOpen(false);
+                                      if (userId) {
+                                        await ReminderService.updateReminderFrequency(userId, 'monthly');
+                                      }
+                                    }}
+                                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600"
+                                  >
+                                    Monthly
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Sort Order Button in Popover */}
+                            <div className="flex items-center gap-2">
+                              <button
+                                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                                  className="p-2 rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white w-full text-left"
+                              >
+                                  Sort Order: {sortOrder === 'asc' ? 'Ascending' : 'Descending'} {sortOrder === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                              </button>
+                            </div>
+
+                            {/* Grid/List View Toggle in Popover */}
+                            <div className="flex rounded-md shadow-sm w-full" role="group">
+                              <button
+                                type="button"
+                                className={`px-3 py-1 text-sm font-medium rounded-l-md ${!isListView ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-white'} hover:bg-purple-700 dark:hover:bg-gray-600 focus:z-10 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 w-1/2`}
+                                onClick={() => {
+                                  setIsListView(false);
+                                  setIsActionsPopoverOpen(false);
+                                }}
+                                title="Grid View"
+                              >
+                                <Grid size={16} /> Grid
+                              </button>
+                              <button
+                                type="button"
+                                className={`px-3 py-1 text-sm font-medium rounded-r-md ${isListView ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-white'} hover:bg-purple-700 dark:hover:bg-gray-600 focus:z-10 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 w-1/2`}
+                                onClick={() => {
+                                  setIsListView(true);
+                                  setIsActionsPopoverOpen(false);
+                                }}
+                                title="List View"
+                              >
+                                <List size={16} /> List
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                 </div>
-                {/* Search Toggle Button */}
-                <button
-                  onClick={() => setIsSearchPanelCollapsed(!isSearchPanelCollapsed)}
-                  className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white"
-                  title={isSearchPanelCollapsed ? "Expand Search" : "Collapse Search"}
-                >
-                  <Search size={20} />
-                </button>
             </div>
         </header>
 
@@ -289,7 +500,14 @@ export function BucketListDetail() {
 
         {/* Main Bucket List Content */}
         <div className="flex-1">
-          <BucketListPanel isSearchPanelCollapsed={isSearchPanelCollapsed} />
+          <BucketListPanel 
+            isSearchPanelCollapsed={isSearchPanelCollapsed}
+            isListView={isListView}
+            selectedItems={selectedItems}
+            setSelectedItems={setSelectedItems}
+            massSelectMode={massSelectMode}
+            setMassSelectMode={setMassSelectMode}
+          />
         </div>
       </main>
       {/* <CommentsSection listId={listId!} /> */}

@@ -191,3 +191,19 @@ export const getMyTierLists = async (userId: string) => {
     return null;
   }
 };
+
+export const deleteTierList = async (listId: string) => {
+  try {
+    const { error } = await supabase
+      .from('tier_lists')
+      .delete()
+      .eq('id', listId);
+
+    if (error) throw error;
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting tier list:', error);
+    return { success: false, error };
+  }
+};
