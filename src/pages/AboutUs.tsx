@@ -18,14 +18,6 @@ const teamMembers: TeamMember[] = [
     github: "https://github.com/Paradox-73",
     linkedin: "https://www.linkedin.com/in/kanav-bhardwaj-a25940281",
     email: "kanavbhardwaj86412a@gmail.com"
-  },
-  {
-    name: "Nikunj Mahajan",
-    role: "Co-Developer",
-    bio: "A creative developer with a love for music and technology.",
-    github: "https://github.com/nikunj169",
-    linkedin: "https://www.linkedin.com/in/nikunj-mahajan-9b43542b6/",
-    email: "nikunjmahajan9937@gmail.com"
   }
 ];
 
