@@ -2,7 +2,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { Dashboard } from '../components/Dashboard/Dashboard';
 import { useAuthStore } from '../store/authStore';
-import { SpotifyAuth } = '../lib/spotify/auth';
+import { SpotifyAuth } from '../lib/spotify/auth';
 import { LoadingSpinner } from '../components/Dashboard/LoadingSpinner';
 
 const DashboardPage = () => {
