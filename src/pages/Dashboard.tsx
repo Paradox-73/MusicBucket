@@ -4,6 +4,7 @@ import { Dashboard } from '../components/Dashboard/Dashboard';
 import { useAuthStore } from '../store/authStore';
 import { SpotifyAuth } from '../lib/spotify/auth';
 import { LoadingSpinner } from '../components/Dashboard/LoadingSpinner';
+import { Toaster } from 'react-hot-toast';
 
 const DashboardPage = () => {
   const { session, loading } = useAuthStore();
