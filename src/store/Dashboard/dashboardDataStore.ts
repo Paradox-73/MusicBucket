@@ -3,6 +3,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { SpotifyAuth } from '../../lib/spotify/auth';
 import { createSpotifyApi } from '../../lib/Dashboard/spotify';
 import { sleep } from '../../lib/Dashboard/spotify';
+import { useSpotifyStatusStore } from '../spotifyStatusStore';
 
 // Define types for the data we'll be fetching
 type TimeRange = 'short_term' | 'medium_term' | 'long_term';
@@ -19,7 +20,8 @@ interface DashboardDataState {
 const fetchCurrentUser = async (spotifyAuth: SpotifyAuth) => {
   const token = await spotifyAuth.getAccessToken();
   if (!token) throw new Error('No access token available');
-  const spotifyApi = createSpotifyApi(token, () => {}); // Pass a dummy setIsRateLimited
+  const { setSpotifyApiAvailability, setLastUpdated } = useSpotifyStatusStore.getState();
+  const spotifyApi = createSpotifyApi(token, undefined, setSpotifyApiAvailability, setLastUpdated);
   const response = await spotifyApi.getCurrentUser();
   return response.data;
 };
@@ -27,7 +29,8 @@ const fetchCurrentUser = async (spotifyAuth: SpotifyAuth) => {
 const fetchAllTracks = async (spotifyAuth: SpotifyAuth) => {
   const token = await spotifyAuth.getAccessToken();
   if (!token) throw new Error('No access token available');
-  const spotifyApi = createSpotifyApi(token, () => {}); // Pass a dummy setIsRateLimited
+  const { setSpotifyApiAvailability, setLastUpdated } = useSpotifyStatusStore.getState();
+  const spotifyApi = createSpotifyApi(token, undefined, setSpotifyApiAvailability, setLastUpdated);
   
   const uniqueTrackIds = new Set<string>();
   const allTracks: any[] = [];
@@ -132,7 +135,8 @@ const fetchAllTracks = async (spotifyAuth: SpotifyAuth) => {
 const fetchTopArtists = async (spotifyAuth: SpotifyAuth, timeRange: TimeRange) => {
   const token = await spotifyAuth.getAccessToken();
   if (!token) throw new Error('No access token available');
-  const spotifyApi = createSpotifyApi(token, () => {});
+  const { setSpotifyApiAvailability, setLastUpdated } = useSpotifyStatusStore.getState();
+  const spotifyApi = createSpotifyApi(token, undefined, setSpotifyApiAvailability, setLastUpdated);
   const response = await spotifyApi.getTopArtists(timeRange, 50);
   return response.data.items;
 };
@@ -140,7 +144,8 @@ const fetchTopArtists = async (spotifyAuth: SpotifyAuth, timeRange: TimeRange) =
 const fetchTopTracks = async (spotifyAuth: SpotifyAuth, timeRange: TimeRange) => {
   const token = await spotifyAuth.getAccessToken();
   if (!token) throw new Error('No access token available');
-  const spotifyApi = createSpotifyApi(token, () => {});
+  const { setSpotifyApiAvailability, setLastUpdated } = useSpotifyStatusStore.getState();
+  const spotifyApi = createSpotifyApi(token, undefined, setSpotifyApiAvailability, setLastUpdated);
   const response = await spotifyApi.getTopTracks(timeRange, 50);
   return response.data.items;
 };

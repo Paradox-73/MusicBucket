@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { Track } from '../types/Road_Trip_Mixtape';
+import { useSupabaseRealtimeStatusStore } from '../store/supabaseRealtimeStatusStore';
 
 export interface Suggestion {
   id: number;
@@ -52,6 +53,8 @@ export async function upvoteSuggestion(suggestionId: number): Promise<Suggestion
 
 // Subscribe to real-time updates for suggestions
 export function onSuggestionsUpdate(playlistId: string, callback: (suggestions: Suggestion[]) => void): () => Promise<"ok" | "timed out" | "error"> {
+  const { setSupabaseRealtimeOnline } = useSupabaseRealtimeStatusStore.getState();
+
   const channel = supabase
     .channel(`playlist_suggestions:${playlistId}`)
     .on(
@@ -71,7 +74,13 @@ export function onSuggestionsUpdate(playlistId: string, callback: (suggestions: 
         callback(data as Suggestion[]);
       }
     )
-    .subscribe();
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        setSupabaseRealtimeOnline(true);
+      } else if (status === 'CLOSED' || status === 'ERRORED') {
+        setSupabaseRealtimeOnline(false);
+      }
+    });
 
   // Fetch initial data
   (async () => {

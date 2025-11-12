@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { createSpotifyApi } from '../../lib/Dashboard/spotify';
+import { useSpotifyStatusStore } from '../../store/spotifyStatusStore';
 import { sleep } from '../../lib/Dashboard/spotify';
 import { SpotifyAuth } from '../../lib/spotify/auth';
 import { UserProfile } from './UserProfile';
@@ -29,14 +30,14 @@ export const Dashboard: React.FC = () => {
   const spotifyAuth = SpotifyAuth.getInstance();
   const queryClient = useQueryClient();
 
-  const [isRateLimited, setIsRateLimited] = useState(false);
+  const { isSpotifyApiAvailable, lastUpdated, setSpotifyApiAvailability, setLastUpdated } = useSpotifyStatusStore();
 
   const { data: currentUser, isLoading: isLoadingUser, error: errorUser } = useQuery({
     queryKey: ['currentUser'],
     queryFn: async () => {
       const token = await spotifyAuth.getAccessToken();
       if (!token) throw new Error('No access token available');
-      const spotifyApi = createSpotifyApi(token, setIsRateLimited);
+      const spotifyApi = createSpotifyApi(token, undefined, setSpotifyApiAvailability, setLastUpdated);
       const response = await spotifyApi.getCurrentUser();
       return response.data;
     },
@@ -93,7 +94,7 @@ export const Dashboard: React.FC = () => {
     queryFn: async () => {
       const token = await spotifyAuth.getAccessToken();
       if (!token) throw new Error('No access token available');
-      const spotifyApi = createSpotifyApi(token, setIsRateLimited);
+      const spotifyApi = createSpotifyApi(token, undefined, setSpotifyApiAvailability, setLastUpdated);
       const response = await spotifyApi.getTopArtists(selectedTimeRange, 50);
       return response.data.items;
     },
@@ -115,7 +116,7 @@ export const Dashboard: React.FC = () => {
     queryFn: async () => {
       const token = await spotifyAuth.getAccessToken();
       if (!token) throw new Error('No access token available');
-      const spotifyApi = createSpotifyApi(token, setIsRateLimited);
+      const spotifyApi = createSpotifyApi(token, undefined, setSpotifyApiAvailability, setLastUpdated);
       const response = await spotifyApi.getTopTracks(selectedTimeRange, 50);
       return response.data.items;
     },
@@ -154,9 +155,9 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8" style={{ '--theme-color': color, transition: 'background-color 0.5s ease' } as React.CSSProperties}>
-      {isRateLimited && (
-        <div className="bg-yellow-500 text-white text-center p-2 rounded-lg mb-4">
-          Spotify API rate limit reached. Retrying...
+      {!isSpotifyApiAvailable && (
+        <div className="bg-red-500 text-white text-center p-2 rounded-lg mb-4">
+          Cannot connect to Spotify. Some features may be unavailable. {lastUpdated && `Last updated: ${new Date(lastUpdated).toLocaleString()}`}
         </div>
       )}
       <UserProfile />

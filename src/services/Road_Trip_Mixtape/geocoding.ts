@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Location } from '../../types/Road_Trip_Mixtape';
+import { useMapboxStatusStore } from '../../store/mapboxStatusStore';
 
 const MAPBOX_API = 'https://api.mapbox.com/geocoding/v5/mapbox.places';
 const ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
@@ -29,7 +30,7 @@ export async function searchLocation(
     const response = await axios.get(
       `${MAPBOX_API}/${encodeURIComponent(query)}.json?${params.toString()}`
     );
-
+    useMapboxStatusStore.getState().setMapboxApiAvailability(true); // API is available
     return response.data.features.map((feature: any) => ({
       name: feature.place_name,
       lat: feature.center[1],
@@ -37,7 +38,8 @@ export async function searchLocation(
     }));
   } catch (error) {
     console.error('Geocoding error:', error);
-    return [];
+    useMapboxStatusStore.getState().setMapboxApiAvailability(false); // API is unavailable
+    throw error; // Re-throw to propagate the error
   }
 }
 
@@ -45,56 +47,68 @@ export async function getRoute(start: Location, end: Location): Promise<{
   route: Location[];
   duration: number;
 }> {
-  const response = await axios.get(
-    `https://api.mapbox.com/directions/v5/mapbox/driving/${start.lng},${start.lat};${end.lng},${end.lat}?geometries=geojson&access_token=${ACCESS_TOKEN}`
-  );
+  try {
+    const response = await axios.get(
+      `https://api.mapbox.com/directions/v5/mapbox/driving/${start.lng},${start.lat};${end.lng},${end.lat}?geometries=geojson&access_token=${ACCESS_TOKEN}`
+    );
 
-  const { coordinates } = response.data.routes[0].geometry;
-  const duration = response.data.routes[0].duration;
-
-  return {
-    route: coordinates.map((coord: number[]) => ({
-      lng: coord[0],
-      lat: coord[1],
-      name: ''
-    })),
-    duration
-  };
+    const { coordinates } = response.data.routes[0].geometry;
+    const duration = response.data.routes[0].duration;
+    useMapboxStatusStore.getState().setMapboxApiAvailability(true); // API is available
+    return {
+      route: coordinates.map((coord: number[]) => ({
+        lng: coord[0],
+        lat: coord[1],
+        name: ''
+      })),
+      duration
+    };
+  } catch (error) {
+    console.error('Mapbox Directions API error:', error);
+    useMapboxStatusStore.getState().setMapboxApiAvailability(false); // API is unavailable
+    throw error; // Re-throw to propagate the error
+  }
 }
 
 export async function getRouteRegions(route: Location[]): Promise<Location[]> {
-  // Sample points at regular intervals (every 50km or significant turns)
-  const sampledPoints = sampleRoutePoints(route, 50);
-  
-  // Get administrative regions for each point
-  const regions = await Promise.all(
-    sampledPoints.map(async point => {
-      const response = await axios.get(
-        `${MAPBOX_API}/${point.lng},${point.lat}.json`,
-        {
-          params: {
-            access_token: ACCESS_TOKEN,
-            types: 'region,district,locality'
+  try {
+    // Sample points at regular intervals (every 50km or significant turns)
+    const sampledPoints = sampleRoutePoints(route, 50);
+    
+    // Get administrative regions for each point
+    const regions = await Promise.all(
+      sampledPoints.map(async point => {
+        const response = await axios.get(
+          `${MAPBOX_API}/${point.lng},${point.lat}.json`,
+          {
+            params: {
+              access_token: ACCESS_TOKEN,
+              types: 'region,district,locality'
+            }
           }
-        }
-      );
-      
-      // Get the most relevant administrative region
-      const feature = response.data.features.find(
-        (f: any) => f.place_type.includes('region') || f.place_type.includes('district')
-      );
-      
-      return {
-        ...point,
-        name: feature?.place_name || point.name
-      };
-    })
-  );
-
-  // Remove duplicate consecutive regions
-  return regions.filter((region, index, array) => 
-    index === 0 || region.name !== array[index - 1].name
-  );
+        );
+        
+        // Get the most relevant administrative region
+        const feature = response.data.features.find(
+          (f: any) => f.place_type.includes('region') || f.place_type.includes('district')
+        );
+        
+        return {
+          ...point,
+          name: feature?.place_name || point.name
+        };
+      })
+    );
+    useMapboxStatusStore.getState().setMapboxApiAvailability(true); // API is available
+    // Remove duplicate consecutive regions
+    return regions.filter((region, index, array) => 
+      index === 0 || region.name !== array[index - 1].name
+    );
+  } catch (error) {
+    console.error('Mapbox Geocoding API error for regions:', error);
+    useMapboxStatusStore.getState().setMapboxApiAvailability(false); // API is unavailable
+    throw error; // Re-throw to propagate the error
+  }
 }
 
 function sampleRoutePoints(route: Location[], distanceKm: number): Location[] {

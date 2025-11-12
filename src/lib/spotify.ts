@@ -1,4 +1,5 @@
 import SpotifyWebApi from 'spotify-web-api-js';
+import { toast } from '../hooks/Recommendation_Roulette/use-toast';
 
 export const spotifyApi = new SpotifyWebApi();
 
@@ -13,6 +14,11 @@ export const getMe = async () => {
     return response;
   } catch (error) {
     console.error('Error getting user profile:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
     return null;
   }
 };
@@ -23,6 +29,11 @@ export const getTopArtists = async () => {
     return response.items;
   } catch (error) {
     console.error('Error getting top artists:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
     return [];
   }
 };
@@ -33,6 +44,11 @@ export const getAudioFeatures = async (trackIds: string[]) => {
     return response.audio_features;
   } catch (error) {
     console.error('Error getting audio features:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
     return [];
   }
 };
@@ -48,6 +64,11 @@ export const getRecommendations = async (seed_artists?: string[], seed_genres?: 
     return response.tracks;
   } catch (error) {
     console.error('Error getting recommendations:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
     return [];
   }
 };
@@ -58,6 +79,11 @@ export const searchTracks = async (query: string) => {
     return response.tracks?.items || [];
   } catch (error) {
     console.error('Error searching tracks:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
     return [];
   }
 };
@@ -68,6 +94,11 @@ export const getArtistTopTracks = async (artistId: string) => {
     return response.tracks;
   } catch (error) {
     console.error('Error getting artist top tracks:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
     return [];
   }
 };
@@ -78,6 +109,11 @@ export const getRelatedArtists = async (artistId: string) => {
     return response.artists;
   } catch (error) {
     console.error('Error getting related artists:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
     return [];
   }
 };
@@ -88,6 +124,11 @@ export const getNewReleases = async () => {
     return response.albums.items;
   } catch (error) {
     console.error('Error getting new releases:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
     return [];
   }
 };
@@ -98,6 +139,11 @@ export const getFeaturedPlaylists = async () => {
     return response.playlists.items;
   } catch (error) {
     console.error('Error getting featured playlists:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
     return [];
   }
 };
@@ -108,6 +154,11 @@ export const getCategories = async () => {
     return response.categories.items;
   } catch (error) {
     console.error('Error getting categories:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
     return [];
   }
 };
@@ -118,6 +169,11 @@ export const getCategoryPlaylists = async (categoryId: string) => {
     return response.playlists.items;
   } catch (error) {
     console.error('Error getting category playlists:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
     return [];
   }
 };
@@ -128,6 +184,11 @@ export const getUserPlaylists = async () => {
     return response.items;
   } catch (error) {
     console.error('Error getting user playlists:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
     return [];
   }
 };
@@ -143,6 +204,11 @@ export const createPlaylist = async (name: string, description: string) => {
     return response;
   } catch (error) {
     console.error('Error creating playlist:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
     return null;
   }
 };
@@ -152,6 +218,11 @@ export const addTracksToPlaylist = async (playlistId: string, trackUris: string[
     await spotifyApi.addTracksToPlaylist(playlistId, trackUris);
   } catch (error) {
     console.error('Error adding tracks to playlist:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
   }
 };
 
@@ -161,6 +232,11 @@ export const getTrack = async (trackId: string) => {
     return response;
   } catch (error) {
     console.error('Error getting track:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
     return null;
   }
 };
@@ -182,6 +258,11 @@ export const getMyFollowedArtists = async () => {
     return artists;
   } catch (error) {
     console.error('Error getting followed artists:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
     return [];
   }
 };
@@ -203,6 +284,11 @@ export const getMySavedAlbums = async () => {
     return albums;
   } catch (error) {
     console.error('Error getting saved albums:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
     return [];
   }
 };
@@ -224,6 +310,11 @@ export const getAlbumTracks = async (albumId: string) => {
     return tracks;
   } catch (error) {
     console.error('Error getting album tracks:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
     return [];
   }
 };
@@ -234,6 +325,11 @@ export const getSeveralArtists = async (artistIds: string[]) => {
     return response.artists;
   } catch (error) {
     console.error('Error getting several artists:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
     return [];
   }
 };
@@ -244,6 +340,11 @@ export const getSeveralAlbums = async (albumIds: string[]) => {
     return response.albums;
   } catch (error) {
     console.error('Error getting several albums:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
     return [];
   }
 };
@@ -254,6 +355,11 @@ export const getSeveralTracks = async (trackIds: string[]) => {
     return response.tracks;
   } catch (error) {
     console.error('Error getting several tracks:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
     return [];
   }
 };
@@ -264,6 +370,11 @@ export const getTopTracks = async () => {
     return response.items;
   } catch (error) {
     console.error('Error getting top tracks:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
     return [];
   }
 };
@@ -285,6 +396,11 @@ export const getSavedTracks = async () => {
     return tracks;
   } catch (error) {
     console.error('Error getting saved tracks:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
     return [];
   }
 };
@@ -306,6 +422,11 @@ export const getPlaylistTracks = async (playlistId: string) => {
     return tracks;
   } catch (error) {
     console.error('Error getting playlist tracks:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
     return [];
   }
 };
@@ -316,6 +437,11 @@ export const searchSpotify = async (query: string, types: ('artist' | 'album' | 
     return response;
   } catch (error) {
     console.error('Error searching Spotify:', error);
+    toast({
+      title: 'Spotify API Error',
+      description: 'Cannot connect to Spotify. Some features may be unavailable. Please try again later.',
+      variant: 'destructive',
+    });
     return { artists: { items: [] }, albums: { items: [] }, tracks: { items: [] } };
   }
 };

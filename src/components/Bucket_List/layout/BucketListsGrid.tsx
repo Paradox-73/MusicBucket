@@ -24,6 +24,7 @@ export function BucketListsGrid() {
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [newListName, setNewListName] = useState('');
+  const [listNameError, setListNameError] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDiscoveryModeOpen, setIsDiscoveryModeOpen] = useState(false);
   const { user } = useAuth();
@@ -73,7 +74,15 @@ export function BucketListsGrid() {
 
   const handleCreateList = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !newListName.trim()) {
+
+    if (!newListName.trim()) {
+      setListNameError('List title is required.');
+      return;
+    }
+    setListNameError(''); // Clear any previous error
+
+    if (!user) {
+      alert('User not authenticated.');
       return;
     }
 
@@ -168,14 +177,20 @@ export function BucketListsGrid() {
       {isDiscoveryModeOpen && <DiscoveryMode isOpen={isDiscoveryModeOpen} onClose={() => setIsDiscoveryModeOpen(false)} />}
       {isCreating && (
         <form onSubmit={handleCreateList} className="mb-6 flex flex-col sm:flex-row gap-2">
-          <input
-            ref={inputRef}
-            type="text"
-            value={newListName}
-            onChange={handleInputChange}
-            placeholder="Enter list name..."
-            className="flex-grow rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 py-2 px-4 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-500"
-          />
+          <div className="flex-grow">
+            <input
+              ref={inputRef}
+              type="text"
+              value={newListName}
+              onChange={(e) => {
+                setNewListName(e.target.value);
+                if (listNameError) setListNameError(''); // Clear error on change
+              }}
+              placeholder="Enter list name..."
+              className="w-full rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 py-2 px-4 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-500"
+            />
+            {listNameError && <p className="text-red-500 text-sm mt-1">{listNameError}</p>}
+          </div>
           <input
             type="file"
             accept="image/*"
@@ -187,7 +202,11 @@ export function BucketListsGrid() {
           </button>
           <button
             type="button"
-            onClick={() => setIsCreating(false)}
+            onClick={() => {
+              setIsCreating(false);
+              setNewListName('');
+              setListNameError(''); // Clear error on cancel
+            }}
             className="bg-gray-400 hover:bg-gray-500 text-white dark:bg-gray-600 dark:hover:bg-gray-700 font-bold py-2 px-4 rounded-lg"
           >
             Cancel

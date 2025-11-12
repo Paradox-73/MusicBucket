@@ -9,6 +9,7 @@ import { getRoute, getRouteRegions } from '../services/Road_Trip_Mixtape/geocodi
 import { Location } from '../types/Road_Trip_Mixtape';
 import axios from 'axios';
 import { MainAppSpotifyAuth } from '../lib/spotifyAuth';
+import { useMapboxStatusStore } from '../store/mapboxStatusStore';
 
 // Import the token from Map component
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
@@ -18,6 +19,7 @@ const RoadTripMixtape = () => {
   const [endQuery, setEndQuery] = React.useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const { isMapboxApiAvailable, setMapboxApiAvailability } = useMapboxStatusStore();
   
   const {
     setStartLocation,
@@ -66,12 +68,16 @@ const RoadTripMixtape = () => {
             setUserLocation({ lat, lng, name: locationName });
           } catch (error) {
             console.error('Error getting location name:', error);
+            setMapboxApiAvailability(false);
           }
         },
         (error) => {
           console.error('Error getting location:', error);
+          setMapboxApiAvailability(false);
         }
       );
+    } else {
+      setMapboxApiAvailability(false); // Geolocation not supported
     }
   }, []);
 
@@ -167,6 +173,7 @@ const RoadTripMixtape = () => {
                 onChange={setStartQuery}
                 onSelect={(location) => handleLocationSelect('start', location)}
                 userLocation={userLocation || undefined}
+                disabled={!isMapboxApiAvailable}
               />
               <LocationInput
                 label="Destination"
@@ -175,16 +182,20 @@ const RoadTripMixtape = () => {
                 onChange={setEndQuery}
                 onSelect={(location) => handleLocationSelect('end', location)}
                 userLocation={userLocation || undefined}
+                disabled={!isMapboxApiAvailable}
               />
                 <button
                   className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors disabled:bg-gray-400"
-                  disabled={isLoading || !startLocation || !endLocation}
+                  disabled={isLoading || !startLocation || !endLocation || !isMapboxApiAvailable}
                   onClick={handleGeneratePlaylist}
                 >
                   {isLoading ? 'Generating...' : 'Generate Playlist'}
                 </button>
                 {error && (
                   <p className="text-red-500 text-sm">{error}</p>
+                )}
+                {!isMapboxApiAvailable && (
+                  <p className="text-red-500 text-sm">Map services are currently unavailable. Please try again later.</p>
                 )}
               </div>
             </div>
