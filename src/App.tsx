@@ -79,11 +79,11 @@ function App() {
         <Route path="/bucket-list/callback" element={<AuthCallback />} />
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
-          <Route path="artist-exploration" element={isProduction ? <ComingSoon /> : <ArtistExploration />} />
+          {/*<Route path="artist-exploration" element={isProduction ? <ComingSoon /> : <ArtistExploration />} />*/}
           <Route path="bucket-list/*" element={<BucketList />} />
           <Route path="dashboard/*" element={<Dashboard />} />
-          <Route path="rabbit-hole" element={<ComingSoon />} />
-          <Route path="recommendation-roulette" element={isProduction ? <ComingSoon /> : <RecommendationRoulette />} />
+          {/*<Route path="rabbit-hole" element={<ComingSoon />} />*/}
+          {/*<Route path="recommendation-roulette" element={isProduction ? <ComingSoon /> : <RecommendationRoulette />} />*/}
           <Route path="roadtrip-mixtape" element={<RoadTripMixtape />} />
           <Route path="tiermaker" element={ <TierMakerPage />} />
           <Route path="about" element={<AboutUs />} />
@@ -91,7 +91,7 @@ function App() {
           <Route path="privacy" element={<Legal />} />
           <Route path="terms" element={<Legal />} />
           <Route path="profile" element={<ComingSoon />} />
-          <Route path="culture-clash" element={isProduction ? <ComingSoon /> : <CultureClashPage />} />
+          {/*<Route path="culture-clash" element={isProduction ? <ComingSoon /> : <CultureClashPage />} />*/}
         </Route>
         <Route path="/bucketlist/share/:id" element={<PublicBucketListPage />} />
         <Route path="/bucketlist/join/:token" element={<BucketListJoinPage />} />

@@ -5,13 +5,15 @@ import { Music2, Github, Twitter, Instagram, Linkedin, Mail } from 'lucide-react
 const Footer: React.FC = () => {
   const footerLinks = {
     product: [
-      { name: 'Artist Exploration', path: '/artist-exploration' },
+      //{ name: 'Artist Exploration', path: '/artist-exploration' },
+      { name: 'Dashboard', path: '/dashboard' },
       { name: 'Bucket List', path: '/bucket-list' },
-      { name: 'Culture Clash', path: '/culture-clash' },
-      { name: 'Exploration Score', path: '/exploration-score' },
-      { name: 'Rabbit Hole', path: '/rabbit-hole' },
-      { name: 'Recommendation Roulette', path: '/recommendation-roulette' },
+      //{ name: 'Culture Clash', path: '/culture-clash' },
+      //{ name: 'Exploration Score', path: '/exploration-score' },
+      //{ name: 'Rabbit Hole', path: '/rabbit-hole' },
+      //{ name: 'Recommendation Roulette', path: '/recommendation-roulette' },
       { name: 'Roadtrip Mixtape', path: '/roadtrip-mixtape' },
+      { name: 'Tierlist Maker', path: '/tiermaker' },
     ],
     company: [
       { name: 'About Us', path: '/about' },
@@ -22,9 +24,8 @@ const Footer: React.FC = () => {
     social: [
       { name: 'Project GitHub', icon: <Github className="w-5 h-5" />, url: 'https://github.com/Paradox-73/MusicBucket' },
       { name: 'Developer 1 LinkedIn', icon: <Linkedin className="w-5 h-5" />, url: 'https://www.linkedin.com/in/kanav-bhardwaj-a25940281/' },
-      { name: 'Developer 2 LinkedIn', icon: <Linkedin className="w-5 h-5" />, url: 'https://www.linkedin.com/in/nikunj-mahajan-9b43542b6/' },
       { name: 'Developer 1 Instagram', icon: <Instagram className="w-5 h-5" />, url: 'https://www.instagram.com/kanavbhardwaj_73/' },
-      { name: 'Developer 2 Instagram', icon: <Instagram className="w-5 h-5" />, url: 'https://www.instagram.com/nikunjmahajan23/' },
+
     ],
     share: [
       { name: 'Twitter', icon: <Twitter className="w-5 h-5" />, url: 'https://twitter.com/intent/tweet?text=Check out MusicBucket - A comprehensive music discovery and tracking platform!&url=your-app-url' }

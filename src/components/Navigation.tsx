@@ -15,14 +15,14 @@ const Navigation: React.FC = () => {
 
   const navLinks = [
     { name: 'Dashboard', path: '/dashboard' },
-    { name: 'Artist Exploration', path: '/artist-exploration' },
+    //{ name: 'Artist Exploration', path: '/artist-exploration' },
     { name: 'Bucket List', path: '/bucket-list' },
     { name: 'Tier Maker', path: '/tiermaker' },
     
-    { name: 'Rabbit Hole', path: '/rabbit-hole' },
-    { name: 'Recommendation Roulette', path: '/recommendation-roulette' },
+    //{ name: 'Rabbit Hole', path: '/rabbit-hole' },
+    //{ name: 'Recommendation Roulette', path: '/recommendation-roulette' },
     { name: 'Roadtrip Mixtape', path: '/roadtrip-mixtape' },
-    { name: 'Culture Clash', path: '/culture-clash' },
+    //{ name: 'Culture Clash', path: '/culture-clash' },
     { name: 'About Us', path: '/about' },
     { name: 'Support', path: '/support' },
   ];
