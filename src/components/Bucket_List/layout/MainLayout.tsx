@@ -1,4 +1,4 @@
-import { Music } from 'lucide-react';
+import { List } from 'lucide-react';
 import { LoginButton } from '../LoginButton';
 import { useSpotifyAuth } from '../../../hooks/Bucket_List/useSpotifyAuth';
 import { Toaster } from 'sonner';
@@ -12,7 +12,7 @@ export function MainLayout() {
   if (!isAuthenticated) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100 dark:bg-black p-4">
-        <Music className="h-16 w-16 text-purple-500 mb-4" />
+        <List className="h-16 w-16 text-purple-500 mb-4" />
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">MusicBucket</h1>
         <p className="text-gray-600 dark:text-gray-400 mb-8 text-center max-w-md">
           Connect with your Spotify account to create and manage your music discovery bucket list.

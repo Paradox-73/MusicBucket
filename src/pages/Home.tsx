@@ -21,35 +21,36 @@ const Home: React.FC = () => {
 
   const features = [
     {
-      title: 'Artist Exploration',
-      description: 'Dive deep into your favorite artists, discover new ones, and explore their musical journeys.',
-      icon: <Music />,
-      link: '/artist-exploration',
+      title: 'Dashboard',
+      description: 'Get a comprehensive overview of your listening habits, top artists, tracks, and personalized insights.',
+      icon: <LayoutDashboard />,
+      link: '/dashboard',
     },
+    // {
+    //   title: 'Artist Exploration',
+    //   description: 'Dive deep into your favorite artists, discover new ones, and explore their musical journeys.',
+    //   icon: <Music />,
+    //   link: '/artist-exploration',
+    // },
     {
       title: 'Bucket List',
       description: 'Create and manage your ultimate music bucket list. Never forget a song or artist you want to check out.',
       icon: <List />,
       link: '/bucket-list',
     },
-    {
-      title: 'Culture Clash',
-      description: 'Explore music from different cultures around the world. Discover global sounds and their origins.',
-      icon: <Globe />,
-      link: '/culture-clash',
-    },
-    {
-      title: 'Dashboard',
-      description: 'Get a comprehensive overview of your listening habits, top artists, tracks, and personalized insights.',
-      icon: <LayoutDashboard />,
-      link: '/dashboard',
-    },
-    {
-      title: 'Recommendation Roulette',
-      description: 'Spin the wheel and get surprising music recommendations tailored to your taste.',
-      icon: <Shuffle />,
-      link: '/recommendation-roulette',
-    },
+    // {
+    //   title: 'Culture Clash',
+    //   description: 'Explore music from different cultures around the world. Discover global sounds and their origins.',
+    //   icon: <Globe />,
+    //   link: '/culture-clash',
+    // },
+    
+    // {
+    //   title: 'Recommendation Roulette',
+    //   description: 'Spin the wheel and get surprising music recommendations tailored to your taste.',
+    //   icon: <Shuffle />,
+    //   link: '/recommendation-roulette',
+    // },
     {
       title: 'Road Trip Mixtape',
       description: 'Generate the perfect playlist for your road trips based on your destination and mood.',
@@ -118,7 +119,7 @@ const Home: React.FC = () => {
           <h2 className="text-4xl font-bold text-white text-center mb-12">
             Explore Our Features
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
               <FeatureCard
                 key={index}

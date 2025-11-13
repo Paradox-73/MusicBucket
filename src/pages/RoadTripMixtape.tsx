@@ -1,8 +1,8 @@
-import React, { useState, useEffect  } from 'react';
-import { LocationInput } from '../components/Road_Trip_Mixtape/LocationInput';
-import { PlaylistView } from '../components/Road_Trip_Mixtape/PlaylistView'; 
+import React, { useState, useEffect  } from 'react';                                                          
+import { LocationInput } from '../components/Road_Trip_Mixtape/LocationInput';                                
+import { PlaylistView } from '../components/Road_Trip_Mixtape/PlaylistView';                                  
 import { generatePlaylist } from '../services/Road_Trip_Mixtape/playlist';
-import { Music, LogIn } from 'lucide-react';
+import { Music, LogIn, Car } from 'lucide-react';
 import { TripMap } from '../components/Road_Trip_Mixtape/Map';
 import { useAppStore } from '../store/Road_Trip_Mixtape';
 import { getRoute, getRouteRegions } from '../services/Road_Trip_Mixtape/geocoding';
@@ -133,7 +133,7 @@ const RoadTripMixtape = () => {
     return (
       <div className="flex flex-col min-h-screen items-center justify-center p-4">
         <div className="text-center max-w-md">
-          <Music className="w-16 h-16 text-blue-500 mx-auto mb-6" />
+          <Car className="w-16 h-16 text-blue-500 mx-auto mb-6" />
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Road Trip Playlist Generator</h2>
           <p className="text-gray-600 dark:text-gray-300 mb-8">To generate playlists for your road trips, you need to connect to Spotify first. This app requires permission to create and modify playlists on your behalf.</p>
           <button
