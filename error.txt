@@ -1,40 +1,23 @@
-C:\MusicBucket>git status
-On branch main
-Your branch is up to date with 'origin/main'.
+/// <reference types="vitest" />
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
 
-Changes not staged for commit:
-  (use "git add/rm <file>..." to update what will be committed)
-  (use "git restore <file>..." to discard changes in working directory)
-        modified:   README.md
-        modified:   error.txt
-        modified:   package-lock.json
-        modified:   package.json
-        modified:   src/store/authStore.ts
-        modified:   src/tests/setup.ts
-        deleted:    src/tests/supabase.test.ts
-        modified:   tsconfig.json
-
-Untracked files:
-  (use "git add <file>..." to include in what will be committed)
-        .github/
-        MusicBucket_Project_Report.md
-        MusicBucket_SRS.pdf
-        Project.md
-        Spotify docs/
-        cypress.config.ts
-        cypress/
-        design_document.txt
-        diagrams.zip
-        diagrams/
-        plantuml_diagrams.txt
-        project_explanation.txt
-        requirement_analysis.txt
-        src/tests/fixtures/
-        src/tests/integration/
-        src/tests/mocks/
-        src/tests/unit/
-        tsconfig.cypress.json
-        use_case.png
-        vitest.config.ts
-
-no changes added to commit (use "git add" and/or "git commit -a")
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/tests/setup.ts',
+    include: ['src/tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+    },
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+});
