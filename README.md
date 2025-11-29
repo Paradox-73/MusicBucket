@@ -1,6 +1,6 @@
 # MusicBucket 🎵
 
-**Project Status**: This project is currently under active development. While the core features are being implemented, some functionality may be incomplete or subject to change. 
+**Project Status**: This project is currently under active development. While the core features are being implemented, some functionality may be incomplete or subject to change.
 
 MusicBucket is a comprehensive music discovery and tracking platform that helps music enthusiasts explore new genres, track their listening habits, and deepen their appreciation for artists. By combining data visualization, personalized recommendations, and interactive features, MusicBucket transforms how users engage with their music listening journey.
 
@@ -49,20 +49,12 @@ MusicBucket is a comprehensive music discovery and tracking platform that helps 
 
 ## 🛠 Tech Stack
 
-- **Frontend**: React.js with Redux Toolkit
-- **Mobile**: React Native
-- **Backend**: Node.js with Express.js
-- **Database**: MongoDB
-- **Authentication**: Firebase Authentication
-- **API Integrations**: 
+- **Frontend**: React.js, TypeScript, Tailwind CSS
+- **Backend**: Supabase (PostgreSQL, Realtime, Auth)
+- **APIs**:
   - Spotify Web API
   - MapBox API
-  - Globe.GL
-  - Three.js
-- **Styling**: Tailwind CSS
-- **Visualization**: D3.js, Chart.js
-- **Deployment**: AWS/Heroku
-- **Testing**: Jest, React Testing Library
+- **Testing**: Vitest, React Testing Library, MSW (Mock Service Worker), Cypress
 - **CI/CD**: GitHub Actions
 
 ## 🔄 Git Setup for Collaborators
@@ -80,20 +72,7 @@ MusicBucket is a comprehensive music discovery and tracking platform that helps 
    ```
 
 3. Set up environment variables:
-   - For the main project:
-     ```
-     cp src/.env.example src/.env
-     ```
-   - For each feature module:
-     ```
-     cp Bucket_List/.env.example Bucket_List/.env
-     cp Rabbit_Hole/.env.example Rabbit_Hole/.env
-     cp Exploration_Score/.env.example Exploration_Score/.env
-     cp Road_Trip_Mixtape/.env.example Road_Trip_Mixtape/.env
-     cp Recommendation_Roulette/.env.example Recommendation_Roulette/.env
-     cp Artist_Exploration/.env.example Artist_Exploration/.env
-     ```
-   - Fill in your own API keys and secrets in each .env file
+   - Create a `.env` file in the root directory and populate it with necessary API keys (Spotify, MapBox, Supabase) as per `.env.example`.
 
 4. Start the development server:
    ```
@@ -127,13 +106,12 @@ MusicBucket is a comprehensive music discovery and tracking platform that helps 
 
 ## 🔑 Key Technical Implementations
 
-- **Complex State Management**: Implemented Redux Toolkit for handling application-wide state and user preferences
+- **Complex State Management**: Implemented Zustand for handling application-wide state and user preferences
 - **Real-time Data Processing**: Built efficient algorithms for processing and analyzing music listening data
-- **Interactive Visualizations**: Created dynamic data visualizations using D3.js, Chart.js, and Globe.GL
 - **API Integration**: Developed robust integration with Spotify Web API, MapBox API including rate limiting and error handling
 - **Responsive Design**: Implemented mobile-first design principles using Tailwind CSS
 - **Authentication Flow**: Built secure OAuth implementation for Spotify authentication
-- **Database Design**: Created optimized MongoDB schemas for efficient data retrieval and storage
+- **Database Design**: Created optimized PostgreSQL schemas for efficient data retrieval and storage
 - **Geolocation Services**: Integrated MapBox API for route planning and local music discovery
 
 ## 🎯 Problem Solution
@@ -151,7 +129,6 @@ MusicBucket addresses several key challenges in music discovery and tracking:
 
 - Spotify Web API for providing the music data infrastructure
 - MapBox API for enabling geographical features
-- Globe.GL and Three.js communities for 3D visualization capabilities
 - The open-source community for various tools and libraries used in this project
 
 ## 💡 Inspiration & Attribution

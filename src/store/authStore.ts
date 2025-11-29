@@ -19,13 +19,7 @@ export const useAuthStore = create<AuthState>((set) => {
     console.log('AuthStore: onAuthStateChange session:', session); // Debugging
 
     if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-      console.log('AuthStore: Handling SIGNED_IN or INITIAL_SESSION.'); // Add this
-      set({
-        user: session?.user || null,
-        session: session || null,
-        loading: false,
-      });
-      console.log('AuthStore: State updated - User:', session?.user, 'Session:', session); // Add this
+      console.log('AuthStore: State updated - User:', session?.user || null, 'Session:', session || null); // Add this
       if (session?.user) {
         try {
           upsertProfile(session.user);
