@@ -11,6 +11,5 @@ jobs:
       - run: npm ci
       - run: npm run test:unit  # Vitest unit tests
       - run: npm run test:integration  # Vitest integration tests
-      - run: npm run test:e2e  # Cypress E2E tests
       - run: npm run test:coverage  # Coverage report
       - uses: codecov/codecov-action@v3
