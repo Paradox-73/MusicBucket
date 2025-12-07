@@ -76,7 +76,7 @@ The project repository can be found on GitHub: [https://github.com/Paradox-73/Mu
 *   **Frontend**: React.js
 *   **Styling**: Tailwind CSS
 *   **API Integrations**: Spotify Web API, MapBox API
-*   **Database**: Supabase (PostgreSQL, Realtime, Auth)
+*   **Backened & Database**: Supabase (BaaS, PostgreSQL, Realtime, Auth)
 *   **Testing**: Vitest, React Testing Library, MSW (Mock Service Worker), Cypress
 
 ## Setup Instructions
@@ -108,7 +108,7 @@ To get the MusicBucket application running locally, follow these steps:
 A deployed version of MusicBucket is available at:
 [https://music-bucket-five.vercel.app/](https://music-bucket-five.vercel.app/)
 
-To access the full functionality of the deployed version, particularly features integrating with the Spotify API, you will need to be manually added to the project's Spotify Developer Dashboard. Please contact Kanav Bhardwaj IMT2023024 and provide the email and username associated with your Spotify account. Once added, you will be able to log in and use the application.
+To access the full functionality of the deployed version, particularly features integrating with the Spotify API, you will need to be manually added to the project's Spotify Developer Dashboard (because we are using free developer version and only 25 manually added users are allowed). Please contact Kanav Bhardwaj IMT2023024 and provide the email and username associated with your Spotify account. Once added, you will be able to log in and use the application.
 
 ## Running Tests
 
@@ -131,11 +131,41 @@ Specific test categories can also be run individually:
 
 ### Testing Strategy
 
-The project employs a multi-faceted testing strategy to ensure reliability and functionality:
+The project employs a comprehensive testing strategy to ensure code quality, functionality, and reliability. This strategy is designed so that anyone can run the full suite of tests without needing any secret API keys or complex environment setup.
 
-*   **`npm test`**: This command executes the comprehensive test suite, encompassing unit, integration, and end-to-end tests. It provides an overall health check of the application, verifying all critical functionalities from isolated units to complete user flows.
+#### Core Principles
 
-*   **`npm run test:unit`**: These tests focus on the smallest testable parts of the application, such as individual functions, components, or modules, in isolation. They verify that each unit of code performs its specific task correctly, ensuring the foundational logic is sound.
+1.  **Independence**: Tests do not rely on live external services (like Spotify or Mapbox). This makes them fast, prevents failures from network issues or API outages, and ensures consistent results.
+2.  **Automation**: The entire test suite can be run with a single command (`npm test`) and is integrated into our CI/CD pipeline (`.github/workflows/test.yml`) to catch issues automatically.
+3.  **Security**: By not requiring API keys for testing, we avoid the risk of exposing secrets.
+
+#### How We Test Without API Keys: Mocking
+
+We use a technique called **mocking** to simulate the behavior of external APIs. When the application tries to make a network request during a test, our test environment intercepts the call and provides a predefined, local "mock" response.
+
+*   **For Unit & Integration Tests (Vitest)**: We use **Mock Service Worker (MSW)**.
+    *   **What it does**: Before tests run, a mock server is initialized (`src/tests/setup.ts`). This server intercepts API calls made by our components.
+    *   **How it works**: Instead of calling the real Spotify API, it finds a matching request handler in `src/tests/mocks/handlers.ts` and returns the fake data specified there. This allows us to test how our components render with different kinds of data or how they handle API errors, all without a network connection.
+
+*   **For End-to-End Tests (Cypress)**: We use Cypress's built-in `cy.intercept()` command.
+    *   **What it does**: This command lets us define mock responses for any API endpoint directly within an E2E test.
+    *   **How it works**: When Cypress runs a test that simulates a user action (like clicking a button that fetches data), `cy.intercept()` catches the API call and provides a mock response. This allows us to verify entire user flows from start to finish in a controlled and predictable environment.
+
+#### How to Run the Tests
+
+The following commands can be used to run the different types of tests.
+
+*   **`npm test`**: Runs all unit and integration tests. This is the main command for checking the health of the application's logic.
+    **Output Example (npm test):**
+    ```
+     Test Files  9 passed (9)
+          Tests  30 passed (30)
+       Start at  20:58:01
+       Duration  4.40s
+     PASS  Waiting for file changes...
+    ```
+
+*   **`npm run test:unit`**: Runs only the unit tests, which verify individual functions and components in isolation.
     **Output Example (npm run test:unit):**
     ```
      Test Files  6 passed (6)
@@ -144,7 +174,7 @@ The project employs a multi-faceted testing strategy to ensure reliability and f
        Duration  2.63s
     ```
 
-*   **`npm run test:integration`**: These tests verify the interactions between different units or modules. They ensure that various parts of the system, like a component interacting with a hook or a service layer, work correctly together, validating the communication and data flow between them.
+*   **`npm run test:integration`**: Runs only the integration tests, which check that different parts of the application work together correctly.
     **Output Example (npm run test:integration):**
     ```
      Test Files  3 passed (3)
@@ -153,11 +183,7 @@ The project employs a multi-faceted testing strategy to ensure reliability and f
        Duration  2.77s
     ```
 
-*   **`npm run test:e2e`**: End-to-end tests simulate real user scenarios to validate the entire application flow from start to finish. These tests interact with the application through its user interface, ensuring that all integrated components work together as expected in a production-like environment.
-    *   **Prerequisite for E2E Tests:** Before running E2E tests, the development server must be running. You can start it using:
-        ```bash
-        npm run dev
-        ```
+*   **`npm run test:e2e`**: Runs the end-to-end tests using Cypress. **Note**: The development server must be running in a separate terminal (`npm run dev`) before executing this command.
     **Output Example (npm run test:e2e):**
     ```
       ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
