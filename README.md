@@ -1,201 +1,143 @@
-# MusicBucket Project Report
+# MusicBucket 🎵
 
-**Prepared by: Team: Betala Ke Dost**
-*   Kanav Bhardwaj (IMT2023024)
-*   Aarpeet Chandrasekhar (IMT2023011)
-*   Bhavya Jain (IMT2023050)
-*   Suryans Dash (IMT2023041)
+**Project Status**: This project is currently under active development. While the core features are being implemented, some functionality may be incomplete or subject to change.
 
-## Project Overview
+MusicBucket is a comprehensive music discovery and tracking platform that helps music enthusiasts explore new genres, track their listening habits, and deepen their appreciation for artists. By combining data visualization, personalized recommendations, and interactive features, MusicBucket transforms how users engage with their music listening journey.
 
-MusicBucket is a comprehensive music discovery and tracking platform designed to integrate with Spotify. It aims to provide users with an engaging platform for discovering, organizing, and tracking music using features like bucket lists, dashboards, road trip playlists, and tier-making tools. This document focuses on the currently implemented core features: Dashboard, Bucket List, Road Trip Mixtape, and Tier Maker.
+## 🌟 Features
 
-The project repository can be found on GitHub: [https://github.com/Paradox-73/MusicBucket](https://github.com/Paradox-73/MusicBucket)
+### Dashboard Analytics
+- Comprehensive visualization of your listening patterns across different timeframes (4 weeks, 6 months, 1 year)
+- Detailed analysis of music taste including metrics like danceability, tempo, energy, and more
+- Achievement tracking to celebrate your musical exploration milestones
 
-## Implemented Features
+### MusicBucket Lists
+- Create and manage personalized music bucket lists across different categories
+- Filter and organize by artists, albums, genres, tracks, podcasts, and playlists
+- Share your bucketlists with the community
+- Auto-generate Spotify playlists based on your bucket selections
 
-### 1. Dashboard Analytics (Dashboard Insights)
+### Recommendation Roulette
+- Interactive wheel-based recommendation system
+- Customizable filters for discovering new music
+- Smart recommendations based on listening history
+- Direct integration with Spotify for instant listening
 
-**Description:**
-*   Display user's Spotify profile summary and key statistics.
-*   Show top artists, tracks, and genres across time ranges (4 weeks, 6 months, all time).
-*   Visualize trends with charts for repeated songs, library growth, and decade distribution.
-*   Analyze user's "music personality" and taste profile.
-*   Include playlist-based metrics and highlight niche vs mainstream preferences.
-*   Present achievements based on listening patterns.
+### RabbitHole
+- Intuitive interface for continuous music discovery through hover-to-play functionality
+- Personalized recommendations based on saved tracks and listening history
+- Integration with global charts and new releases
+- Quick-save feature for seamless music collection building
 
-**Key Technical Implementation:**
-*   Comprehensive visualization of listening patterns across different timeframes.
-*   Detailed analysis of music taste including metrics like danceability, tempo, energy, and more.
-*   Achievement tracking to celebrate musical exploration milestones.
+### Artist Depth Analysis
+- Detailed artist cards showing your listening relationship
+- Track your exploration score for each artist
+- Discover lesser-known tracks from your favorite artists
+- Generate playlists to deepen your artist knowledge
 
-### 2. Music Bucket Lists (Bucket List Management)
+### RoadTrip
+- Create location-based mixtapes using MapBox API integration
+- Discover local artists along your planned route
+- Generate playlists based on geographical music trends
+- Export playlists for offline listening during your journey
 
-**Description:**
-*   Create, rename, and delete personal bucket lists with descriptions and optional cover images.
-*   Add Spotify items (artists, albums, tracks, playlists, podcasts) to lists via search.
-*   Mark items as listened/unlistened and add personal notes.
-*   Filter, sort, and reorder items within each list.
-*   Import liked songs or playlists directly from Spotify.
-*   Make lists public or private, and share via unique URLs.
-*   Invite collaborators to edit shared lists.
-*   Backup and restore data locally and receive reminder notifications.
+### Music Personality
+- Generate shareable music taste visualizations
+- Create custom musical avatars
+- Access BetterBlend for enhanced playlist creation
+- Export personalized music reports
 
-**Key Technical Implementation:**
-*   Create and manage personalized music bucket lists across different categories.
-*   Filter and organize by artists, albums, genres, tracks, podcasts, and playlists.
-*   Share your bucketlists with the community.
+## 🛠 Tech Stack
 
+- **Frontend**: React.js, TypeScript, Tailwind CSS
+- **Backend**: Supabase (PostgreSQL, Realtime, Auth)
+- **APIs**:
+  - Spotify Web API
+  - MapBox API
+- **Testing**: Vitest, React Testing Library, MSW (Mock Service Worker), Cypress
+- **CI/CD**: GitHub Actions
 
-### 3. Road Trip Mixtape (RoadTrip)
+## 🔄 Git Setup for Collaborators
 
-**Description:**
-*   Accept start and destination inputs to define a travel route.
-*   Use Mapbox API to display route and waypoints.
-*   Generate a Spotify playlist based on location-specific artists and genres.
-*   Allow editing of playlist details before saving to Spotify.
-*   Display route map and playlist information in a unified view.
+### Getting Started with the Repository
+1. Clone the repository:
+   ```
+   git clone https://github.com/your-username/MusicBucket.git
+   cd MusicBucket
+   ```
 
-**Key Technical Implementation:**
-*   Create location-based mixtapes using MapBox API integration.
-*   Discover local artists along your planned route.
-*   Generate playlists based on geographical music trends.
+2. Install dependencies:
+   ```
+   npm install
+   ```
 
-### 4. Tier Maker
+3. Set up environment variables:
+   - Create a `.env` file in the root directory and populate it with necessary API keys (Spotify, MapBox, Supabase) as per `.env.example`.
 
-**Description:**
-*   Create new tier lists for artists, albums, or tracks.
-*   Customize tier rows (names, colors, order).
-*   Add Spotify items via search or existing library.
-*   Drag and drop items between tiers or reorder within tiers.
-*   Save, share, and download tier lists as PNG images.
-*   Toggle privacy options (public/private) and generate shareable links.
+4. Start the development server:
+   ```
+   npm run dev
+   ```
 
-## Technical Stack
+### Contributing
+1. Create a new branch for your feature:
+   ```
+   git checkout -b feature/your-feature-name
+   ```
 
-*   **Frontend**: React.js
-*   **Styling**: Tailwind CSS
-*   **API Integrations**: Spotify Web API, MapBox API
-*   **Backened & Database**: Supabase (BaaS, PostgreSQL, Realtime, Auth)
-*   **Testing**: Vitest, React Testing Library, MSW (Mock Service Worker), Cypress
+2. Make your changes and commit them:
+   ```
+   git add .
+   git commit -m "Description of your changes"
+   ```
 
-## Setup Instructions
+3. Push your branch to GitHub:
+   ```
+   git push origin feature/your-feature-name
+   ```
 
-To get the MusicBucket application running locally, follow these steps:
+4. Create a Pull Request on GitHub to merge your changes to the main branch
 
-1.  **Clone the repository**:
-    ```bash
-    git clone https://github.com/Paradox-73/MusicBucket.git
-    cd MusicBucket
-    ```
-2.  **Install dependencies**:
-    ```bash
-    npm install
-    ```
-3.  **Set up environment variables**:
-    *   MusicBucket relies on external APIs. You will need API keys for Spotify, MapBox, and Supabase.
-    *   Create a `.env` file in the root directory (e.g., by copying `.env.example`) and populate it with your respective API keys and configurations.
-    *   **Note:** After running `npm run dev` for the first time, you may need to navigate to the application in your browser. This initial access is crucial for the application to register with Spotify and potentially obtain necessary API tokens. Ensure your Spotify API Redirect URIs are correctly configured (e.g., `http://localhost:5173/callback`).
+### Security Best Practices
+- Never commit sensitive information like API keys or secrets
+- All environment variables should be set in the .env file which is ignored by git
+- Use environment variables for all sensitive configuration
+- Reach out to the project maintainer if you need access to API keys for development
 
-4.  **Start the development server**:
-    ```bash
-    npm run dev
-    ```
-    This will start the application locally, typically accessible at `http://localhost:5173` or a similar address.
+## 🔑 Key Technical Implementations
 
-## Deployed Version & Access
+- **Complex State Management**: Implemented Zustand for handling application-wide state and user preferences
+- **Real-time Data Processing**: Built efficient algorithms for processing and analyzing music listening data
+- **API Integration**: Developed robust integration with Spotify Web API, MapBox API including rate limiting and error handling
+- **Responsive Design**: Implemented mobile-first design principles using Tailwind CSS
+- **Authentication Flow**: Built secure OAuth implementation for Spotify authentication
+- **Database Design**: Created optimized PostgreSQL schemas for efficient data retrieval and storage
+- **Geolocation Services**: Integrated MapBox API for route planning and local music discovery
 
-A deployed version of MusicBucket is available at:
-[https://music-bucket-five.vercel.app/](https://music-bucket-five.vercel.app/)
+## 🎯 Problem Solution
 
-To access the full functionality of the deployed version, particularly features integrating with the Spotify API, you will need to be manually added to the project's Spotify Developer Dashboard (because we are using free developer version and only 25 manually added users are allowed). Please contact Kanav Bhardwaj IMT2023024 and provide the email and username associated with your Spotify account. Once added, you will be able to log in and use the application.
+MusicBucket addresses several key challenges in music discovery and tracking:
 
-## Running Tests
+1. **Discovery Paralysis**: Simplifies music discovery through interactive and gamified features
+2. **Surface-Level Listening**: Encourages deeper artist exploration through the Artist Depth feature
+4. **Tracking Difficulty**: Provides comprehensive analytics and visualization of listening habits
+5. **Disconnected Experience**: Integrates seamlessly with Spotify for a unified music experience
+6. **Geographic Disconnect**: Bridges the gap between location and music through RoadTrip feature
+7. **Discovery Friction**: Streamlines music exploration with the RabbitHole feature
 
-The project includes a comprehensive test suite covering unit, integration, and end-to-end scenarios. All tests are currently passing, ensuring the stability and correctness of the application.
+## 🙏 Acknowledgments
 
-To run the full test suite, use the default command:
-```bash
-npm test
-```
-**Output Example (npm test):**
-```
- Test Files  9 passed (9)
-      Tests  30 passed (30)
-   Start at  20:58:01
-   Duration  4.40s
- PASS  Waiting for file changes...
-```
+- Spotify Web API for providing the music data infrastructure
+- MapBox API for enabling geographical features
+- The open-source community for various tools and libraries used in this project
 
-Specific test categories can also be run individually:
+## 💡 Inspiration & Attribution
 
-### Testing Strategy
+While MusicBucket builds upon ideas from various music platforms and tools, we believe in transparent attribution. This project was inspired by features from several existing platforms, which we've reimagined and enhanced to create a unique music discovery experience. Key inspirations include:
 
-The project employs a comprehensive testing strategy to ensure code quality, functionality, and reliability. This strategy is designed so that anyone can run the full suite of tests without needing any secret API keys or complex environment setup.
+- Last.fm's music tracking capabilities
+- Spotify's Discover Weekly algorithm
+- Apple Music's visualization style
+- Various music analysis tools and platforms
 
-#### Core Principles
-
-1.  **Independence**: Tests do not rely on live external services (like Spotify or Mapbox). This makes them fast, prevents failures from network issues or API outages, and ensures consistent results.
-2.  **Automation**: The entire test suite can be run with a single command (`npm test`) and is integrated into our CI/CD pipeline (`.github/workflows/test.yml`) to catch issues automatically.
-3.  **Security**: By not requiring API keys for testing, we avoid the risk of exposing secrets.
-
-#### How We Test Without API Keys: Mocking
-
-We use a technique called **mocking** to simulate the behavior of external APIs. When the application tries to make a network request during a test, our test environment intercepts the call and provides a predefined, local "mock" response.
-
-*   **For Unit & Integration Tests (Vitest)**: We use **Mock Service Worker (MSW)**.
-    *   **What it does**: Before tests run, a mock server is initialized (`src/tests/setup.ts`). This server intercepts API calls made by our components.
-    *   **How it works**: Instead of calling the real Spotify API, it finds a matching request handler in `src/tests/mocks/handlers.ts` and returns the fake data specified there. This allows us to test how our components render with different kinds of data or how they handle API errors, all without a network connection.
-
-*   **For End-to-End Tests (Cypress)**: We use Cypress's built-in `cy.intercept()` command.
-    *   **What it does**: This command lets us define mock responses for any API endpoint directly within an E2E test.
-    *   **How it works**: When Cypress runs a test that simulates a user action (like clicking a button that fetches data), `cy.intercept()` catches the API call and provides a mock response. This allows us to verify entire user flows from start to finish in a controlled and predictable environment.
-
-#### How to Run the Tests
-
-The following commands can be used to run the different types of tests.
-
-*   **`npm test`**: Runs all unit and integration tests. This is the main command for checking the health of the application's logic.
-    **Output Example (npm test):**
-    ```
-     Test Files  9 passed (9)
-          Tests  30 passed (30)
-       Start at  20:58:01
-       Duration  4.40s
-     PASS  Waiting for file changes...
-    ```
-
-*   **`npm run test:unit`**: Runs only the unit tests, which verify individual functions and components in isolation.
-    **Output Example (npm run test:unit):**
-    ```
-     Test Files  6 passed (6)
-          Tests  20 passed (20)
-       Start at  20:58:16
-       Duration  2.63s
-    ```
-
-*   **`npm run test:integration`**: Runs only the integration tests, which check that different parts of the application work together correctly.
-    **Output Example (npm run test:integration):**
-    ```
-     Test Files  3 passed (3)
-          Tests  10 passed (10)
-       Start at  20:58:30
-       Duration  2.77s
-    ```
-
-*   **`npm run test:e2e`**: Runs the end-to-end tests using Cypress. **Note**: The development server must be running in a separate terminal (`npm run dev`) before executing this command.
-    **Output Example (npm run test:e2e):**
-    ```
-      ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
-      │ Tests:        1                                                                                │
-      │ Passing:      1                                                                                │
-      │ Failing:      0                                                                                │
-      │ Pending:      0                                                                                │
-      │ Skipped:      0                                                                                │
-      │ Screenshots:  0                                                                                │
-      │ Video:        false                                                                            │
-      │ Duration:     6 seconds                                                                        │
-      │ Spec Ran:     example.cy.ts                                                                    │
-      └────────────────────────────────────────────────────────────────────────────────────────────────┘
-        √  All specs passed!                        00:06        1        1        -        -        -
-    ```
+We acknowledge these inspirations while ensuring our implementation brings new value through unique combinations, enhanced features, and novel approaches to music discovery.
