@@ -8,6 +8,8 @@ const Footer: React.FC = () => {
       //{ name: 'Artist Exploration', path: '/artist-exploration' },
       { name: 'Dashboard', path: '/dashboard' },
       { name: 'Bucket List', path: '/bucket-list' },
+      { name: 'Daily Mix', path: '/daily-mix' },
+      { name: 'Playlist Manager', path: '/playlist-manager' },
       //{ name: 'Culture Clash', path: '/culture-clash' },
       //{ name: 'Exploration Score', path: '/exploration-score' },
       //{ name: 'Rabbit Hole', path: '/rabbit-hole' },

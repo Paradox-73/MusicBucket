@@ -18,7 +18,8 @@ const Navigation: React.FC = () => {
     //{ name: 'Artist Exploration', path: '/artist-exploration' },
     { name: 'Bucket List', path: '/bucket-list' },
     { name: 'Tier Maker', path: '/tiermaker' },
-    
+    { name: 'Daily Mix', path: '/daily-mix' },
+    { name: 'Playlist Manager', path: '/playlist-manager' },
     //{ name: 'Rabbit Hole', path: '/rabbit-hole' },
     //{ name: 'Recommendation Roulette', path: '/recommendation-roulette' },
     { name: 'Roadtrip Mixtape', path: '/roadtrip-mixtape' },

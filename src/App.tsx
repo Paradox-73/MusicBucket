@@ -37,6 +37,8 @@ import ComingSoon from './pages/ComingSoon';
 import ArtistExploration from './pages/ArtistExploration';
 import BucketList from './pages/BucketList';
 import RoadTripMixtape from './pages/RoadTripMixtape';
+import DailyMix from './pages/DailyMix';
+import PlaylistManager from './pages/PlaylistManager';
 import Dashboard from './pages/Dashboard';
 import RecommendationRoulette from './pages/RecommendationRoulette';
 import { SpotifyCallback } from './components/SpotifyCallback';
@@ -85,6 +87,8 @@ function App() {
           {/*<Route path="rabbit-hole" element={<ComingSoon />} />*/}
           {/*<Route path="recommendation-roulette" element={isProduction ? <ComingSoon /> : <RecommendationRoulette />} />*/}
           <Route path="roadtrip-mixtape" element={<RoadTripMixtape />} />
+          <Route path="daily-mix" element={<DailyMix />} />
+          <Route path="playlist-manager" element={<PlaylistManager />} />
           <Route path="tiermaker" element={ <TierMakerPage />} />
           <Route path="about" element={<AboutUs />} />
           <Route path="support" element={<Support />} />

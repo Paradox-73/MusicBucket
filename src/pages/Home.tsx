@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronRight, Music, List, Globe, LayoutDashboard, Shuffle, Car, Trophy } from 'lucide-react';
+import { ChevronRight, Music, List, Globe, LayoutDashboard, Shuffle, Car, Trophy, CalendarClock, SlidersHorizontal } from 'lucide-react';
 import { SpotifyLoginButton } from '../components/SpotifyLoginButton';
 import { useSpotifyAuthBridge } from '../lib/spotifyAuth';
 import { motion } from 'framer-motion';
@@ -52,16 +52,28 @@ const Home: React.FC = () => {
     //   link: '/recommendation-roulette',
     // },
     {
+      title: 'Daily Mix',
+      description: 'A fresh daily shuffle built from your listening — heavy rotation, old favourites, and new discoveries.',
+      icon: <CalendarClock />,
+      link: '/daily-mix',
+    },
+    {
+      title: 'Playlist Manager',
+      description: 'Build playlists by filtering on artists, genres, and vibe. Preview, fine-tune, and save to Spotify.',
+      icon: <SlidersHorizontal />,
+      link: '/playlist-manager',
+    },
+    {
       title: 'Road Trip Mixtape',
       description: 'Generate the perfect playlist for your road trips based on your destination and mood.',
       icon: <Car />,
-      link: '/road-trip-mixtape',
+      link: '/roadtrip-mixtape',
     },
     {
       title: 'Tier Maker',
       description: 'Rank your favorite albums, artists, or songs using our interactive tier list creator.',
       icon: <Trophy />,
-      link: '/tier-maker',
+      link: '/tiermaker',
     },
   ];
 
