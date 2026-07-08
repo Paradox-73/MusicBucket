@@ -237,7 +237,8 @@ export const PlaylistView: React.FC = () => {
         <div className="flex flex-wrap justify-end gap-2 sm:gap-4 mt-4 sm:mt-0">
           <button
             onClick={handlePlayAll}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+            aria-label="Play all"
+            className="p-2.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             {playingAll ? (
               <Pause className="w-5 h-5" />
@@ -247,7 +248,8 @@ export const PlaylistView: React.FC = () => {
           </button>
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+            aria-label="Edit playlist"
+            className="p-2.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <Edit className="w-5 h-5" />
           </button>

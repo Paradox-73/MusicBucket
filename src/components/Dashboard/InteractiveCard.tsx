@@ -14,7 +14,21 @@ export const InteractiveCard: React.FC<InteractiveCardProps> = ({ front, back })
   };
 
   return (
-    <div className="w-full h-full" onMouseEnter={handleFlip} onMouseLeave={handleFlip}>
+    <div
+      className="w-full h-full"
+      onMouseEnter={handleFlip}
+      onMouseLeave={handleFlip}
+      onClick={handleFlip}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          if (e.key === ' ') e.preventDefault();
+          handleFlip();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label="Flip card"
+    >
       <motion.div
         className="relative w-full h-full"
         style={{ transformStyle: 'preserve-3d' }}

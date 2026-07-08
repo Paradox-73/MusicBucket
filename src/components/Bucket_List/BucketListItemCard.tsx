@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import ReactCrop, { type Crop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 
@@ -23,12 +23,6 @@ const BucketListItemCard: React.FC<BucketListItemCardProps> = ({ item }) => {
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
-
-  useEffect(() => {
-    if (!croppedImageUrl) {
-      setIsModalOpen(true);
-    }
-  }, []); // Changed dependency array
 
   const handleSpotifyNavigation = () => {
     let spotifyUrl = '';
@@ -75,7 +69,8 @@ const BucketListItemCard: React.FC<BucketListItemCardProps> = ({ item }) => {
   const polaroidStyle = {
     backgroundColor: 'white',
     padding: '10px 10px 40px 10px',
-    width: '200px',
+    maxWidth: '200px',
+    width: '100%',
     height: '250px',
     position: 'relative' as const,
     boxSizing: 'border-box' as const,

@@ -86,12 +86,24 @@ const PublicTierListPage: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-4xl font-bold mb-2 text-gray-900 dark:text-white">{tierList.title}</h1>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl sm:text-4xl font-bold mb-2 text-gray-900 dark:text-white">{tierList.title}</h1>
       {tierList.description && <p className="text-gray-600 dark:text-gray-400 mb-4">{tierList.description}</p>}
       <div className="flex flex-col">
         {tiers.map((tier) => (
-          <TierRow key={tier.id} id={tier.id} label={tier.label} color={tier.color}>
+          <TierRow
+            key={tier.id}
+            id={tier.id}
+            label={tier.label}
+            color={tier.color}
+            readOnly
+            isDragging={false}
+            onMoveUp={() => {}}
+            onMoveDown={() => {}}
+            onLabelChange={() => {}}
+            onColorChange={() => {}}
+            onRemove={() => {}}
+          >
             {tier.items.map((item) => (
               <TierItem
                 key={item.id}

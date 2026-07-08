@@ -104,10 +104,10 @@ const ShareBucketListPage: React.FC = () => {
   
 
   return (
-    <div style={pageStyle} className="flex flex-col items-center">
+    <div style={pageStyle} className="flex flex-col items-center overflow-x-hidden">
       {/* Removed the white square div */}
       <div
-        className="relative w-full px-8 py-0" // Adjusted padding and width
+        className="relative w-full px-4 sm:px-8 py-0" // Adjusted padding and width
         style={{
           backgroundColor: 'transparent', // Keep transparent to show pageStyle's background
           // Combine aged texture and lines

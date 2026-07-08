@@ -286,7 +286,7 @@ const PlaylistManagerInner: React.FC = () => {
                         <button
                           key={genre}
                           onClick={() => handleAddGenre(genre)}
-                          className="rounded-full border border-gray-300 px-2.5 py-1 text-xs capitalize text-gray-600 transition-colors hover:border-primary hover:text-primary dark:border-gray-600 dark:text-gray-300 dark:hover:border-secondary dark:hover:text-secondary"
+                          className="min-h-[36px] rounded-full border border-gray-300 px-2.5 py-1.5 text-xs capitalize text-gray-600 transition-colors hover:border-primary hover:text-primary dark:border-gray-600 dark:text-gray-300 dark:hover:border-secondary dark:hover:text-secondary"
                         >
                           {genre}
                         </button>
@@ -310,7 +310,7 @@ const PlaylistManagerInner: React.FC = () => {
                         <button
                           onClick={() => removeSeedArtist(artist.id)}
                           aria-label={`Remove ${artist.name}`}
-                          className="rounded-full p-0.5 hover:bg-primary/20 dark:hover:bg-secondary/20"
+                          className="rounded-full p-1.5 hover:bg-primary/20 dark:hover:bg-secondary/20"
                         >
                           <X className="h-3.5 w-3.5" />
                         </button>
@@ -326,7 +326,7 @@ const PlaylistManagerInner: React.FC = () => {
                         <button
                           onClick={() => removeSeedGenre(genre)}
                           aria-label={`Remove ${genre}`}
-                          className="rounded-full p-0.5 hover:bg-primary/20 dark:hover:bg-secondary/20"
+                          className="rounded-full p-1.5 hover:bg-primary/20 dark:hover:bg-secondary/20"
                         >
                           <X className="h-3.5 w-3.5" />
                         </button>
@@ -369,7 +369,7 @@ const PlaylistManagerInner: React.FC = () => {
                           <button
                             key={genre}
                             onClick={() => toggleGenreFilter(genre)}
-                            className={`rounded-full border px-2.5 py-1 text-xs capitalize transition-colors ${
+                            className={`min-h-[36px] rounded-full border px-2.5 py-1.5 text-xs capitalize transition-colors ${
                               active
                                 ? 'border-transparent bg-primary text-white dark:bg-secondary dark:text-gray-900'
                                 : 'border-gray-300 text-gray-600 hover:border-primary hover:text-primary dark:border-gray-600 dark:text-gray-300 dark:hover:border-secondary dark:hover:text-secondary'

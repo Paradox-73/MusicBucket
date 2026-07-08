@@ -47,8 +47,8 @@ const TrackRow: React.FC<TrackRowProps> = ({ track, index, isPlaying, onTogglePl
             disabled={!canPreview}
             title={canPreview ? 'Play 30s preview' : 'No preview available'}
             aria-label={canPreview ? 'Play preview' : 'No preview available'}
-            className={`absolute inset-0 flex items-center justify-center rounded-md bg-black/50 text-white opacity-0 transition-opacity focus:opacity-100 focus-visible:opacity-100 ${
-              canPreview ? 'hover:opacity-100' : 'cursor-not-allowed'
+            className={`absolute inset-0 flex items-center justify-center rounded-md bg-black/50 text-white opacity-100 sm:opacity-0 transition-opacity focus:opacity-100 focus-visible:opacity-100 ${
+              canPreview ? 'sm:hover:opacity-100' : 'cursor-not-allowed'
             } ${isPlaying ? 'opacity-100' : ''}`}
           >
             {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}

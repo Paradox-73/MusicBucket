@@ -30,32 +30,33 @@ const AboutUs = () => {
         transition={{ duration: 0.5 }}
         className="text-center mb-12"
       >
-        <h1 className="text-4xl font-bold  text-gray-900 dark:text-white mb-6">About MusicBucket</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-6">About MusicBucket</h1>
         <p className="text-lg  text-gray-900 dark:text-white mb-6">
           MusicBucket is a labor of love, created by music enthusiasts for music enthusiasts.
           Our mission is to transform how people discover, track, and engage with music.
         </p>
       </motion.div>
 
-      <div className="grid gap-8 md:grid-cols-1">
+      <div className="grid gap-8 max-w-2xl mx-auto">
         {teamMembers.map((member, index) => (
           <motion.div
             key={member.name}
             initial={{ opacity: 0, x: index % 2 === 0 ? -20 : 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: index * 0.2 }}
-            className="bg-white rounded-lg shadow-lg p-6"
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6"
           >
-            <h2 className="text-2xl font-bold mb-2">{member.name}</h2>
-            <p className="text-gray-600 mb-4">{member.role}</p>
-            <p className="text-gray-700 mb-4">{member.bio}</p>
-            <div className="flex gap-4">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{member.name}</h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">{member.role}</p>
+            <p className="text-gray-700 dark:text-gray-300 mb-4">{member.bio}</p>
+            <div className="flex gap-2">
               {member.github && (
                 <a
                   href={member.github}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-600 hover:text-gray-900"
+                  aria-label={`${member.name} on GitHub`}
+                  className="inline-flex p-2 rounded-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <Github className="w-6 h-6" />
                 </a>
@@ -65,7 +66,8 @@ const AboutUs = () => {
                   href={member.linkedin}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-600 hover:text-gray-900"
+                  aria-label={`${member.name} on LinkedIn`}
+                  className="inline-flex p-2 rounded-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <Linkedin className="w-6 h-6" />
                 </a>
@@ -73,7 +75,8 @@ const AboutUs = () => {
               {member.email && (
                 <a
                   href={`mailto:${member.email}`}
-                  className="text-gray-600 hover:text-gray-900"
+                  aria-label={`Email ${member.name}`}
+                  className="inline-flex p-2 rounded-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <Mail className="w-6 h-6" />
                 </a>

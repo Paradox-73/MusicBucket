@@ -492,14 +492,14 @@ export function BucketListDetail() {
             </section>
         )}
 
-      <main className="flex flex-1 overflow-y-auto">
+      <main className="flex flex-col md:flex-row flex-1 overflow-y-auto">
         {/* Search Panel */}
-        <div className={`${isSearchPanelCollapsed ? 'w-0 overflow-hidden' : 'w-full md:w-1/3 lg:w-1/4'} transition-all duration-300 ease-in-out border-r border-gray-200 dark:border-white/10 flex flex-col`}>
+        <div className={`${isSearchPanelCollapsed ? 'w-0 overflow-hidden' : 'w-full md:w-1/3 lg:w-1/4'} min-h-0 transition-all duration-300 ease-in-out border-r border-gray-200 dark:border-white/10 flex flex-col`}>
           <SearchPanel listId={listId!} isCollapsed={isSearchPanelCollapsed} />
         </div>
 
         {/* Main Bucket List Content */}
-        <div className="flex-1">
+        <div className="w-full md:flex-1 min-h-0">
           <BucketListPanel 
             isSearchPanelCollapsed={isSearchPanelCollapsed}
             isListView={isListView}

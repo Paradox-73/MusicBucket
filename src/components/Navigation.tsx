@@ -38,8 +38,8 @@ const Navigation: React.FC = () => {
           </span>
         </Link>
 
-        {/* Desktop Navigation */} 
-        <div className="hidden md:flex items-center space-x-6">
+        {/* Desktop Navigation */}
+        <div className="hidden lg:flex items-center space-x-6">
           {navLinks.map((link) => (
             <Link
               key={link.path}

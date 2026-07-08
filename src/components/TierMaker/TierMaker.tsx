@@ -485,12 +485,12 @@ const TierMaker: React.FC = () => {
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="flex flex-col lg:flex-row">
-        <div className="flex-grow p-2 sm:p-4 lg:w-2/3">
+        <div className="flex-grow p-2 sm:p-4 lg:w-2/3 pb-40 lg:pb-0">
           <div className="relative mb-4">
             <h1 className="text-center text-xl sm:text-2xl font-bold text-gray-900 dark:text-white break-words">
               Tier Maker
             </h1>
-            <h2 className="absolute right-0 top-1/2 -translate-y-1/2 text-base font-semibold text-gray-500 dark:text-gray-400">
+            <h2 className="hidden sm:block absolute right-0 top-1/2 -translate-y-1/2 text-base font-semibold text-gray-500 dark:text-gray-400">
               Tier Canvas
             </h2>
           </div>
@@ -525,14 +525,16 @@ const TierMaker: React.FC = () => {
                 <button
                   onClick={handleSaveTierList}
                   title="Save Tier List"
-                  className="p-2 bg-blue-500 hover:bg-blue-700 text-white font-bold rounded"
+                  aria-label="Save Tier List"
+                  className="p-2.5 bg-blue-500 hover:bg-blue-700 text-white font-bold rounded"
                 >
                   <Save size={20} />
                 </button>
                 <button
                   onClick={handleAddTier}
                   title="Add New Tier"
-                  className="p-2 bg-green-500 hover:bg-green-700 text-white font-bold rounded"
+                  aria-label="Add New Tier"
+                  className="p-2.5 bg-green-500 hover:bg-green-700 text-white font-bold rounded"
                 >
                   <Plus size={20} />
                 </button>
@@ -540,7 +542,8 @@ const TierMaker: React.FC = () => {
                   <button
                     onClick={handleFetchMyTierLists}
                     title="Load Tier List"
-                    className="p-2 bg-green-500 hover:bg-green-700 text-white font-bold rounded"
+                    aria-label="Load Tier List"
+                    className="p-2.5 bg-green-500 hover:bg-green-700 text-white font-bold rounded"
                   >
                     <FolderOpen size={20} />
                   </button>
@@ -571,14 +574,16 @@ const TierMaker: React.FC = () => {
                     <button
                       onClick={handleShareTierList}
                       title="Share Tier List"
-                      className="p-2 bg-purple-500 hover:bg-purple-700 text-white font-bold rounded"
+                      aria-label="Share Tier List"
+                      className="p-2.5 bg-purple-500 hover:bg-purple-700 text-white font-bold rounded"
                     >
                       <Share2 size={20} />
                     </button>
                     <button
                       onClick={handleDeleteTierList}
                       title="Delete Tier List"
-                      className="p-2 bg-red-500 hover:bg-red-700 text-white font-bold rounded"
+                      aria-label="Delete Tier List"
+                      className="p-2.5 bg-red-500 hover:bg-red-700 text-white font-bold rounded"
                     >
                       <Trash2 size={20} />
                     </button>
@@ -596,7 +601,8 @@ const TierMaker: React.FC = () => {
                         }
                       }}
                       title="Download as Image"
-                      className={`p-2 bg-teal-500 hover:bg-teal-700 text-white font-bold rounded ${isLoadingImages ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      aria-label="Download as Image"
+                      className={`p-2.5 bg-teal-500 hover:bg-teal-700 text-white font-bold rounded ${isLoadingImages ? 'opacity-50 cursor-not-allowed' : ''}`}
                       disabled={isLoadingImages}
                     >
                       {isLoadingImages ? '...' : <ImageDown size={20} />}

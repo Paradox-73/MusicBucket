@@ -154,7 +154,7 @@ export const Dashboard: React.FC = () => {
   if (isLoadingUser) return <LoadingSpinner />;
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8" style={{ '--theme-color': color, transition: 'background-color 0.5s ease' } as React.CSSProperties}>
+    <div className="container mx-auto px-4 py-4 sm:py-8" style={{ '--theme-color': color, transition: 'background-color 0.5s ease' } as React.CSSProperties}>
       {!isSpotifyApiAvailable && (
         <div className="bg-red-500 text-white text-center p-2 rounded-lg mb-4">
           Cannot connect to Spotify. Some features may be unavailable. {lastUpdated && `Last updated: ${new Date(lastUpdated).toLocaleString()}`}
@@ -175,7 +175,8 @@ export const Dashboard: React.FC = () => {
           <div className="flex flex-col sm:flex-row justify-between items-baseline mb-6">
             <h2 className="text-3xl font-bold">Your Top Charts</h2>
             <select
-              className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              aria-label="Select time range"
+              className="p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               value={selectedTimeRange}
               onChange={(e) => setSelectedTimeRange(e.target.value as TimeRange)}
             >
@@ -227,7 +228,8 @@ export const Dashboard: React.FC = () => {
         <div className="flex flex-col sm:flex-row justify-between items-baseline my-8">
           <h2 className="text-3xl font-bold">Your Library</h2>
           <select
-            className="p-2 border rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            aria-label="Filter by ownership"
+            className="p-2 border dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             value={playlistOwnershipFilter}
             onChange={(e) => setPlaylistOwnershipFilter(e.target.value as TimeRange)}
           >

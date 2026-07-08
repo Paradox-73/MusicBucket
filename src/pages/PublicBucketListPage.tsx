@@ -142,7 +142,7 @@ export function PublicBucketListPage() {
   }
 
   return (
-    <div className="bg-gray-100 dark:bg-black text-gray-900 dark:text-white min-h-screen p-8">
+    <div className="bg-gray-100 dark:bg-black text-gray-900 dark:text-white min-h-screen p-4 sm:p-8">
       <header className="relative mb-8 p-6 rounded-lg shadow-lg bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white overflow-hidden">
         <div className="absolute top-4 right-4 z-20">
           <ThemeToggle />
@@ -238,8 +238,8 @@ export function PublicBucketListPage() {
                       <Music size={32} className="text-gray-500 dark:text-gray-400" />
                     </div>
                   )}
-                  <div>
-                    <p className="font-bold text-lg text-gray-900 dark:text-white">{item.title}</p>
+                  <div className="min-w-0">
+                    <p className="font-bold text-lg text-gray-900 dark:text-white truncate">{item.title}</p>
                     <p className="text-sm text-gray-600 dark:text-gray-400">{item.artists?.map(a => a.name).join(', ')}</p>
                     {item.notes && ( // Display notes if present
                       <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2" title={item.notes}>

@@ -13,6 +13,7 @@ interface TierRowProps {
   onLabelChange: (id: string, newLabel: string) => void;
   onColorChange: (id: string, newColor: string) => void;
   onRemove: (id: string) => void;
+  readOnly?: boolean;
 }
 
 const TierRow: React.FC<TierRowProps> = ({
@@ -26,6 +27,7 @@ const TierRow: React.FC<TierRowProps> = ({
   onLabelChange,
   onColorChange,
   onRemove,
+  readOnly = false,
 }) => {
   const { setNodeRef, isOver } = useDroppable({
     id: id,
@@ -78,16 +80,16 @@ const TierRow: React.FC<TierRowProps> = ({
           <span onDoubleClick={() => setIsEditing(true)} className="w-full break-words">{label}</span>
         )}
       </div>
-      <div style={{ backgroundColor: color }} className="flex flex-wrap gap-2 flex-grow p-2">
+      <div style={{ backgroundColor: color }} className="flex flex-wrap gap-2 flex-grow p-2 pr-12">
         {children}
       </div>
-      {!isDragging && (
+      {!readOnly && !isDragging && (
         <div className="absolute right-0 top-0 bottom-0 flex flex-col justify-center bg-gray-800 bg-opacity-50 p-2">
-          <button onClick={() => onMoveUp(id)} className="text-white hover:text-gray-300">
+          <button onClick={() => onMoveUp(id)} aria-label="Move tier up" className="text-white hover:text-gray-300 p-1.5">
             <ChevronUp className="w-6 h-6" />
           </button>
           <div className="relative" ref={settingsMenuRef}>
-            <button onClick={() => setIsSettingsOpen(prev => !prev)} className="text-white hover:text-gray-300 my-1">
+            <button onClick={() => setIsSettingsOpen(prev => !prev)} aria-label="Tier settings" className="text-white hover:text-gray-300 my-1 p-1.5">
               <Settings className="w-6 h-6" />
             </button>
             <div className={`absolute right-full top-1/2 -translate-y-1/2 w-40 bg-gray-900 text-white rounded-md shadow-lg p-2 ${isSettingsOpen ? 'block' : 'hidden'} z-10 mr-2`}>
@@ -121,7 +123,7 @@ const TierRow: React.FC<TierRowProps> = ({
               </button>
             </div>
           </div>
-          <button onClick={() => onMoveDown(id)} className="text-white hover:text-gray-300">
+          <button onClick={() => onMoveDown(id)} aria-label="Move tier down" className="text-white hover:text-gray-300 p-1.5">
             <ChevronDown className="w-6 h-6" />
           </button>
         </div>

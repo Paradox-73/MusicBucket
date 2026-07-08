@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Coffee, Heart, MessageCircle } from 'lucide-react';
 
 const Support = () => {
+  const shareUrl = typeof window !== 'undefined' ? window.location.origin : 'https://musicbucket.app';
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <motion.div
@@ -10,7 +11,7 @@ const Support = () => {
         transition={{ duration: 0.5 }}
         className="text-center mb-12"
       >
-        <h1 className="text-4xl font-bold  text-gray-900 dark:text-white mb-6">Support MusicBucket</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-6">Support MusicBucket</h1>
         <p className="text-lg  text-gray-900 dark:text-white mb-6">
           Help us keep MusicBucket free and continue improving the music discovery experience.
         </p>
@@ -21,11 +22,11 @@ const Support = () => {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="bg-white rounded-lg shadow-lg p-6 text-center"
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 text-center"
         >
           <Coffee className="w-12 h-12 mx-auto mb-4 text-amber-600" />
-          <h2 className="text-2xl font-bold mb-4">Buy us a Coffee</h2>
-          <p className="text-gray-600 mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Buy us a Coffee</h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
             Support our work by buying us a coffee through Ko-Fi. Every contribution helps us
             maintain and improve MusicBucket.
           </p>
@@ -44,17 +45,17 @@ const Support = () => {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="bg-white rounded-lg shadow-lg p-6 text-center"
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 text-center"
         >
           <Heart className="w-12 h-12 mx-auto mb-4 text-red-500" />
-          <h2 className="text-2xl font-bold mb-4">Spread the Word</h2>
-          <p className="text-gray-600 mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Spread the Word</h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
             Share MusicBucket with your friends and fellow music enthusiasts.
             The more people using MusicBucket, the better it becomes for everyone.
           </p>
           <div className="flex justify-center gap-4">
             <a
-              href="https://twitter.com/intent/tweet?text=Check out MusicBucket - A comprehensive music discovery and tracking platform!&url=your-app-url"
+              href={`https://twitter.com/intent/tweet?text=${encodeURIComponent('Check out MusicBucket - A comprehensive music discovery and tracking platform!')}&url=${encodeURIComponent(shareUrl)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-400 hover:text-blue-600"
@@ -62,7 +63,7 @@ const Support = () => {
               Share on Twitter
             </a>
             <a
-              href="https://www.facebook.com/sharer/sharer.php?u=your-app-url"
+              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:text-blue-800"
@@ -80,7 +81,7 @@ const Support = () => {
         className="mt-12 text-center"
       >
         <MessageCircle className="w-12 h-12 mx-auto mb-4 text-blue-500" />
-        <h2 className="text-2xl font-bold  text-gray-900 dark:text-white mb-6">Get in Touch</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Get in Touch</h2>
         <p className=" text-gray-900 dark:text-white mb-6">
           Have questions or suggestions? We'd love to hear from you!
         </p>

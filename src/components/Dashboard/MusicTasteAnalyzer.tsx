@@ -247,7 +247,7 @@ export const MusicTasteAnalyzer: React.FC<MusicTasteAnalyzerProps> = ({ savedTra
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={metrics.top5Songs} layout="vertical">
               <XAxis type="number" />
-              <YAxis type="category" dataKey="name" width={150} />
+              <YAxis type="category" dataKey="name" width={90} />
               <Tooltip />
               <Legend />
               <Bar dataKey="count" fill="#8884d8" name="Times Repeated" />
@@ -259,7 +259,7 @@ export const MusicTasteAnalyzer: React.FC<MusicTasteAnalyzerProps> = ({ savedTra
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={metrics.top5Artists} layout="vertical">
               <XAxis type="number" />
-              <YAxis type="category" dataKey="name" width={150} />
+              <YAxis type="category" dataKey="name" width={90} />
               <Tooltip />
               <Legend />
               <Bar dataKey="count" fill="#82ca9d" name="Times Repeated" />
@@ -271,7 +271,7 @@ export const MusicTasteAnalyzer: React.FC<MusicTasteAnalyzerProps> = ({ savedTra
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={metrics.top5Albums} layout="vertical">
               <XAxis type="number" />
-              <YAxis type="category" dataKey="name" width={150} />
+              <YAxis type="category" dataKey="name" width={90} />
               <Tooltip />
               <Legend />
               <Bar dataKey="count" fill="#ffc658" name="Times Repeated" />
