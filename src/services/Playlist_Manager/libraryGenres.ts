@@ -18,7 +18,7 @@
 import { getSeveralArtists } from '../../lib/spotify';
 import { getTrackTopTags } from '../Daily_Mix/lastfm';
 
-const CACHE_KEY = 'musicbucket.trackgenres.cache.v1';
+const CACHE_KEY = 'musicbucket.trackgenres.cache.v2';
 /** Last.fm allows ~5 req/s; stay comfortably under it. */
 const MIN_INTERVAL_MS = 250;
 

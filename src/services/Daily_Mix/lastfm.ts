@@ -93,16 +93,17 @@ export async function getSimilarTracks(track: string, artist: string, limit = 20
 /**
  * Community tags for a single track, lowercased and ordered most-popular first.
  * Track-level (not artist-level), so two songs by the same artist can carry
- * different genre tags. Returns [] on miss or error.
+ * different genre tags. Last.fm normalises `count` to 0–100 (top tag = 100);
+ * we drop low-confidence tags so a few users tagging a rap song "jazzy" don't
+ * count as a genre. Returns [] on miss or error.
  */
-export async function getTrackTopTags(artist: string, track: string, limit = 15): Promise<string[]> {
+export async function getTrackTopTags(artist: string, track: string, limit = 10): Promise<string[]> {
   try {
     const data = await callLastfm('track.gettoptags', { artist, track, autocorrect: 1 });
     return (data.toptags?.tag ?? [])
-      .map((t) => t.name)
-      .filter((n): n is string => Boolean(n))
+      .filter((t) => t.name && (t.count ?? 0) >= 10)
       .slice(0, limit)
-      .map((n) => n.toLowerCase());
+      .map((t) => t.name!.toLowerCase());
   } catch {
     return [];
   }

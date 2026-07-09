@@ -232,6 +232,26 @@ interface GatherResult {
   artistCount: number;
 }
 
+/** Normalise a genre/tag for comparison ("Hip-Hop" → "hip hop"). */
+function normalizeGenre(s: string): string {
+  return s.toLowerCase().replace(/[-_/]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Does a track carrying `tags` belong to any `wanted` seed genre? A seed matches
+ * a tag only when it's the tag's genre *head* (its trailing words) or an exact
+ * hit — so "rock" catches "alternative rock", but "jazz" does NOT catch the
+ * hip-hop subgenres "jazz rap"/"jazz hop" (whose head is "rap"/"hop"), nor the
+ * mood tag "jazzy". This keeps folksonomy noise from leaking cross-genre songs.
+ */
+function tagsMatchGenre(tags: string[], wanted: string[]): boolean {
+  const norms = tags.map(normalizeGenre);
+  return wanted.some((seed) => {
+    const s = normalizeGenre(seed);
+    return norms.some((t) => t === s || t.endsWith(` ${s}`));
+  });
+}
+
 /** Keep tracks whose popularity and release year fall inside the filter ranges. */
 function withinPopularityAndYear(t: UITrack, filters: PoolFilters): boolean {
   const pop = t.popularity ?? 50;
@@ -366,7 +386,7 @@ async function gatherFromLibrary(
         const track = candidateById.get(input.id);
         let newTracks: UITrack[] = [];
         if (track) {
-          const isMatch = tags.some((tag) => wanted.some((w) => tag.includes(w) || w.includes(tag)));
+          const isMatch = tagsMatchGenre(tags, wanted);
           if (isMatch) {
             matched.set(track.id, track);
             if (track.artists?.[0]?.id) contributingArtists.add(track.artists[0].id);
