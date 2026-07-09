@@ -31,6 +31,7 @@ interface LastfmResponse {
   lovedtracks?: { track?: LastfmApiTrack[] };
   recenttracks?: { track?: LastfmApiTrack[] };
   similartracks?: { track?: LastfmApiTrack[] };
+  toptags?: { tag?: Array<{ name?: string; count?: number }> };
 }
 
 async function callLastfm(method: string, params: Record<string, unknown>): Promise<LastfmResponse> {
@@ -87,6 +88,24 @@ export async function getRecentTracks(username: string, limit = 200): Promise<La
 export async function getSimilarTracks(track: string, artist: string, limit = 20): Promise<LastfmTrack[]> {
   const data = await callLastfm('track.getsimilar', { track, artist, limit, autocorrect: 1 });
   return toLastfmTracks(data.similartracks?.track);
+}
+
+/**
+ * Community tags for a single track, lowercased and ordered most-popular first.
+ * Track-level (not artist-level), so two songs by the same artist can carry
+ * different genre tags. Returns [] on miss or error.
+ */
+export async function getTrackTopTags(artist: string, track: string, limit = 15): Promise<string[]> {
+  try {
+    const data = await callLastfm('track.gettoptags', { artist, track, autocorrect: 1 });
+    return (data.toptags?.tag ?? [])
+      .map((t) => t.name)
+      .filter((n): n is string => Boolean(n))
+      .slice(0, limit)
+      .map((n) => n.toLowerCase());
+  } catch {
+    return [];
+  }
 }
 
 /** Normalised cache key for a name/artist pair. */

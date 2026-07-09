@@ -1,7 +1,8 @@
 import { spotifyApi } from '../../lib/spotify';
-import { getArtistTopTracks, getRelatedArtists } from '../../lib/spotify';
+import { getArtistTopTracks, getRelatedArtists, getSavedTracks } from '../../lib/spotify';
 import { UITrack, toUITrack } from '../../components/common/trackTypes';
 import { fetchAudioFeatures } from './audioFeatures';
+import { fetchTrackGenres } from './libraryGenres';
 
 /** A simplified artist used as a filter seed. */
 export interface PMArtist {
@@ -15,6 +16,8 @@ export interface PMArtist {
 export interface PoolFilters {
   /** Widen the net by including each seed's related artists. */
   expandRelated: boolean;
+  /** Only keep tracks the user has saved to their Spotify library. */
+  libraryOnly: boolean;
   /** Only keep tracks from artists tagged with at least one of these genres. Empty = no genre filter. */
   genres: string[];
   minPopularity: number;
@@ -42,6 +45,7 @@ export interface PoolFilters {
 
 export const DEFAULT_POOL_FILTERS: PoolFilters = {
   expandRelated: false,
+  libraryOnly: false,
   genres: [],
   minPopularity: 0,
   maxPopularity: 100,
@@ -59,6 +63,19 @@ export const DEFAULT_POOL_FILTERS: PoolFilters = {
   minTempo: 0,
   maxTempo: 250,
 };
+
+/**
+ * Incremental progress emitted while building from the library by genre — the
+ * MusicBrainz lookup is slow, so the UI streams matches and shows a % bar.
+ */
+export interface BuildProgress {
+  /** Saved tracks whose genre has been resolved so far. */
+  processed: number;
+  /** Total saved tracks being checked. */
+  total: number;
+  /** Tracks newly matched since the last callback (already filtered + ready to show). */
+  newTracks: UITrack[];
+}
 
 export interface PoolResult {
   tracks: UITrack[];
@@ -134,14 +151,16 @@ function shuffle<T>(items: T[]): T[] {
 
 /**
  * Build a candidate track pool from the selected seed artists, seed genres and
- * filters. Pure Spotify data: seed artists (+ artists found by genre, +
- * optionally related artists) → their top tracks → filtered by genre,
- * popularity and release year.
+ * filters. Gathers candidates one of two ways — Spotify's catalogue
+ * ({@link gatherFromCatalogue}) or, when `filters.libraryOnly` is set, the
+ * user's saved library ({@link gatherFromLibrary}) — then applies the optional
+ * audio-feature filter and trims to the target size.
  */
 export async function buildTrackPool(
   seeds: PMArtist[],
   seedGenres: string[],
   filters: PoolFilters,
+  onProgress?: (progress: BuildProgress) => void,
 ): Promise<PoolResult> {
   if (seeds.length === 0 && seedGenres.length === 0) {
     return {
@@ -154,60 +173,12 @@ export async function buildTrackPool(
     };
   }
 
-  // --- Resolve the full artist set ----------------------------------------
-  const artistMap = new Map<string, PMArtist>();
-  seeds.forEach((s) => artistMap.set(s.id, s));
-
-  // Genre seeds expand into representative artists of that genre.
-  if (seedGenres.length > 0) {
-    const genreArtistLists = await Promise.all(seedGenres.map((g) => searchArtistsByGenre(g)));
-    genreArtistLists.flat().forEach((a) => {
-      if (!artistMap.has(a.id)) artistMap.set(a.id, a);
-    });
-  }
-
-  if (filters.expandRelated && seeds.length > 0) {
-    const relatedLists = await Promise.all(seeds.map((s) => getRelatedArtists(s.id)));
-    relatedLists.flat().forEach((a) => {
-      if (!artistMap.has(a.id)) artistMap.set(a.id, simplifyArtist(a));
-    });
-  }
-
-  const allArtists = [...artistMap.values()];
-  const availableGenres = Array.from(new Set(allArtists.flatMap((a) => a.genres))).sort();
-
-  // Apply genre filter at the artist level.
-  const selected = filters.genres.map((g) => g.toLowerCase());
-  const matchingArtists =
-    selected.length === 0
-      ? allArtists
-      : allArtists.filter((a) => a.genres.some((g) => selected.includes(g.toLowerCase())));
-
-  // --- Gather + filter tracks per artist ----------------------------------
-  const seen = new Set<string>();
-  const collected: UITrack[] = [];
-
-  const perArtistTracks = await Promise.all(
-    matchingArtists.map(async (artist) => {
-      const raw = await getArtistTopTracks(artist.id);
-      return raw.map(toUITrack);
-    }),
-  );
-
-  perArtistTracks.forEach((tracks) => {
-    let takenForArtist = 0;
-    for (const t of shuffle(tracks)) {
-      if (takenForArtist >= filters.tracksPerArtist) break;
-      if (seen.has(t.id)) continue;
-      const pop = t.popularity ?? 50;
-      const year = t.year ?? filters.maxYear;
-      if (pop < filters.minPopularity || pop > filters.maxPopularity) continue;
-      if (year < filters.minYear || year > filters.maxYear) continue;
-      seen.add(t.id);
-      collected.push(t);
-      takenForArtist++;
-    }
-  });
+  // --- Gather candidate tracks --------------------------------------------
+  // Two strategies: draw from Spotify's catalogue (each artist's top tracks),
+  // or, when the user restricts to their library, from their saved tracks.
+  const { collected, availableGenres, artistCount } = filters.libraryOnly
+    ? await gatherFromLibrary(seeds, seedGenres, filters, onProgress)
+    : await gatherFromCatalogue(seeds, seedGenres, filters);
 
   // --- Optional ReccoBeats audio-feature filtering ------------------------
   let filtered = collected;
@@ -248,7 +219,170 @@ export async function buildTrackPool(
     reserve,
     targetSize: tracks.length,
     availableGenres,
-    artistCount: matchingArtists.length,
+    artistCount,
     audioUnavailable,
   };
+}
+
+interface GatherResult {
+  collected: UITrack[];
+  /** Every genre present across the resolved artist set (for the genre picker). */
+  availableGenres: string[];
+  /** Number of artists that contributed tracks. */
+  artistCount: number;
+}
+
+/** Keep tracks whose popularity and release year fall inside the filter ranges. */
+function withinPopularityAndYear(t: UITrack, filters: PoolFilters): boolean {
+  const pop = t.popularity ?? 50;
+  const year = t.year ?? filters.maxYear;
+  return (
+    pop >= filters.minPopularity &&
+    pop <= filters.maxPopularity &&
+    year >= filters.minYear &&
+    year <= filters.maxYear
+  );
+}
+
+/**
+ * Catalogue strategy: resolve seeds (+ genre-representative and related artists)
+ * to a set of artists, then draw and filter their Spotify top tracks.
+ */
+async function gatherFromCatalogue(
+  seeds: PMArtist[],
+  seedGenres: string[],
+  filters: PoolFilters,
+): Promise<GatherResult> {
+  const artistMap = new Map<string, PMArtist>();
+  seeds.forEach((s) => artistMap.set(s.id, s));
+
+  // Genre seeds expand into representative artists of that genre.
+  if (seedGenres.length > 0) {
+    const genreArtistLists = await Promise.all(seedGenres.map((g) => searchArtistsByGenre(g)));
+    genreArtistLists.flat().forEach((a) => {
+      if (!artistMap.has(a.id)) artistMap.set(a.id, a);
+    });
+  }
+
+  if (filters.expandRelated && seeds.length > 0) {
+    const relatedLists = await Promise.all(seeds.map((s) => getRelatedArtists(s.id)));
+    relatedLists.flat().forEach((a) => {
+      if (!artistMap.has(a.id)) artistMap.set(a.id, simplifyArtist(a));
+    });
+  }
+
+  const allArtists = [...artistMap.values()];
+  const availableGenres = Array.from(new Set(allArtists.flatMap((a) => a.genres))).sort();
+
+  // Apply genre filter at the artist level.
+  const selected = filters.genres.map((g) => g.toLowerCase());
+  const matchingArtists =
+    selected.length === 0
+      ? allArtists
+      : allArtists.filter((a) => a.genres.some((g) => selected.includes(g.toLowerCase())));
+
+  const seen = new Set<string>();
+  const collected: UITrack[] = [];
+
+  const perArtistTracks = await Promise.all(
+    matchingArtists.map(async (artist) => {
+      const raw = await getArtistTopTracks(artist.id);
+      return raw.map(toUITrack);
+    }),
+  );
+
+  perArtistTracks.forEach((tracks) => {
+    let takenForArtist = 0;
+    for (const t of shuffle(tracks)) {
+      if (takenForArtist >= filters.tracksPerArtist) break;
+      if (seen.has(t.id)) continue;
+      if (!withinPopularityAndYear(t, filters)) continue;
+      seen.add(t.id);
+      collected.push(t);
+      takenForArtist++;
+    }
+  });
+
+  return { collected, availableGenres, artistCount: matchingArtists.length };
+}
+
+/**
+ * Library strategy: draw only from the user's saved tracks. Artist seeds keep
+ * every saved track by that artist (not just its top tracks); genre seeds keep
+ * saved tracks whose genre tags match, resolved via Last.fm track tags with a
+ * Spotify artist-genre fallback (Spotify deprecated its genre/recommendation
+ * endpoints).
+ */
+async function gatherFromLibrary(
+  seeds: PMArtist[],
+  seedGenres: string[],
+  filters: PoolFilters,
+  onProgress?: (progress: BuildProgress) => void,
+): Promise<GatherResult> {
+  // De-dupe the saved library by track id.
+  const savedById = new Map<string, SpotifyApi.TrackObjectFull>();
+  for (const item of await getSavedTracks()) {
+    const t = item.track;
+    if (t?.id && !savedById.has(t.id)) savedById.set(t.id, t);
+  }
+  const savedTracks = [...savedById.values()];
+
+  const matched = new Map<string, SpotifyApi.TrackObjectFull>();
+  const contributingArtists = new Set<string>();
+
+  // Artist seeds (+ related, when enabled) → every saved track by those artists.
+  const artistIds = new Set(seeds.map((s) => s.id));
+  if (filters.expandRelated && seeds.length > 0) {
+    const relatedLists = await Promise.all(seeds.map((s) => getRelatedArtists(s.id)));
+    relatedLists.flat().forEach((a) => artistIds.add(a.id));
+  }
+  if (artistIds.size > 0) {
+    for (const t of savedTracks) {
+      const hit = (t.artists ?? []).find((a) => artistIds.has(a.id));
+      if (hit) {
+        matched.set(t.id, t);
+        contributingArtists.add(hit.id);
+      }
+    }
+  }
+
+  // Genre seeds → saved tracks whose genre tags match. Genres come from Last.fm
+  // track tags (track-level) with a Spotify artist-genre fallback. Broad seeds
+  // match specific tags in either direction ("rock" ⇄ "alternative rock"). The
+  // lookup can be slow, so we stream matches out via `onProgress` as each track
+  // resolves rather than waiting for the whole library.
+  if (seedGenres.length > 0) {
+    const wanted = seedGenres.map((g) => g.toLowerCase());
+    const candidates = savedTracks.filter((t) => !matched.has(t.id));
+    const candidateById = new Map(candidates.map((t) => [t.id, t]));
+    await fetchTrackGenres(
+      candidates.map((t) => ({
+        id: t.id,
+        name: t.name,
+        artistId: t.artists?.[0]?.id,
+        artist: t.artists?.[0]?.name ?? '',
+      })),
+      (input, tags, progress) => {
+        const track = candidateById.get(input.id);
+        let newTracks: UITrack[] = [];
+        if (track) {
+          const isMatch = tags.some((tag) => wanted.some((w) => tag.includes(w) || w.includes(tag)));
+          if (isMatch) {
+            matched.set(track.id, track);
+            if (track.artists?.[0]?.id) contributingArtists.add(track.artists[0].id);
+            const ui = toUITrack(track);
+            if (withinPopularityAndYear(ui, filters)) newTracks = [ui];
+          }
+        }
+        onProgress?.({ processed: progress.processed, total: progress.total, newTracks });
+      },
+    );
+  }
+
+  const collected = [...matched.values()]
+    .map(toUITrack)
+    .filter((t) => withinPopularityAndYear(t, filters));
+  const availableGenres = Array.from(new Set(seeds.flatMap((s) => s.genres))).sort();
+
+  return { collected, availableGenres, artistCount: contributingArtists.size };
 }

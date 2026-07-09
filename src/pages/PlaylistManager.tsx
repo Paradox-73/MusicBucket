@@ -17,11 +17,13 @@ import {
   Tag,
   Activity,
   AlertTriangle,
+  Library,
 } from 'lucide-react';
 import SpotifyConnectGate from '../components/common/SpotifyConnectGate';
 import TrackRow from '../components/common/TrackRow';
 import { usePreviewPlayer } from '../components/common/usePreviewPlayer';
 import { searchArtists, buildTrackPool, PMArtist, COMMON_GENRES } from '../services/Playlist_Manager/buildPool';
+import { UITrack } from '../components/common/trackTypes';
 import { usePlaylistManagerStore } from '../store/Playlist_Manager/playlistManagerStore';
 import { findOrCreateOwnedPlaylist, replacePlaylistTracks } from '../services/common/playlistSync';
 
@@ -63,6 +65,9 @@ const PlaylistManagerInner: React.FC = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [audioOpen, setAudioOpen] = useState(false);
   const [building, setBuilding] = useState(false);
+  // Live progress while scanning the saved library by genre (MusicBrainz is slow).
+  const [buildProgress, setBuildProgress] = useState<{ processed: number; total: number } | null>(null);
+  const [streamTracks, setStreamTracks] = useState<UITrack[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedInfo, setSavedInfo] = useState<{ url: string; created: boolean } | null>(null);
@@ -128,8 +133,13 @@ const PlaylistManagerInner: React.FC = () => {
     setBuilding(true);
     setError(null);
     setSavedInfo(null);
+    setBuildProgress(null);
+    setStreamTracks([]);
     try {
-      const result = await buildTrackPool(seedArtists, seedGenres, filters);
+      const result = await buildTrackPool(seedArtists, seedGenres, filters, (p) => {
+        setBuildProgress({ processed: p.processed, total: p.total });
+        if (p.newTracks.length > 0) setStreamTracks((prev) => [...prev, ...p.newTracks]);
+      });
       setPoolResult(result);
       if (result.tracks.length === 0) {
         setError('No tracks matched your filters. Try widening the popularity/year ranges or removing genre filters.');
@@ -139,6 +149,8 @@ const PlaylistManagerInner: React.FC = () => {
       setError('Something went wrong while building the pool. Please try again.');
     } finally {
       setBuilding(false);
+      setBuildProgress(null);
+      setStreamTracks([]);
     }
   };
 
@@ -346,6 +358,23 @@ const PlaylistManagerInner: React.FC = () => {
                     className="h-5 w-9 cursor-pointer appearance-none rounded-full bg-gray-300 transition-colors checked:bg-primary dark:bg-gray-600 dark:checked:bg-secondary relative before:absolute before:left-0.5 before:top-0.5 before:h-4 before:w-4 before:rounded-full before:bg-white before:transition-transform checked:before:translate-x-4"
                   />
                 </label>
+
+                <label className="mt-3 flex cursor-pointer items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <Library className="h-4 w-4" /> Only songs from your library
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={filters.libraryOnly}
+                    onChange={(e) => updateFilter('libraryOnly', e.target.checked)}
+                    className="h-5 w-9 cursor-pointer appearance-none rounded-full bg-gray-300 transition-colors checked:bg-primary dark:bg-gray-600 dark:checked:bg-secondary relative before:absolute before:left-0.5 before:top-0.5 before:h-4 before:w-4 before:rounded-full before:bg-white before:transition-transform checked:before:translate-x-4"
+                  />
+                </label>
+                <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+                  On, the pool is built from your saved library: artist seeds pull every saved song by that artist, and
+                  genre seeds match saved songs by genre using Last.fm track tags (with a Spotify fallback). First build
+                  is slower, then cached.
+                </p>
               </div>
 
               {/* Refine */}
@@ -622,10 +651,37 @@ const PlaylistManagerInner: React.FC = () => {
 
               {/* List / states */}
               {building ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <Loader2 className="mb-4 h-10 w-10 animate-spin text-primary dark:text-secondary" />
-                  <p className="text-gray-600 dark:text-gray-300">Gathering tracks and applying your filters…</p>
-                </div>
+                buildProgress ? (
+                  <div className="space-y-3">
+                    <BuildProgressBar
+                      processed={buildProgress.processed}
+                      total={buildProgress.total}
+                      matched={streamTracks.length}
+                    />
+                    {streamTracks.length > 0 ? (
+                      <div className="space-y-2">
+                        {streamTracks.map((track, i) => (
+                          <TrackRow
+                            key={`${track.id}-stream-${i}`}
+                            track={track}
+                            index={i + 1}
+                            isPlaying={playingId === track.id}
+                            onTogglePlay={(t) => toggle(t.id, t.previewUrl)}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                        Scanning your library for matches…
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <Loader2 className="mb-4 h-10 w-10 animate-spin text-primary dark:text-secondary" />
+                    <p className="text-gray-600 dark:text-gray-300">Gathering tracks and applying your filters…</p>
+                  </div>
+                )
               ) : pool.length > 0 ? (
                 <div className="space-y-2">
                   {pool.map((track, i) => (
@@ -680,6 +736,33 @@ const PlaylistManagerInner: React.FC = () => {
           </section>
         </div>
       </main>
+    </div>
+  );
+};
+
+const BuildProgressBar: React.FC<{ processed: number; total: number; matched: number }> = ({
+  processed,
+  total,
+  matched,
+}) => {
+  const pct = total > 0 ? Math.round((processed / total) * 100) : 0;
+  return (
+    <div className="rounded-xl border border-primary/10 bg-gray-50 p-4 dark:border-secondary/10 dark:bg-gray-700/40">
+      <div className="mb-2 flex items-center justify-between text-xs font-medium text-gray-600 dark:text-gray-300">
+        <span className="flex items-center gap-1.5">
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary dark:text-secondary" />
+          Scanning library · {processed}/{total}
+        </span>
+        <span className="tabular-nums">
+          {matched} match{matched === 1 ? '' : 'es'} · {pct}%
+        </span>
+      </div>
+      <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-600">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-primary to-secondary transition-all duration-300"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
     </div>
   );
 };
